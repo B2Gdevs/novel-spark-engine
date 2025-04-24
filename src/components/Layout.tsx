@@ -44,7 +44,7 @@ export function Layout({ children }: { children: ReactNode }) {
       
       <CommandMenu />
       
-      <div className="min-h-screen flex flex-col w-full bg-zinc-900 text-white">
+      <div className="min-h-screen flex flex-col w-full bg-[#1A1F2C]">
         <Toolbar />
         <div className="flex flex-1 h-[calc(100vh-3rem)] overflow-hidden">
           <AppSidebar />

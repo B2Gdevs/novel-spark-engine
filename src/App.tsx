@@ -14,6 +14,8 @@ import { ScenesPage } from "./pages/ScenesPage";
 import { SceneForm } from "./pages/SceneForm";
 import { EventsPage } from "./pages/EventsPage";
 import { EventForm } from "./pages/EventForm";
+import { BooksPage } from "./pages/BooksPage";
+import { BillingPage } from "./pages/BillingPage";
 import { AssistantPage } from "./pages/AssistantPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { Layout } from "./components/Layout";
@@ -35,6 +37,8 @@ const App = () => (
             <Route path="/scenes/:id" element={<Layout><SceneForm /></Layout>} />
             <Route path="/events" element={<Layout><EventsPage /></Layout>} />
             <Route path="/events/:id" element={<Layout><EventForm /></Layout>} />
+            <Route path="/books" element={<Layout><BooksPage /></Layout>} />
+            <Route path="/billing" element={<Layout><BillingPage /></Layout>} />
             <Route path="/assistant" element={<Layout><AssistantPage /></Layout>} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
