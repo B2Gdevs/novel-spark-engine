@@ -32,13 +32,14 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-[80vh] bg-background rounded-lg border">
       <div className="border-b p-4">
-        <h2 className="font-semibold">Novel Assistant</h2>
+        <h2 className="font-semibold text-xl">NovelSpark Assistant</h2>
+        <p className="text-sm text-muted-foreground">Your AI-powered writing companion</p>
       </div>
       
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-6">
+      <ScrollArea className="flex-1 px-4">
+        <div className="py-4 space-y-6">
           {project.chatHistory.map((msg) => (
             <div
               key={msg.id}
@@ -47,7 +48,7 @@ export function ChatInterface() {
               <div
                 className={`rounded-lg p-4 max-w-[80%] ${
                   msg.role === "user" 
-                    ? "bg-primary text-primary-foreground ml-4" 
+                    ? "bg-primary text-primary-foreground" 
                     : "bg-muted"
                 }`}
               >
@@ -58,12 +59,12 @@ export function ChatInterface() {
         </div>
       </ScrollArea>
 
-      <form onSubmit={handleSubmit} className="border-t p-4">
+      <form onSubmit={handleSubmit} className="border-t p-4 bg-background">
         <div className="flex gap-2 items-center">
           <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Message Novel Assistant..."
+            placeholder="Ask anything about your novel..."
             className="flex-1"
           />
           <Button 
