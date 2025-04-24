@@ -1,11 +1,11 @@
 
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { PlusIcon, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useNovel } from "@/contexts/NovelContext";
 import { SceneCard } from "@/components/SceneCard";
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 export function ScenesPage() {
@@ -31,25 +31,26 @@ export function ScenesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-novel-orange">Scenes</h1>
-          <p className="text-muted-foreground">Create and manage the scenes in your novel</p>
+          <h1 className="text-3xl font-bold text-orange-500">Scenes</h1>
+          <p className="text-muted-foreground">Build and manage the scenes in your story</p>
         </div>
-        <Button asChild className="bg-novel-orange hover:bg-novel-orange/90">
+        <Button asChild className="bg-orange-500 hover:bg-orange-600">
           <Link to="/scenes/new">
             <PlusIcon className="mr-2 h-4 w-4" />
-            Add Scene
+            New Scene
           </Link>
         </Button>
       </div>
 
-      <div className="max-w-xl">
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search scenes..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="mb-4"
+          className="pl-9"
         />
       </div>
 
@@ -63,7 +64,7 @@ export function ScenesPage() {
             />
           ))
         ) : (
-          <div className="col-span-full p-8 text-center bg-white rounded-lg border border-dashed">
+          <div className="col-span-full p-8 text-center bg-white dark:bg-zinc-800 rounded-lg border border-dashed">
             <h3 className="font-medium text-lg mb-2">No scenes found</h3>
             <p className="text-muted-foreground mb-4">
               {searchTerm
@@ -71,10 +72,10 @@ export function ScenesPage() {
                 : "Get started by adding your first scene."}
             </p>
             {!searchTerm && (
-              <Button asChild className="bg-novel-orange hover:bg-novel-orange/90">
+              <Button asChild className="bg-orange-500 hover:bg-orange-600">
                 <Link to="/scenes/new">
                   <PlusIcon className="mr-2 h-4 w-4" />
-                  Add Scene
+                  New Scene
                 </Link>
               </Button>
             )}

@@ -1,11 +1,11 @@
 
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { PlusIcon, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useNovel } from "@/contexts/NovelContext";
 import { CharacterCard } from "@/components/CharacterCard";
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 export function CharactersPage() {
@@ -33,25 +33,26 @@ export function CharactersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-novel-purple">Characters</h1>
-          <p className="text-muted-foreground">Create and manage the characters in your novel</p>
+          <h1 className="text-3xl font-bold text-purple-600">Characters</h1>
+          <p className="text-muted-foreground">Build and manage the characters in your story</p>
         </div>
-        <Button asChild className="bg-novel-purple hover:bg-novel-purple/90">
+        <Button asChild className="bg-purple-600 hover:bg-purple-700">
           <Link to="/characters/new">
             <PlusIcon className="mr-2 h-4 w-4" />
-            Add Character
+            New Character
           </Link>
         </Button>
       </div>
 
-      <div className="max-w-xl">
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search characters..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="mb-4"
+          className="pl-9"
         />
       </div>
 
@@ -65,7 +66,7 @@ export function CharactersPage() {
             />
           ))
         ) : (
-          <div className="col-span-full p-8 text-center bg-white rounded-lg border border-dashed">
+          <div className="col-span-full p-8 text-center bg-white dark:bg-zinc-800 rounded-lg border border-dashed">
             <h3 className="font-medium text-lg mb-2">No characters found</h3>
             <p className="text-muted-foreground mb-4">
               {searchTerm
@@ -73,10 +74,10 @@ export function CharactersPage() {
                 : "Get started by adding your first character."}
             </p>
             {!searchTerm && (
-              <Button asChild>
+              <Button asChild className="bg-purple-600 hover:bg-purple-700">
                 <Link to="/characters/new">
                   <PlusIcon className="mr-2 h-4 w-4" />
-                  Add Character
+                  New Character
                 </Link>
               </Button>
             )}

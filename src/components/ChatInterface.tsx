@@ -20,7 +20,6 @@ export function ChatInterface() {
     });
 
     // Here you would integrate with OpenAI
-    // For now, just show a simple response
     setTimeout(() => {
       addChatMessage({
         role: "assistant",
@@ -32,10 +31,10 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col min-h-[80vh] bg-background rounded-lg border">
+    <div className="flex flex-col h-full bg-background rounded-lg border">
       <div className="border-b p-4">
-        <h2 className="font-semibold text-xl">NovelSpark Assistant</h2>
-        <p className="text-sm text-muted-foreground">Your AI-powered writing companion</p>
+        <h2 className="font-semibold text-xl">Novel Assistant</h2>
+        <p className="text-sm text-muted-foreground">Your AI-powered story building companion</p>
       </div>
       
       <ScrollArea className="flex-1 px-4">
@@ -48,8 +47,8 @@ export function ChatInterface() {
               <div
                 className={`rounded-lg p-4 max-w-[80%] ${
                   msg.role === "user" 
-                    ? "bg-primary text-primary-foreground" 
-                    : "bg-muted"
+                    ? "bg-novel-purple text-white" 
+                    : "bg-zinc-100 dark:bg-zinc-800"
                 }`}
               >
                 <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
@@ -64,13 +63,14 @@ export function ChatInterface() {
           <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Ask anything about your novel..."
+            placeholder="Ask anything about your story..."
             className="flex-1"
           />
           <Button 
             type="submit" 
             size="icon"
             disabled={!message.trim()}
+            className="bg-novel-purple hover:bg-novel-purple/90"
           >
             <Send className="h-4 w-4" />
           </Button>
