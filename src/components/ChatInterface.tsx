@@ -101,7 +101,7 @@ export function ChatInterface() {
     : scenes;
     
   const filteredEvents = mentionSearch 
-    ? events.filter(e => e.title.toLowerCase().includes(mentionSearch.toLowerCase()))
+    ? events.filter(e => e.name.toLowerCase().includes(mentionSearch.toLowerCase()))
     : events;
 
   return (
@@ -197,10 +197,10 @@ export function ChatInterface() {
                     {filteredEvents.map(event => (
                       <button
                         key={event.id}
-                        onClick={() => insertMention('event', event.title)}
+                        onClick={() => insertMention('event', event.name)}
                         className="w-full text-left px-3 py-2 hover:bg-zinc-700 text-white text-sm"
                       >
-                        {event.title}
+                        {event.name}
                       </button>
                     ))}
                   </div>

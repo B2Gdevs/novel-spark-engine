@@ -43,13 +43,23 @@ interface NovelContextType {
 
 export function NovelProvider({ children }: { children: ReactNode }) {
   const [project, setProject] = useState<NovelProject>(() => {
-    const savedProject = localStorage.getItem("novelProject");
-    return savedProject ? JSON.parse(savedProject) : defaultProject;
+    try {
+      const savedProject = localStorage.getItem("novelProject");
+      return savedProject ? JSON.parse(savedProject) : defaultProject;
+    } catch (e) {
+      console.error("Error loading project from localStorage:", e);
+      return defaultProject;
+    }
   });
 
   const [apiKey, setApiKey] = useState(() => {
-    const savedKey = localStorage.getItem("openaiApiKey");
-    return savedKey || "";
+    try {
+      const savedKey = localStorage.getItem("openaiApiKey");
+      return savedKey || "";
+    } catch (e) {
+      console.error("Error loading API key from localStorage:", e);
+      return "";
+    }
   });
 
   const currentBook = project.currentBookId 
@@ -391,7 +401,7 @@ export function NovelProvider({ children }: { children: ReactNode }) {
 
   const addMockData = useCallback(() => {
     setProject(prev => {
-      if (prev.books.length === 0 || prev.books[0].characters.length === 0) {
+      if (prev.books.length === 0 || (prev.books[0]?.characters && prev.books[0].characters.length === 0)) {
         const mockCharacters = [
           {
             id: uuidv4(),
@@ -401,6 +411,9 @@ export function NovelProvider({ children }: { children: ReactNode }) {
             traits: ["intelligent", "secretive", "powerful"],
             backstory: "Exiled from his homeland after a magical accident, Kael seeks redemption while hiding his true identity.",
             imageUrl: "",
+            role: "Protagonist",
+            secrets: [],
+            relationships: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           },
@@ -412,6 +425,9 @@ export function NovelProvider({ children }: { children: ReactNode }) {
             traits: ["brave", "righteous", "stubborn"],
             backstory: "Born to a noble family, Lyra abandoned her inheritance to pursue a life of service to the light.",
             imageUrl: "",
+            role: "Ally",
+            secrets: [],
+            relationships: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           }
@@ -422,6 +438,7 @@ export function NovelProvider({ children }: { children: ReactNode }) {
             id: uuidv4(),
             title: "The Awakening",
             description: "Kael discovers his latent magical powers after a violent confrontation",
+            content: "The forest grew quiet as Kael felt the power surge through his veins...",
             location: "Mistwood Forest",
             characters: [mockCharacters[0].id],
             notes: "Key moment in Kael's character development",
@@ -432,6 +449,7 @@ export function NovelProvider({ children }: { children: ReactNode }) {
             id: uuidv4(),
             title: "Oath of Protection",
             description: "Lyra swears to protect the village from the oncoming darkness",
+            content: "Standing before the altar, Lyra raised her sword to the heavens...",
             location: "Temple of Light",
             characters: [mockCharacters[1].id],
             notes: "Establishes Lyra's primary motivation",
@@ -443,10 +461,12 @@ export function NovelProvider({ children }: { children: ReactNode }) {
         const mockEvents = [
           {
             id: uuidv4(),
-            title: "The Great Cataclysm",
+            name: "The Great Cataclysm",
             description: "A magical disaster that shattered the old kingdom",
             date: "10 years before story begins",
             impact: "Created the world as it exists now, with magic being feared and distrusted",
+            characters: [],
+            consequences: ["The rise of the Anti-Magic League", "The scattering of the Royal Family"],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           }
@@ -466,18 +486,19 @@ export function NovelProvider({ children }: { children: ReactNode }) {
             updatedAt: new Date().toISOString()
           });
         } else {
+          const book = updatedBooks[0];
           updatedBooks[0] = {
-            ...updatedBooks[0],
-            characters: [...updatedBooks[0].characters, ...mockCharacters],
-            scenes: [...updatedBooks[0].scenes, ...mockScenes],
-            events: [...updatedBooks[0].events, ...mockEvents]
+            ...book,
+            characters: [...(book.characters || []), ...mockCharacters],
+            scenes: [...(book.scenes || []), ...mockScenes],
+            events: [...(book.events || []), ...mockEvents]
           };
         }
         
         return {
           ...prev,
           books: updatedBooks,
-          currentBookId: updatedBooks[0].id
+          currentBookId: updatedBooks[0]?.id || null
         };
       }
       
@@ -486,11 +507,19 @@ export function NovelProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("openaiApiKey", apiKey);
+    try {
+      localStorage.setItem("openaiApiKey", apiKey);
+    } catch (e) {
+      console.error("Error saving API key to localStorage:", e);
+    }
   }, [apiKey]);
 
   useEffect(() => {
-    localStorage.setItem("novelProject", JSON.stringify(project));
+    try {
+      localStorage.setItem("novelProject", JSON.stringify(project));
+    } catch (e) {
+      console.error("Error saving project to localStorage:", e);
+    }
   }, [project]);
 
   const contextValue = {

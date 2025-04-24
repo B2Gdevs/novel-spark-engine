@@ -1,11 +1,17 @@
+
 export interface Character {
   id: string;
   name: string;
   traits: string[];
   description: string;
   role: string;
+  age?: number;
+  backstory?: string;
+  imageUrl?: string;
   secrets?: string[];
   relationships?: Relationship[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Relationship {
@@ -18,10 +24,14 @@ export interface Scene {
   id: string;
   title: string;
   content: string;
+  description?: string;
   characters: string[]; // Character IDs
   location?: string;
   events?: string[]; // Event IDs
+  notes?: string;
   tone?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Event {
@@ -30,6 +40,10 @@ export interface Event {
   description: string;
   characters: string[]; // Character IDs involved
   consequences: string[];
+  date?: string;
+  impact?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Note {
@@ -43,6 +57,8 @@ export interface Note {
     events?: string[];
     notes?: string[];
   };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ChatMessage {
@@ -65,6 +81,8 @@ export interface Book {
     scenes?: string[]; // IDs of scenes from other books
     events?: string[]; // IDs of events from other books
   };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface NovelProject {
