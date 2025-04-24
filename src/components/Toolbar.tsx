@@ -3,7 +3,6 @@ import { BookOpen, User, Calendar, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { CommandMenu } from "@/components/CommandMenu";
 
 export function Toolbar() {
   const location = useLocation();
@@ -27,7 +26,7 @@ export function Toolbar() {
   ];
 
   return (
-    <div className="h-12 bg-zinc-800 border-b border-zinc-700 flex items-center justify-between px-4 z-10">
+    <div className="h-12 bg-zinc-900 flex items-center justify-between px-4 z-10">
       <div className="flex items-center">
         <BookOpen className="mr-2 h-5 w-5 text-purple-400" />
         <span className="font-bold text-lg text-white">NovelSpark</span>
@@ -41,7 +40,7 @@ export function Toolbar() {
             size="sm"
             asChild
             className={cn(
-              "text-zinc-300 hover:text-white hover:bg-zinc-700",
+              "rounded-md bg-zinc-800/80 text-zinc-300 hover:text-white hover:bg-zinc-700",
               location.pathname === item.path && "bg-zinc-700 text-white"
             )}
           >
@@ -57,7 +56,7 @@ export function Toolbar() {
         <Button 
           variant="outline" 
           size="sm" 
-          className="text-xs bg-zinc-700 border-zinc-600 text-zinc-300 hover:bg-zinc-600"
+          className="text-xs bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700"
         >
           Cmd+K
         </Button>
