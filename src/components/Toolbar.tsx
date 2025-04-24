@@ -1,16 +1,9 @@
 
-import { BookOpen, User, Calendar, List, Book, CreditCard, UserRound } from "lucide-react";
+import { BookOpen, User, Calendar, List, Book } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { CommandMenu } from "@/components/CommandMenu";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Toolbar() {
   const location = useLocation();
@@ -53,8 +46,8 @@ export function Toolbar() {
             size="sm"
             asChild
             className={cn(
-              "text-white/70 hover:text-white bg-white/5 hover:bg-white/10 transition-colors",
-              location.pathname === item.path && "bg-white/10 text-white"
+              "text-white/70 hover:text-white bg-white/10 hover:bg-white/15 transition-colors",
+              location.pathname === item.path && "bg-white/15 text-white"
             )}
           >
             <Link to={item.path} className="flex items-center gap-2">
@@ -65,44 +58,15 @@ export function Toolbar() {
         ))}
       </div>
       
-      <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          className="text-white/70 hover:text-white"
-          asChild
-        >
-          <Link to="/billing">
-            <CreditCard className="h-5 w-5" />
-          </Link>
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder.svg" alt="Avatar" />
-                <AvatarFallback>
-                  <UserRound className="h-4 w-4" />
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>Log out</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="text-xs bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
-        >
-          Cmd+K
-        </Button>
-      </div>
+      <div className="flex-1" /> {/* This pushes the Cmd+K button to the right */}
+      
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="text-xs bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+      >
+        Cmd+K
+      </Button>
     </div>
   );
 }
