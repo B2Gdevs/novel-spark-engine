@@ -1,5 +1,4 @@
-
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 import { Book, NovelProject, Character, Scene, Event, Note, ChatMessage } from "@/types/novel";
@@ -39,6 +38,7 @@ interface NovelContextType {
   clearChatHistory: () => void;
   saveProject: () => void;
   loadProject: (project: NovelProject) => void;
+  addMockData: () => void;
 }
 
 export function NovelProvider({ children }: { children: ReactNode }) {
@@ -389,6 +389,102 @@ export function NovelProvider({ children }: { children: ReactNode }) {
     toast.success("Chat history cleared");
   };
 
+  const addMockData = useCallback(() => {
+    setProject(prev => {
+      if (prev.books.length === 0 || prev.books[0].characters.length === 0) {
+        const mockCharacters = [
+          {
+            id: uuidv4(),
+            name: "Kael Windrunner",
+            age: 27,
+            description: "A brooding and mysterious mage with a dark past",
+            traits: ["intelligent", "secretive", "powerful"],
+            backstory: "Exiled from his homeland after a magical accident, Kael seeks redemption while hiding his true identity.",
+            imageUrl: "",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: uuidv4(),
+            name: "Lyra Dawnbringer",
+            age: 24,
+            description: "A valiant paladin devoted to her cause",
+            traits: ["brave", "righteous", "stubborn"],
+            backstory: "Born to a noble family, Lyra abandoned her inheritance to pursue a life of service to the light.",
+            imageUrl: "",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ];
+        
+        const mockScenes = [
+          {
+            id: uuidv4(),
+            title: "The Awakening",
+            description: "Kael discovers his latent magical powers after a violent confrontation",
+            location: "Mistwood Forest",
+            characters: [mockCharacters[0].id],
+            notes: "Key moment in Kael's character development",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: uuidv4(),
+            title: "Oath of Protection",
+            description: "Lyra swears to protect the village from the oncoming darkness",
+            location: "Temple of Light",
+            characters: [mockCharacters[1].id],
+            notes: "Establishes Lyra's primary motivation",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ];
+        
+        const mockEvents = [
+          {
+            id: uuidv4(),
+            title: "The Great Cataclysm",
+            description: "A magical disaster that shattered the old kingdom",
+            date: "10 years before story begins",
+            impact: "Created the world as it exists now, with magic being feared and distrusted",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ];
+        
+        let updatedBooks = [...prev.books];
+        if (updatedBooks.length === 0) {
+          updatedBooks.push({
+            id: uuidv4(),
+            title: "The Dark Mage's Redemption",
+            description: "A tale of magic, betrayal, and redemption",
+            characters: mockCharacters,
+            scenes: mockScenes,
+            events: mockEvents,
+            notes: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+        } else {
+          updatedBooks[0] = {
+            ...updatedBooks[0],
+            characters: [...updatedBooks[0].characters, ...mockCharacters],
+            scenes: [...updatedBooks[0].scenes, ...mockScenes],
+            events: [...updatedBooks[0].events, ...mockEvents]
+          };
+        }
+        
+        return {
+          ...prev,
+          books: updatedBooks,
+          currentBookId: updatedBooks[0].id
+        };
+      }
+      
+      return prev;
+    });
+  }, []);
+
   useEffect(() => {
     localStorage.setItem("openaiApiKey", apiKey);
   }, [apiKey]);
@@ -397,36 +493,39 @@ export function NovelProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("novelProject", JSON.stringify(project));
   }, [project]);
 
+  const contextValue = {
+    project,
+    currentBook,
+    apiKey,
+    setApiKey,
+    addBook,
+    switchBook,
+    addCharacter,
+    updateCharacter,
+    deleteCharacter,
+    getCharacter,
+    addScene,
+    updateScene,
+    deleteScene,
+    getScene,
+    addEvent,
+    updateEvent,
+    deleteEvent,
+    getEvent,
+    addNote,
+    updateNote,
+    deleteNote,
+    getNote,
+    addChatMessage,
+    clearChatHistory,
+    saveProject,
+    loadProject,
+    addMockData,
+  };
+
   return (
     <NovelContext.Provider
-      value={{
-        project,
-        currentBook,
-        apiKey,
-        setApiKey,
-        addBook,
-        switchBook,
-        addCharacter,
-        updateCharacter,
-        deleteCharacter,
-        getCharacter,
-        addScene,
-        updateScene,
-        deleteScene,
-        getScene,
-        addEvent,
-        updateEvent,
-        deleteEvent,
-        getEvent,
-        addNote,
-        updateNote,
-        deleteNote,
-        getNote,
-        addChatMessage,
-        clearChatHistory,
-        saveProject,
-        loadProject,
-      }}
+      value={contextValue}
     >
       {children}
     </NovelContext.Provider>
