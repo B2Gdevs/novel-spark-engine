@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Badge } from "@/components/ui/badge";
 
 export function EventForm() {
-  const { addEvent, updateEvent, getEvent, project } = useNovel();
+  const { addEvent, updateEvent, getEvent, currentBook } = useNovel();
   const navigate = useNavigate();
   const { id } = useParams();
   
@@ -160,7 +160,7 @@ export function EventForm() {
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Characters</SelectLabel>
-                    {project.characters.map((character) => (
+                    {currentBook?.characters.map((character) => (
                       <SelectItem
                         key={character.id}
                         value={character.id}
@@ -174,7 +174,7 @@ export function EventForm() {
               </Select>
               <div className="flex flex-wrap gap-2 mt-2">
                 {event.characters.map((characterId) => {
-                  const character = project.characters.find(c => c.id === characterId);
+                  const character = currentBook?.characters.find(c => c.id === characterId);
                   return character ? (
                     <Badge
                       key={characterId}
