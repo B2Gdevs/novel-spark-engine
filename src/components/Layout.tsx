@@ -6,7 +6,6 @@ import { ReactNode, useEffect, useState } from "react";
 import { DialogProvider } from "@/components/DialogProvider";
 import { ChatInterface } from "@/components/ChatInterface";
 import { toast } from "sonner";
-import { CommandMenu } from "@/components/CommandMenu";
 
 export function Layout({ children }: { children: ReactNode }) {
   const [showChatDialog, setShowChatDialog] = useState(false);
@@ -41,8 +40,6 @@ export function Layout({ children }: { children: ReactNode }) {
       >
         <ChatInterface />
       </DialogProvider>
-      
-      <CommandMenu />
       
       <div className="min-h-screen flex flex-col w-full bg-zinc-900 text-white">
         <Toolbar />
