@@ -1,13 +1,23 @@
-
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { Character, Scene, Event, Note, ChatMessage, NovelProject } from "@/types/novel";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
+import { Book, NovelProject } from "@/types/novel";
+
+const defaultProject: NovelProject = {
+  books: [],
+  currentBookId: null,
+  chatHistory: []
+};
+
+const NovelContext = createContext<NovelContextType | undefined>(undefined);
 
 interface NovelContextType {
   project: NovelProject;
+  currentBook: Book | null;
   apiKey: string;
   setApiKey: (key: string) => void;
+  addBook: (book: Omit<Book, "id">) => void;
+  switchBook: (id: string) => void;
   addCharacter: (character: Omit<Character, "id">) => void;
   updateCharacter: (id: string, character: Partial<Character>) => void;
   deleteCharacter: (id: string) => void;
@@ -30,29 +40,38 @@ interface NovelContextType {
   loadProject: (project: NovelProject) => void;
 }
 
-const defaultProject: NovelProject = {
-  characters: [],
-  scenes: [],
-  events: [],
-  notes: [],
-  chatHistory: []
-};
-
-const NovelContext = createContext<NovelContextType | undefined>(undefined);
-
 export function NovelProvider({ children }: { children: ReactNode }) {
   const [project, setProject] = useState<NovelProject>(() => {
     const savedProject = localStorage.getItem("novelProject");
     return savedProject ? JSON.parse(savedProject) : defaultProject;
   });
-  const [apiKey, setApiKey] = useState<string>(() => {
+
+  const [apiKey, setApiKey] = useState(() => {
     const savedKey = localStorage.getItem("openaiApiKey");
     return savedKey || "";
   });
 
-  useEffect(() => {
-    localStorage.setItem("openaiApiKey", apiKey);
-  }, [apiKey]);
+  const currentBook = project.currentBookId 
+    ? project.books.find(book => book.id === project.currentBookId) || null
+    : null;
+
+  const addBook = (book: Omit<Book, "id">) => {
+    const newBook = { ...book, id: uuidv4() };
+    setProject(prev => ({
+      ...prev,
+      books: [...prev.books, newBook],
+      currentBookId: newBook.id
+    }));
+    toast.success("New book created");
+  };
+
+  const switchBook = (id: string) => {
+    setProject(prev => ({
+      ...prev,
+      currentBookId: id
+    }));
+    toast.success("Switched to different book");
+  };
 
   const saveProject = () => {
     localStorage.setItem("novelProject", JSON.stringify(project));
@@ -198,7 +217,10 @@ export function NovelProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Save project to localStorage whenever it changes
+    localStorage.setItem("openaiApiKey", apiKey);
+  }, [apiKey]);
+
+  useEffect(() => {
     localStorage.setItem("novelProject", JSON.stringify(project));
   }, [project]);
 
@@ -206,8 +228,11 @@ export function NovelProvider({ children }: { children: ReactNode }) {
     <NovelContext.Provider
       value={{
         project,
+        currentBook,
         apiKey,
         setApiKey,
+        addBook,
+        switchBook,
         addCharacter,
         updateCharacter,
         deleteCharacter,

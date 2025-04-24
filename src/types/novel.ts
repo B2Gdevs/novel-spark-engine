@@ -1,4 +1,3 @@
-
 export interface Character {
   id: string;
   name: string;
@@ -53,10 +52,23 @@ export interface ChatMessage {
   timestamp: number;
 }
 
-export interface NovelProject {
+export interface Book {
+  id: string;
+  title: string;
+  description: string;
   characters: Character[];
   scenes: Scene[];
   events: Event[];
   notes: Note[];
+  references?: {
+    characters?: string[]; // IDs of characters from other books
+    scenes?: string[]; // IDs of scenes from other books
+    events?: string[]; // IDs of events from other books
+  };
+}
+
+export interface NovelProject {
+  books: Book[];
+  currentBookId: string | null;
   chatHistory: ChatMessage[];
 }
