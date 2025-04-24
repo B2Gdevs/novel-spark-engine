@@ -9,11 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 export function EventsPage() {
-  const { project, deleteEvent } = useNovel();
+  const { currentBook, deleteEvent } = useNovel();
   const [searchTerm, setSearchTerm] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const filteredEvents = project.events.filter(
+  const events = currentBook?.events || [];
+
+  const filteredEvents = events.filter(
     (event) =>
       event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||

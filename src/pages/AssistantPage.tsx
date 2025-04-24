@@ -12,12 +12,17 @@ import { Input } from "@/components/ui/input";
 import { MessageSquare } from "lucide-react";
 
 export function AssistantPage() {
-  const { project, addChatMessage, clearChatHistory, apiKey, setApiKey } = useNovel();
+  const { project, addChatMessage, clearChatHistory, apiKey, setApiKey, currentBook } = useNovel();
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [keyInput, setKeyInput] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const characterCount = currentBook?.characters.length || 0;
+  const sceneCount = currentBook?.scenes.length || 0;
+  const eventCount = currentBook?.events.length || 0;
+  const noteCount = currentBook?.notes.length || 0;
 
   // Show API key dialog if not set
   useEffect(() => {
@@ -57,10 +62,10 @@ export function AssistantPage() {
         If a user mentions an entity with @ symbol (like @character/Kael), they are referring to a specific element in their story.
         
         The user currently has:
-        - ${project.characters.length} characters
-        - ${project.scenes.length} scenes
-        - ${project.events.length} events
-        - ${project.notes.length} notes
+        - ${characterCount} characters
+        - ${sceneCount} scenes
+        - ${eventCount} events
+        - ${noteCount} notes
       `;
       
       const response = await processNovelPrompt(message, project, systemInstructions);

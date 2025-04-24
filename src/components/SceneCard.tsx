@@ -12,11 +12,11 @@ interface SceneCardProps {
 }
 
 export function SceneCard({ scene, onDelete }: SceneCardProps) {
-  const { project } = useNovel();
+  const { currentBook } = useNovel();
   
   // Get character names from IDs
   const characterNames = scene.characters.map(id => {
-    const character = project.characters.find(char => char.id === id);
+    const character = currentBook?.characters.find(char => char.id === id);
     return character ? character.name : "Unknown";
   });
 

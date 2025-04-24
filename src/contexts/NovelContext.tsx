@@ -1,7 +1,8 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
-import { Book, NovelProject } from "@/types/novel";
+import { Book, NovelProject, Character, Scene, Event, Note, ChatMessage } from "@/types/novel";
 
 const defaultProject: NovelProject = {
   books: [],
@@ -85,115 +86,287 @@ export function NovelProvider({ children }: { children: ReactNode }) {
   };
 
   const addCharacter = (character: Omit<Character, "id">) => {
+    if (!currentBook) return;
+    
     const newCharacter = { ...character, id: uuidv4() };
-    setProject((prev) => ({
-      ...prev,
-      characters: [...prev.characters, newCharacter]
-    }));
+    setProject((prev) => {
+      const updatedBooks = prev.books.map(book => {
+        if (book.id === prev.currentBookId) {
+          return {
+            ...book,
+            characters: [...book.characters, newCharacter]
+          };
+        }
+        return book;
+      });
+      
+      return {
+        ...prev,
+        books: updatedBooks
+      };
+    });
   };
 
   const updateCharacter = (id: string, character: Partial<Character>) => {
-    setProject((prev) => ({
-      ...prev,
-      characters: prev.characters.map((c) => 
-        c.id === id ? { ...c, ...character } : c
-      )
-    }));
+    if (!currentBook) return;
+    
+    setProject((prev) => {
+      const updatedBooks = prev.books.map(book => {
+        if (book.id === prev.currentBookId) {
+          return {
+            ...book,
+            characters: book.characters.map((c) => 
+              c.id === id ? { ...c, ...character } : c
+            )
+          };
+        }
+        return book;
+      });
+      
+      return {
+        ...prev,
+        books: updatedBooks
+      };
+    });
   };
 
   const deleteCharacter = (id: string) => {
-    setProject((prev) => ({
-      ...prev,
-      characters: prev.characters.filter((c) => c.id !== id)
-    }));
+    if (!currentBook) return;
+    
+    setProject((prev) => {
+      const updatedBooks = prev.books.map(book => {
+        if (book.id === prev.currentBookId) {
+          return {
+            ...book,
+            characters: book.characters.filter((c) => c.id !== id)
+          };
+        }
+        return book;
+      });
+      
+      return {
+        ...prev,
+        books: updatedBooks
+      };
+    });
   };
 
-  const getCharacter = (id: string) => {
-    return project.characters.find((c) => c.id === id);
+  const getCharacter = (id: string): Character | undefined => {
+    if (!currentBook) return undefined;
+    return currentBook.characters.find((c) => c.id === id);
   };
 
   const addScene = (scene: Omit<Scene, "id">) => {
+    if (!currentBook) return;
+    
     const newScene = { ...scene, id: uuidv4() };
-    setProject((prev) => ({
-      ...prev,
-      scenes: [...prev.scenes, newScene]
-    }));
+    setProject((prev) => {
+      const updatedBooks = prev.books.map(book => {
+        if (book.id === prev.currentBookId) {
+          return {
+            ...book,
+            scenes: [...book.scenes, newScene]
+          };
+        }
+        return book;
+      });
+      
+      return {
+        ...prev,
+        books: updatedBooks
+      };
+    });
   };
 
   const updateScene = (id: string, scene: Partial<Scene>) => {
-    setProject((prev) => ({
-      ...prev,
-      scenes: prev.scenes.map((s) => 
-        s.id === id ? { ...s, ...scene } : s
-      )
-    }));
+    if (!currentBook) return;
+    
+    setProject((prev) => {
+      const updatedBooks = prev.books.map(book => {
+        if (book.id === prev.currentBookId) {
+          return {
+            ...book,
+            scenes: book.scenes.map((s) => 
+              s.id === id ? { ...s, ...scene } : s
+            )
+          };
+        }
+        return book;
+      });
+      
+      return {
+        ...prev,
+        books: updatedBooks
+      };
+    });
   };
 
   const deleteScene = (id: string) => {
-    setProject((prev) => ({
-      ...prev,
-      scenes: prev.scenes.filter((s) => s.id !== id)
-    }));
+    if (!currentBook) return;
+    
+    setProject((prev) => {
+      const updatedBooks = prev.books.map(book => {
+        if (book.id === prev.currentBookId) {
+          return {
+            ...book,
+            scenes: book.scenes.filter((s) => s.id !== id)
+          };
+        }
+        return book;
+      });
+      
+      return {
+        ...prev,
+        books: updatedBooks
+      };
+    });
   };
 
-  const getScene = (id: string) => {
-    return project.scenes.find((s) => s.id === id);
+  const getScene = (id: string): Scene | undefined => {
+    if (!currentBook) return undefined;
+    return currentBook.scenes.find((s) => s.id === id);
   };
 
   const addEvent = (event: Omit<Event, "id">) => {
+    if (!currentBook) return;
+    
     const newEvent = { ...event, id: uuidv4() };
-    setProject((prev) => ({
-      ...prev,
-      events: [...prev.events, newEvent]
-    }));
+    setProject((prev) => {
+      const updatedBooks = prev.books.map(book => {
+        if (book.id === prev.currentBookId) {
+          return {
+            ...book,
+            events: [...book.events, newEvent]
+          };
+        }
+        return book;
+      });
+      
+      return {
+        ...prev,
+        books: updatedBooks
+      };
+    });
   };
 
   const updateEvent = (id: string, event: Partial<Event>) => {
-    setProject((prev) => ({
-      ...prev,
-      events: prev.events.map((e) => 
-        e.id === id ? { ...e, ...event } : e
-      )
-    }));
+    if (!currentBook) return;
+    
+    setProject((prev) => {
+      const updatedBooks = prev.books.map(book => {
+        if (book.id === prev.currentBookId) {
+          return {
+            ...book,
+            events: book.events.map((e) => 
+              e.id === id ? { ...e, ...event } : e
+            )
+          };
+        }
+        return book;
+      });
+      
+      return {
+        ...prev,
+        books: updatedBooks
+      };
+    });
   };
 
   const deleteEvent = (id: string) => {
-    setProject((prev) => ({
-      ...prev,
-      events: prev.events.filter((e) => e.id !== id)
-    }));
+    if (!currentBook) return;
+    
+    setProject((prev) => {
+      const updatedBooks = prev.books.map(book => {
+        if (book.id === prev.currentBookId) {
+          return {
+            ...book,
+            events: book.events.filter((e) => e.id !== id)
+          };
+        }
+        return book;
+      });
+      
+      return {
+        ...prev,
+        books: updatedBooks
+      };
+    });
   };
 
-  const getEvent = (id: string) => {
-    return project.events.find((e) => e.id === id);
+  const getEvent = (id: string): Event | undefined => {
+    if (!currentBook) return undefined;
+    return currentBook.events.find((e) => e.id === id);
   };
 
   const addNote = (note: Omit<Note, "id">) => {
+    if (!currentBook) return;
+    
     const newNote = { ...note, id: uuidv4() };
-    setProject((prev) => ({
-      ...prev,
-      notes: [...prev.notes, newNote]
-    }));
+    setProject((prev) => {
+      const updatedBooks = prev.books.map(book => {
+        if (book.id === prev.currentBookId) {
+          return {
+            ...book,
+            notes: [...book.notes, newNote]
+          };
+        }
+        return book;
+      });
+      
+      return {
+        ...prev,
+        books: updatedBooks
+      };
+    });
   };
 
   const updateNote = (id: string, note: Partial<Note>) => {
-    setProject((prev) => ({
-      ...prev,
-      notes: prev.notes.map((n) => 
-        n.id === id ? { ...n, ...note } : n
-      )
-    }));
+    if (!currentBook) return;
+    
+    setProject((prev) => {
+      const updatedBooks = prev.books.map(book => {
+        if (book.id === prev.currentBookId) {
+          return {
+            ...book,
+            notes: book.notes.map((n) => 
+              n.id === id ? { ...n, ...note } : n
+            )
+          };
+        }
+        return book;
+      });
+      
+      return {
+        ...prev,
+        books: updatedBooks
+      };
+    });
   };
 
   const deleteNote = (id: string) => {
-    setProject((prev) => ({
-      ...prev,
-      notes: prev.notes.filter((n) => n.id !== id)
-    }));
+    if (!currentBook) return;
+    
+    setProject((prev) => {
+      const updatedBooks = prev.books.map(book => {
+        if (book.id === prev.currentBookId) {
+          return {
+            ...book,
+            notes: book.notes.filter((n) => n.id !== id)
+          };
+        }
+        return book;
+      });
+      
+      return {
+        ...prev,
+        books: updatedBooks
+      };
+    });
   };
 
-  const getNote = (id: string) => {
-    return project.notes.find((n) => n.id === id);
+  const getNote = (id: string): Note | undefined => {
+    if (!currentBook) return undefined;
+    return currentBook.notes.find((n) => n.id === id);
   };
 
   const addChatMessage = (message: Omit<ChatMessage, "id" | "timestamp">) => {

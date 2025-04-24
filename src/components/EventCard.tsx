@@ -12,11 +12,11 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, onDelete }: EventCardProps) {
-  const { project } = useNovel();
+  const { currentBook } = useNovel();
   
   // Get character names from IDs
   const characterNames = event.characters.map(id => {
-    const character = project.characters.find(char => char.id === id);
+    const character = currentBook?.characters.find(char => char.id === id);
     return character ? character.name : "Unknown";
   });
 

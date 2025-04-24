@@ -6,14 +6,16 @@ import { useNovel } from "@/contexts/NovelContext";
 import { SceneCard } from "@/components/SceneCard";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 export function ScenesPage() {
-  const { project, deleteScene } = useNovel();
+  const { currentBook, deleteScene } = useNovel();
   const [searchTerm, setSearchTerm] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const filteredScenes = project.scenes.filter(
+  const scenes = currentBook?.scenes || [];
+
+  const filteredScenes = scenes.filter(
     (scene) =>
       scene.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       scene.content.toLowerCase().includes(searchTerm.toLowerCase()) ||

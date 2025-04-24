@@ -4,7 +4,12 @@ import { Link } from "react-router-dom";
 import { useNovel } from "@/contexts/NovelContext";
 
 export function HomePage() {
-  const { project } = useNovel();
+  const { project, currentBook } = useNovel();
+
+  const characterCount = currentBook?.characters.length || 0;
+  const sceneCount = currentBook?.scenes.length || 0;
+  const eventCount = currentBook?.events.length || 0;
+  const noteCount = currentBook?.notes.length || 0;
 
   return (
     <div className="space-y-8">
@@ -25,19 +30,19 @@ export function HomePage() {
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="text-3xl font-bold text-novel-purple">{project.characters.length}</div>
+              <div className="text-3xl font-bold text-novel-purple">{characterCount}</div>
               <div className="text-sm text-gray-500">Characters</div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="text-3xl font-bold text-novel-orange">{project.scenes.length}</div>
+              <div className="text-3xl font-bold text-novel-orange">{sceneCount}</div>
               <div className="text-sm text-gray-500">Scenes</div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="text-3xl font-bold text-blue-500">{project.events.length}</div>
+              <div className="text-3xl font-bold text-blue-500">{eventCount}</div>
               <div className="text-sm text-gray-500">Events</div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="text-3xl font-bold text-green-500">{project.notes.length}</div>
+              <div className="text-3xl font-bold text-green-500">{noteCount}</div>
               <div className="text-sm text-gray-500">Notes</div>
             </div>
           </div>
