@@ -6,13 +6,11 @@ import { ReactNode, useEffect, useState } from "react";
 import { DialogProvider } from "@/components/DialogProvider";
 import { ChatInterface } from "@/components/ChatInterface";
 import { toast } from "sonner";
-import { useNovel } from "@/contexts/NovelContext";
 import { CommandMenu } from "@/components/CommandMenu";
 
 export function Layout({ children }: { children: ReactNode }) {
   const [showChatDialog, setShowChatDialog] = useState(false);
-  const { addMockData } = useNovel();
-
+  
   useEffect(() => {
     // Add keyboard shortcut for chat (Cmd+K / Ctrl+K)
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -24,9 +22,6 @@ export function Layout({ children }: { children: ReactNode }) {
 
     window.addEventListener('keydown', handleKeyDown);
     
-    // Add mock data on first load
-    addMockData();
-    
     // Show toast about keyboard shortcut
     toast("Press Cmd+K or Ctrl+K to open the AI chat", {
       duration: 5000,
@@ -35,7 +30,7 @@ export function Layout({ children }: { children: ReactNode }) {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [addMockData]);
+  }, []);
 
   return (
     <SidebarProvider>

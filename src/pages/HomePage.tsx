@@ -1,5 +1,6 @@
 
 import { ChatInterface } from "@/components/ChatInterface";
+import { NovelProvider } from "@/contexts/NovelContext";
 
 export function HomePage() {
   return (

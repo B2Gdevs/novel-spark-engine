@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
@@ -45,7 +46,16 @@ export function NovelProvider({ children }: { children: ReactNode }) {
   const [project, setProject] = useState<NovelProject>(() => {
     try {
       const savedProject = localStorage.getItem("novelProject");
-      return savedProject ? JSON.parse(savedProject) : defaultProject;
+      if (savedProject) {
+        const parsedProject = JSON.parse(savedProject);
+        // Ensure the structure is valid
+        return {
+          books: Array.isArray(parsedProject.books) ? parsedProject.books : [],
+          currentBookId: parsedProject.currentBookId || null,
+          chatHistory: Array.isArray(parsedProject.chatHistory) ? parsedProject.chatHistory : []
+        };
+      }
+      return defaultProject;
     } catch (e) {
       console.error("Error loading project from localStorage:", e);
       return defaultProject;
@@ -67,7 +77,14 @@ export function NovelProvider({ children }: { children: ReactNode }) {
     : null;
 
   const addBook = (book: Omit<Book, "id">) => {
-    const newBook = { ...book, id: uuidv4() };
+    const newBook = { 
+      ...book, 
+      id: uuidv4(),
+      characters: Array.isArray(book.characters) ? book.characters : [],
+      scenes: Array.isArray(book.scenes) ? book.scenes : [],
+      events: Array.isArray(book.events) ? book.events : [],
+      notes: Array.isArray(book.notes) ? book.notes : []
+    };
     setProject(prev => ({
       ...prev,
       books: [...prev.books, newBook],
@@ -399,9 +416,16 @@ export function NovelProvider({ children }: { children: ReactNode }) {
     toast.success("Chat history cleared");
   };
 
+  // FIXED: Added safe checks for properties that could be undefined
   const addMockData = useCallback(() => {
     setProject(prev => {
-      if (prev.books.length === 0 || (prev.books[0]?.characters && prev.books[0].characters.length === 0)) {
+      // Ensure prev.books is an array before proceeding
+      const prevBooks = Array.isArray(prev.books) ? prev.books : [];
+      
+      // Check if we need to add mock data (if books array is empty or first book has no characters)
+      if (prevBooks.length === 0 || 
+          (prevBooks[0] && (!prevBooks[0].characters || prevBooks[0].characters.length === 0))) {
+        
         const mockCharacters = [
           {
             id: uuidv4(),
@@ -472,9 +496,9 @@ export function NovelProvider({ children }: { children: ReactNode }) {
           }
         ];
         
-        let updatedBooks = [...prev.books];
+        let updatedBooks = [...prevBooks];
         if (updatedBooks.length === 0) {
-          updatedBooks.push({
+          const newBook = {
             id: uuidv4(),
             title: "The Dark Mage's Redemption",
             description: "A tale of magic, betrayal, and redemption",
@@ -484,14 +508,15 @@ export function NovelProvider({ children }: { children: ReactNode }) {
             notes: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
-          });
+          };
+          updatedBooks.push(newBook);
         } else {
           const book = updatedBooks[0];
           updatedBooks[0] = {
             ...book,
-            characters: [...(book.characters || []), ...mockCharacters],
-            scenes: [...(book.scenes || []), ...mockScenes],
-            events: [...(book.events || []), ...mockEvents]
+            characters: [...(Array.isArray(book.characters) ? book.characters : []), ...mockCharacters],
+            scenes: [...(Array.isArray(book.scenes) ? book.scenes : []), ...mockScenes],
+            events: [...(Array.isArray(book.events) ? book.events : []), ...mockEvents]
           };
         }
         

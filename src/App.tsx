@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { NovelProvider } from "@/contexts/NovelContext";
-import { Layout } from "@/components/Layout";
 
 // Pages
 import { HomePage } from "./pages/HomePage";
@@ -17,6 +16,7 @@ import { EventsPage } from "./pages/EventsPage";
 import { EventForm } from "./pages/EventForm";
 import { AssistantPage } from "./pages/AssistantPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { Layout } from "./components/Layout";
 
 const queryClient = new QueryClient();
 
