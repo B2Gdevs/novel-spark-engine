@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNovel } from "@/contexts/NovelContext";
-import { toast } from "sonner";
+import { Send } from "lucide-react";
 
 export function ChatInterface() {
   const { project, addChatMessage } = useNovel();
@@ -34,34 +34,45 @@ export function ChatInterface() {
   return (
     <div className="flex flex-col h-full">
       <div className="border-b p-4">
-        <h2 className="font-semibold">AI Assistant</h2>
+        <h2 className="font-semibold">Novel Assistant</h2>
       </div>
       
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-6">
           {project.chatHistory.map((msg) => (
             <div
               key={msg.id}
-              className={`p-3 rounded-lg ${
-                msg.role === "user" 
-                  ? "bg-primary/10 ml-4" 
-                  : "bg-muted mr-4"
-              }`}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              {msg.content}
+              <div
+                className={`rounded-lg p-4 max-w-[80%] ${
+                  msg.role === "user" 
+                    ? "bg-primary text-primary-foreground ml-4" 
+                    : "bg-muted"
+                }`}
+              >
+                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+              </div>
             </div>
           ))}
         </div>
       </ScrollArea>
 
       <form onSubmit={handleSubmit} className="border-t p-4">
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Ask anything..."
+            placeholder="Message Novel Assistant..."
+            className="flex-1"
           />
-          <Button type="submit">Send</Button>
+          <Button 
+            type="submit" 
+            size="icon"
+            disabled={!message.trim()}
+          >
+            <Send className="h-4 w-4" />
+          </Button>
         </div>
       </form>
     </div>
