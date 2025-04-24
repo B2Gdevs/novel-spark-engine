@@ -25,14 +25,14 @@ import {
 } from "@/components/ui/navigation-menu";
 
 export function AppSidebar() {
-  const { project } = useNovel();
+  const { project, currentBook } = useNovel();
 
   const bookElements = [
     {
       title: "Characters",
       url: "/characters",
       icon: User,
-      count: project.characters.length,
+      count: currentBook?.characters.length || 0,
       color: "text-purple-500",
       bgColor: "bg-purple-100 dark:bg-purple-900/30",
     },
@@ -40,7 +40,7 @@ export function AppSidebar() {
       title: "Scenes",
       url: "/scenes",
       icon: Calendar,
-      count: project.scenes.length,
+      count: currentBook?.scenes.length || 0,
       color: "text-orange-500",
       bgColor: "bg-orange-100 dark:bg-orange-900/30",
     },
@@ -48,7 +48,7 @@ export function AppSidebar() {
       title: "Events",
       url: "/events",
       icon: List,
-      count: project.events.length,
+      count: currentBook?.events.length || 0,
       color: "text-blue-500", 
       bgColor: "bg-blue-100 dark:bg-blue-900/30",
     },

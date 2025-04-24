@@ -1,5 +1,5 @@
 
-import { Robot, Settings, BookOpen } from "lucide-react";
+import { Bot, Settings, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { ChatInterface } from "@/components/ChatInterface";
@@ -16,7 +16,7 @@ export function Toolbar() {
         <Drawer>
           <DrawerTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
-              <Robot className="h-5 w-5 text-novel-purple" />
+              <Bot className="h-5 w-5 text-novel-purple" />
               <span className="sr-only">AI Assistant</span>
             </Button>
           </DrawerTrigger>
