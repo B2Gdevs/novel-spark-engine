@@ -1,10 +1,10 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNovel } from "@/contexts/NovelContext";
 import { Send } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function ChatInterface() {
   const { project, addChatMessage } = useNovel();
@@ -21,7 +21,6 @@ export function ChatInterface() {
     e.preventDefault();
     if (!message.trim() || loading) return;
 
-    // Add user message
     addChatMessage({
       role: "user",
       content: message
@@ -30,7 +29,6 @@ export function ChatInterface() {
     setMessage("");
     setLoading(true);
     
-    // Simulate AI response
     setTimeout(() => {
       const responses = [
         "I've analyzed your character. Try giving them a more complex motivation that contradicts their stated goals.",
