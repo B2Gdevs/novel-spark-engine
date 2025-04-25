@@ -1,8 +1,8 @@
 
-import { BookOpen, User, Calendar, List } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { User, Calendar, List } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { BookOpen } from "lucide-react";
 
 export function Toolbar() {
   const location = useLocation();
@@ -26,40 +26,43 @@ export function Toolbar() {
   ];
 
   return (
-    <div className="h-12 bg-zinc-900 flex items-center justify-between px-4 z-10">
+    <div className="h-12 bg-zinc-900 border-b border-zinc-800/50 flex items-center justify-between px-4 z-10">
       <div className="flex items-center">
         <BookOpen className="mr-2 h-5 w-5 text-purple-400" />
         <span className="font-bold text-lg text-white">NovelSpark</span>
       </div>
       
-      <div className="flex items-center space-x-1">
+      <div className="flex items-center gap-6">
         {navItems.map((item) => (
-          <Button 
+          <Link 
             key={item.path}
-            variant="ghost" 
-            size="sm"
-            asChild
-            className={cn(
-              "rounded-md bg-zinc-800/80 text-zinc-300 hover:text-white hover:bg-zinc-700",
-              location.pathname === item.path && "bg-zinc-700 text-white"
-            )}
+            to={item.path} 
+            className="group relative flex flex-col items-center"
           >
-            <Link to={item.path} className="flex items-center gap-2">
-              <item.icon className="h-4 w-4" />
-              <span>{item.label}</span>
-            </Link>
-          </Button>
+            <item.icon 
+              className={cn(
+                "h-5 w-5 transition-colors duration-200",
+                location.pathname === item.path 
+                  ? "text-white" 
+                  : "text-zinc-400 group-hover:text-white"
+              )}
+            />
+            <span className={cn(
+              "absolute -bottom-4 text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+              location.pathname === item.path ? "text-white" : "text-zinc-400"
+            )}>
+              {item.label}
+            </span>
+          </Link>
         ))}
       </div>
       
       <div className="flex items-center">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="text-xs bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700"
+        <button 
+          className="text-xs px-3 py-1.5 rounded-md bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors"
         >
           Cmd+K
-        </Button>
+        </button>
       </div>
     </div>
   );
