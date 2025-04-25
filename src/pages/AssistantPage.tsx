@@ -5,11 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useNovel } from "@/contexts/NovelContext";
 import { processNovelPrompt } from "@/services/openai-service";
 import { toast } from "sonner";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, SendIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function AssistantPage() {
   const { project, addChatMessage, clearChatHistory, apiKey, setApiKey, currentBook } = useNovel();
@@ -18,11 +17,6 @@ export function AssistantPage() {
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [keyInput, setKeyInput] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
-
-  const characterCount = currentBook?.characters.length || 0;
-  const sceneCount = currentBook?.scenes.length || 0;
-  const eventCount = currentBook?.events.length || 0;
-  const noteCount = currentBook?.notes.length || 0;
 
   // Show API key dialog if not set
   useEffect(() => {
@@ -62,10 +56,10 @@ export function AssistantPage() {
         If a user mentions an entity with @ symbol (like @character/Kael), they are referring to a specific element in their story.
         
         The user currently has:
-        - ${characterCount} characters
-        - ${sceneCount} scenes
-        - ${eventCount} events
-        - ${noteCount} notes
+        - ${currentBook?.characters.length || 0} characters
+        - ${currentBook?.scenes.length || 0} scenes
+        - ${currentBook?.events.length || 0} events
+        - ${currentBook?.notes.length || 0} notes
       `;
       
       const response = await processNovelPrompt(message, project, systemInstructions);
@@ -102,121 +96,128 @@ export function AssistantPage() {
   };
 
   return (
-    <div className="space-y-4 h-[calc(100vh-160px)] flex flex-col">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-novel-purple">AI Assistant</h1>
-          <p className="text-muted-foreground">Chat with an AI assistant to help develop your novel</p>
-        </div>
-        <div className="space-x-2">
+    <div className="flex flex-col h-[calc(100vh-56px)] bg-white text-gray-800">
+      {/* Header */}
+      <div className="border-b border-gray-200 p-3 flex justify-between items-center">
+        <h1 className="text-xl font-medium">AI Assistant</h1>
+        <div className="flex gap-2">
           <Button 
-            variant="outline" 
+            variant="outline"
+            size="sm"
             onClick={() => setShowApiKeyDialog(true)}
+            className="text-sm"
           >
-            Configure API Key
+            API Key
           </Button>
           <Button 
-            variant="outline" 
+            variant="outline"
+            size="sm"
             onClick={clearChatHistory}
-            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+            className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50"
           >
-            Clear Chat
+            Clear
           </Button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-50 rounded-lg shadow-inner">
+      {/* Chat Area */}
+      <div className="flex-1 overflow-y-auto p-4 bg-white">
         {project.chatHistory.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center space-y-4 text-gray-500">
-            <div className="h-20 w-20 bg-novel-purple/10 flex items-center justify-center rounded-full">
-              <MessageSquare className="h-10 w-10 text-novel-purple" />
+            <div className="h-12 w-12 bg-gray-100 flex items-center justify-center rounded-full">
+              <MessageSquare className="h-6 w-6 text-gray-500" />
             </div>
             <div>
-              <h2 className="text-xl font-medium mb-2">No messages yet</h2>
-              <p className="max-w-md">
-                Start a conversation with the AI assistant to help develop characters, scenes, and plot points for your novel.
+              <h2 className="text-lg font-medium mb-2">How can I help with your story?</h2>
+              <p className="max-w-md text-sm">
+                Ask for feedback on your characters, plot ideas, or help developing your world.
               </p>
             </div>
-            <div className="max-w-md mt-4 p-4 bg-white rounded-lg border border-gray-200">
-              <h3 className="text-lg font-medium mb-2">Try asking:</h3>
-              <ul className="space-y-2 text-left">
-                <li>• "Create a new character named Kael, a cocky pilot who's secretly working for the enemy."</li>
-                <li>• "What would be a good flaw for my protagonist to make them more interesting?"</li>
-                <li>• "Suggest a plot twist for the middle of my story."</li>
-              </ul>
+            <div className="max-w-md grid grid-cols-2 gap-2 mt-4 text-sm">
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors cursor-pointer">
+                "Create a new villain character"
+              </div>
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors cursor-pointer">
+                "Help me develop my protagonist's arc"
+              </div>
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors cursor-pointer">
+                "Suggest plot twists for my story"
+              </div>
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors cursor-pointer">
+                "How do I write better dialogue?"
+              </div>
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="max-w-3xl mx-auto space-y-6">
             {project.chatHistory.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                className={cn(
+                  "flex animate-fade-in-up",
+                  msg.role === "user" ? "justify-end" : "justify-start"
+                )}
               >
-                <Card
-                  className={`max-w-3xl ${
-                    msg.role === "user"
-                      ? "bg-novel-purple text-white"
-                      : "bg-white"
-                  }`}
+                <div
+                  className={cn(
+                    "max-w-[80%] px-4 py-3 rounded-2xl",
+                    msg.role === "user" 
+                      ? "bg-novel-purple text-white rounded-br-none" 
+                      : "bg-gray-100 text-gray-800 rounded-bl-none"
+                  )}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <Badge
-                        variant={msg.role === "user" ? "secondary" : "outline"}
-                        className={
-                          msg.role === "user"
-                            ? "bg-white/20 text-white"
-                            : "bg-novel-purple/10 text-novel-purple"
-                        }
-                      >
-                        {msg.role === "user" ? "You" : "AI Assistant"}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(msg.timestamp).toLocaleTimeString()}
-                      </span>
-                    </div>
-                    <div 
-                      className={`prose prose-sm max-w-none ${
-                        msg.role === "user" ? "prose-invert" : "prose-custom"
-                      }`}
-                    >
-                      {msg.content.split("\n").map((line, i) => (
-                        <p key={i} className="mb-2">
-                          {line}
-                        </p>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                  <div className="prose prose-sm max-w-none">
+                    {msg.content.split('\n').map((paragraph, idx) => (
+                      <p key={idx} className={msg.role === "user" ? "mb-2 text-white" : "mb-2"}>
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+                </div>
               </div>
             ))}
             <div ref={chatEndRef} />
+            {loading && (
+              <div className="flex items-center gap-1 px-4 py-3 bg-gray-100 rounded-2xl rounded-bl-none max-w-[80%] animate-pulse">
+                <div className="w-2 h-2 rounded-full bg-gray-400" />
+                <div className="w-2 h-2 rounded-full bg-gray-400 animation-delay-200" />
+                <div className="w-2 h-2 rounded-full bg-gray-400 animation-delay-400" />
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      <div className="flex space-x-2">
-        <Textarea
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyPress}
-          placeholder="Type a message to the AI assistant..."
-          className="flex-1 min-h-[100px] resize-none"
-          disabled={loading || !apiKey}
-        />
-        <Button
-          onClick={handleSendMessage}
-          className="self-end bg-novel-purple hover:bg-novel-purple/90"
-          disabled={loading || !message.trim() || !apiKey}
-        >
-          {loading ? "Thinking..." : "Send"}
-        </Button>
+      {/* Input Area */}
+      <div className="border-t border-gray-200 p-4">
+        <div className="max-w-3xl mx-auto relative">
+          <Textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder="Message AI assistant..."
+            className="min-h-[60px] max-h-[200px] resize-none pr-12 rounded-xl border-gray-300 focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
+            disabled={loading || !apiKey}
+          />
+          <Button
+            size="icon"
+            onClick={handleSendMessage}
+            disabled={loading || !message.trim() || !apiKey}
+            className={cn(
+              "absolute right-3 bottom-3 h-8 w-8 rounded-full",
+              message.trim() 
+                ? "bg-novel-purple hover:bg-novel-purple/90" 
+                : "bg-gray-200 text-gray-500 cursor-not-allowed"
+            )}
+          >
+            <SendIcon size={16} className={message.trim() ? "text-white" : "text-gray-500"} />
+          </Button>
+        </div>
       </div>
 
       {/* API Key Dialog */}
       <Dialog open={showApiKeyDialog} onOpenChange={setShowApiKeyDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Configure OpenAI API Key</DialogTitle>
             <DialogDescription>
@@ -224,7 +225,7 @@ export function AssistantPage() {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="apiKey">OpenAI API Key</Label>
               <Input
