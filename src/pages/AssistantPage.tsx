@@ -7,8 +7,9 @@ import { processNovelPrompt } from "@/services/openai-service";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, SendIcon } from "lucide-react";
+import { MessageSquare, SendIcon, CreditCard, User, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export function AssistantPage() {
   const { project, addChatMessage, clearChatHistory, apiKey, setApiKey, currentBook } = useNovel();
@@ -98,8 +99,7 @@ export function AssistantPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-56px)] bg-zinc-900 text-white">
       {/* Header */}
-      <div className="border-b border-zinc-800 p-3 flex justify-between items-center">
-        <h1 className="text-xl font-medium text-white">AI Assistant</h1>
+      <div className="border-b border-zinc-800 p-3 flex justify-end items-center">
         <div className="flex gap-2">
           <Button 
             variant="outline"

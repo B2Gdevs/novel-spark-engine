@@ -13,6 +13,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export function AppSidebar() {
   const [expanded, setExpanded] = useState(false);
@@ -71,34 +72,71 @@ export function AppSidebar() {
         
         <SidebarFooter>
           <div className="p-2 space-y-2">
-            <SidebarMenuButton
-              tooltip={expanded ? undefined : "Billing"}
-              className="flex items-center justify-start p-3 w-full text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-md transition-colors"
-            >
-              <CreditCard className="h-5 w-5" />
-              <span className={cn(
-                "ml-3 transition-all duration-200",
-                expanded ? "opacity-100" : "opacity-0"
-              )}>
-                Billing
-              </span>
-            </SidebarMenuButton>
+            <Popover>
+              <PopoverTrigger asChild>
+                <SidebarMenuButton
+                  tooltip={expanded ? undefined : "Billing"}
+                  className="flex items-center justify-start p-3 w-full text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-md transition-colors"
+                >
+                  <CreditCard className="h-5 w-5" />
+                  <span className={cn(
+                    "ml-3 transition-all duration-200",
+                    expanded ? "opacity-100" : "opacity-0"
+                  )}>
+                    Billing
+                  </span>
+                </SidebarMenuButton>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-4 bg-zinc-800 border-zinc-700">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-white">Billing Overview</h4>
+                  <p className="text-sm text-zinc-400">Manage your subscription and billing details.</p>
+                  <Button variant="outline" className="w-full mt-2 bg-zinc-700 hover:bg-zinc-600 text-white border-zinc-600">
+                    Manage Subscription
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
             
-            <SidebarMenuButton
-              tooltip={expanded ? undefined : "Profile"}
-              className="flex items-center justify-start p-3 w-full text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-md transition-colors"
-            >
-              <Avatar className="h-5 w-5">
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
-              </Avatar>
-              <span className={cn(
-                "ml-3 transition-all duration-200",
-                expanded ? "opacity-100" : "opacity-0"
-              )}>
-                Profile
-              </span>
-            </SidebarMenuButton>
+            <Popover>
+              <PopoverTrigger asChild>
+                <SidebarMenuButton
+                  tooltip={expanded ? undefined : "Profile"}
+                  className="flex items-center justify-start p-3 w-full text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-md transition-colors"
+                >
+                  <Avatar className="h-5 w-5">
+                    <AvatarImage src="https://github.com/shadcn.png" />
+                    <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                  </Avatar>
+                  <span className={cn(
+                    "ml-3 transition-all duration-200",
+                    expanded ? "opacity-100" : "opacity-0"
+                  )}>
+                    Profile
+                  </span>
+                </SidebarMenuButton>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-4 bg-zinc-800 border-zinc-700">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src="https://github.com/shadcn.png" />
+                      <AvatarFallback><User className="h-6 w-6" /></AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h4 className="font-medium text-white">John Doe</h4>
+                      <p className="text-sm text-zinc-400">john@example.com</p>
+                    </div>
+                  </div>
+                  <div className="pt-2">
+                    <Button variant="outline" className="w-full bg-zinc-700 hover:bg-zinc-600 text-white border-zinc-600">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Account Settings
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </SidebarFooter>
       </Sidebar>
