@@ -1,4 +1,3 @@
-
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Toolbar } from "@/components/Toolbar";
@@ -43,9 +42,9 @@ export function Layout({ children }: { children: ReactNode }) {
       
       <div className="min-h-screen flex flex-col w-full bg-zinc-900 text-white">
         <Toolbar />
-        <div className="flex flex-1 h-[calc(100vh-3rem)] overflow-hidden">
+        <div className="flex flex-1 h-[calc(100vh-4rem)] overflow-hidden">
           <AppSidebar />
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto pt-4 px-6">
             {children}
           </main>
         </div>

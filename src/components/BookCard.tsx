@@ -22,15 +22,7 @@ export function BookCard({ title, genre, description, icon }: BookCardProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-zinc-300 mb-6">{description}</p>
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-zinc-200">Quick Actions:</h3>
-          <ul className="space-y-2 text-sm text-zinc-400">
-            <li>• Create a new character</li>
-            <li>• Generate a chapter outline</li>
-            <li>• Resume writing last scene</li>
-          </ul>
-        </div>
+        <p className="text-zinc-300">{description}</p>
       </CardContent>
       <CardFooter>
         <Button className="w-full" variant="secondary">
@@ -40,3 +32,4 @@ export function BookCard({ title, genre, description, icon }: BookCardProps) {
     </Card>
   );
 }
+

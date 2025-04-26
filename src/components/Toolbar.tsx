@@ -16,7 +16,7 @@ export function Toolbar() {
           variant="ghost" 
           className="flex items-center gap-2 bg-zinc-900/50 hover:bg-zinc-800/50"
         >
-          <span className="text-lg">+</span>
+          <span>+</span>
           <span>New Book</span>
         </Button>
         <Button 
@@ -30,3 +30,4 @@ export function Toolbar() {
     </div>
   );
 }
+
