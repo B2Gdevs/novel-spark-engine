@@ -1,3 +1,4 @@
+
 import { Bot, CreditCard, Settings, User } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";  // Ensure this import is correct
 
 export function AppSidebar() {
   const [expanded, setExpanded] = useState(false);
@@ -92,7 +93,10 @@ export function AppSidebar() {
                 <div className="space-y-2">
                   <h4 className="font-medium text-white">Billing Overview</h4>
                   <p className="text-sm text-zinc-400">Manage your subscription and billing details.</p>
-                  <Button variant="outline" className="w-full mt-2 bg-zinc-700 hover:bg-zinc-600 text-white border-zinc-600">
+                  <Button 
+                    variant="outline" 
+                    className="w-full mt-2 bg-zinc-700 hover:bg-zinc-600 text-white border-zinc-600"
+                  >
                     Manage Subscription
                   </Button>
                 </div>
@@ -130,7 +134,10 @@ export function AppSidebar() {
                     </div>
                   </div>
                   <div className="pt-2">
-                    <Button variant="outline" className="w-full bg-zinc-700 hover:bg-zinc-600 text-white border-zinc-600">
+                    <Button 
+                      variant="outline" 
+                      className="w-full bg-zinc-700 hover:bg-zinc-600 text-white border-zinc-600"
+                    >
                       <Settings className="mr-2 h-4 w-4" />
                       Account Settings
                     </Button>
