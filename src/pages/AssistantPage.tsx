@@ -96,16 +96,16 @@ export function AssistantPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-56px)] bg-white text-gray-800">
+    <div className="flex flex-col h-[calc(100vh-56px)] bg-zinc-900 text-white">
       {/* Header */}
-      <div className="border-b border-gray-200 p-3 flex justify-between items-center">
-        <h1 className="text-xl font-medium">AI Assistant</h1>
+      <div className="border-b border-zinc-800 p-3 flex justify-between items-center">
+        <h1 className="text-xl font-medium text-white">AI Assistant</h1>
         <div className="flex gap-2">
           <Button 
             variant="outline"
             size="sm"
             onClick={() => setShowApiKeyDialog(true)}
-            className="text-sm"
+            className="text-sm text-zinc-300 hover:bg-zinc-800"
           >
             API Key
           </Button>
@@ -113,7 +113,7 @@ export function AssistantPage() {
             variant="outline"
             size="sm"
             onClick={clearChatHistory}
-            className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50"
+            className="text-sm text-red-500 hover:text-red-400 hover:bg-zinc-800"
           >
             Clear
           </Button>
@@ -121,36 +121,33 @@ export function AssistantPage() {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-4 bg-white">
+      <div className="flex-1 overflow-y-auto p-4 bg-zinc-900">
         {project.chatHistory.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center space-y-4 text-gray-500">
-            <div className="h-12 w-12 bg-gray-100 flex items-center justify-center rounded-full">
-              <MessageSquare className="h-6 w-6 text-gray-500" />
+          <div className="h-full flex flex-col items-center justify-center text-center space-y-4 text-zinc-500">
+            <div className="h-12 w-12 bg-zinc-800 flex items-center justify-center rounded-full">
+              <MessageSquare className="h-6 w-6 text-zinc-400" />
             </div>
             <div>
-              <h2 className="text-lg font-medium mb-2">How can I help with your story?</h2>
-              <p className="max-w-md text-sm">
+              <h2 className="text-lg font-medium mb-2 text-white">How can I help with your story?</h2>
+              <p className="max-w-md text-sm text-zinc-400">
                 Ask for feedback on your characters, plot ideas, or help developing your world.
               </p>
             </div>
             <div className="max-w-md grid grid-cols-2 gap-2 mt-4 text-sm">
-              <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors cursor-pointer">
-                "Create a new villain character"
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors cursor-pointer">
-                "Help me develop my protagonist's arc"
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors cursor-pointer">
-                "Suggest plot twists for my story"
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors cursor-pointer">
-                "How do I write better dialogue?"
-              </div>
+              {["Create a new villain character", "Help me develop my protagonist's arc", 
+                "Suggest plot twists for my story", "How do I write better dialogue?"].map((prompt, index) => (
+                <div 
+                  key={index} 
+                  className="p-3 bg-zinc-800 rounded-lg border border-zinc-700 hover:bg-zinc-700 transition-colors cursor-pointer text-zinc-300"
+                >
+                  {prompt}
+                </div>
+              ))}
             </div>
           </div>
         ) : (
           <div className="max-w-3xl mx-auto space-y-6">
-            {project.chatHistory.map((msg) => (
+            {project.chatHistory.map((msg, index) => (
               <div
                 key={msg.id}
                 className={cn(
@@ -162,13 +159,13 @@ export function AssistantPage() {
                   className={cn(
                     "max-w-[80%] px-4 py-3 rounded-2xl",
                     msg.role === "user" 
-                      ? "bg-novel-purple text-white rounded-br-none" 
-                      : "bg-gray-100 text-gray-800 rounded-bl-none"
+                      ? "bg-purple-800 text-white rounded-br-none" 
+                      : "bg-zinc-800 text-zinc-200 rounded-bl-none"
                   )}
                 >
                   <div className="prose prose-sm max-w-none">
                     {msg.content.split('\n').map((paragraph, idx) => (
-                      <p key={idx} className={msg.role === "user" ? "mb-2 text-white" : "mb-2"}>
+                      <p key={idx} className={msg.role === "user" ? "mb-2 text-white" : "mb-2 text-zinc-200"}>
                         {paragraph}
                       </p>
                     ))}
@@ -178,10 +175,10 @@ export function AssistantPage() {
             ))}
             <div ref={chatEndRef} />
             {loading && (
-              <div className="flex items-center gap-1 px-4 py-3 bg-gray-100 rounded-2xl rounded-bl-none max-w-[80%] animate-pulse">
-                <div className="w-2 h-2 rounded-full bg-gray-400" />
-                <div className="w-2 h-2 rounded-full bg-gray-400 animation-delay-200" />
-                <div className="w-2 h-2 rounded-full bg-gray-400 animation-delay-400" />
+              <div className="flex items-center gap-1 px-4 py-3 bg-zinc-800 rounded-2xl rounded-bl-none max-w-[80%] animate-pulse">
+                <div className="w-2 h-2 rounded-full bg-zinc-600" />
+                <div className="w-2 h-2 rounded-full bg-zinc-600 animation-delay-200" />
+                <div className="w-2 h-2 rounded-full bg-zinc-600 animation-delay-400" />
               </div>
             )}
           </div>
@@ -189,14 +186,14 @@ export function AssistantPage() {
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-gray-200 p-4">
+      <div className="border-t border-zinc-800 p-4">
         <div className="max-w-3xl mx-auto relative">
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder="Message AI assistant..."
-            className="min-h-[60px] max-h-[200px] resize-none pr-12 rounded-xl border-gray-300 focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
+            className="min-h-[60px] max-h-[200px] resize-none pr-12 rounded-xl bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500 focus:ring-1 focus:ring-purple-700"
             disabled={loading || !apiKey}
           />
           <Button
@@ -206,21 +203,21 @@ export function AssistantPage() {
             className={cn(
               "absolute right-3 bottom-3 h-8 w-8 rounded-full",
               message.trim() 
-                ? "bg-novel-purple hover:bg-novel-purple/90" 
-                : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                ? "bg-purple-800 hover:bg-purple-700" 
+                : "bg-zinc-700 text-zinc-500 cursor-not-allowed"
             )}
           >
-            <SendIcon size={16} className={message.trim() ? "text-white" : "text-gray-500"} />
+            <SendIcon size={16} className={message.trim() ? "text-white" : "text-zinc-500"} />
           </Button>
         </div>
       </div>
 
       {/* API Key Dialog */}
       <Dialog open={showApiKeyDialog} onOpenChange={setShowApiKeyDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-zinc-800 border-zinc-700">
           <DialogHeader>
-            <DialogTitle>Configure OpenAI API Key</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-white">Configure OpenAI API Key</DialogTitle>
+            <DialogDescription className="text-zinc-400">
               Enter your OpenAI API key to enable the AI assistant. Your key will be stored locally in your browser.
             </DialogDescription>
           </DialogHeader>
@@ -234,15 +231,16 @@ export function AssistantPage() {
                 placeholder="sk-..."
                 value={keyInput}
                 onChange={(e) => setKeyInput(e.target.value)}
+                className="bg-zinc-700 border-zinc-600 text-white placeholder-zinc-500"
               />
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-zinc-400">
               Get your API key from{" "}
               <a
                 href="https://platform.openai.com/account/api-keys"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-novel-purple hover:underline"
+                className="text-purple-400 hover:underline"
               >
                 OpenAI's platform
               </a>
@@ -250,10 +248,17 @@ export function AssistantPage() {
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowApiKeyDialog(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowApiKeyDialog(false)}
+              className="text-zinc-300 hover:bg-zinc-700"
+            >
               Cancel
             </Button>
-            <Button onClick={saveApiKey} className="bg-novel-purple hover:bg-novel-purple/90">
+            <Button 
+              onClick={saveApiKey} 
+              className="bg-purple-800 hover:bg-purple-700 text-white"
+            >
               Save API Key
             </Button>
           </DialogFooter>
@@ -266,7 +271,7 @@ export function AssistantPage() {
 // Custom Label component for this page
 function Label({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
   return (
-    <label htmlFor={htmlFor} className="block text-sm font-medium text-gray-700">
+    <label htmlFor={htmlFor} className="block text-sm font-medium text-zinc-300">
       {children}
     </label>
   );
