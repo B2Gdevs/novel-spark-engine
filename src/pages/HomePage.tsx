@@ -2,11 +2,31 @@
 import { BookCard } from "@/components/BookCard";
 
 export function HomePage() {
-  const showBooks = false; // This should be controlled by your book selection state
-  
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      {!showBooks ? (
+    <div className="pt-20 p-6">
+      <div className="max-w-6xl mx-auto space-y-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold text-white">Books</h1>
+          <button className="text-white bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-lg flex items-center gap-2">
+            <span>+</span> New Book
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <BookCard
+            title="The Iron Wars"
+            genre="Sci-Fi"
+            description="In a war torn galaxy, a daring pilot becomes embroiled in a conflict between a tyrannical empire and a fledgling rebellion"
+            icon="📕"
+          />
+          <BookCard
+            title="Ashes of Winter"
+            genre="Fantasy"
+            description=""
+            icon="❄️"
+          />
+        </div>
+
         <div className="mt-12 max-w-3xl mx-auto">
           <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
             <h2 className="text-lg font-medium text-white mb-4">
@@ -24,28 +44,7 @@ export function HomePage() {
             </div>
           </div>
         </div>
-      ) : (
-        <>
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-white">Books</h1>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <BookCard
-              title="The Iron Wars"
-              genre="Sci-Fi"
-              description="In a war torn galaxy, a daring pilot becomes embroiled in a conflict between a tyrannical empire and a fledgling rebellion"
-              icon="📕"
-            />
-            <BookCard
-              title="Ashes of Winter"
-              genre="Fantasy"
-              description=""
-              icon="❄️"
-            />
-          </div>
-        </>
-      )}
+      </div>
     </div>
   );
 }
-
