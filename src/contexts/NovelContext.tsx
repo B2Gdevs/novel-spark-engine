@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
-import { Book, NovelProject, Character, Scene, Event, Note, ChatMessage } from "@/types/novel";
+import { Book, NovelProject, Character, Scene, Event, Note, ChatMessage, Page } from "@/types/novel";
 
 const defaultProject: NovelProject = {
   books: [],
@@ -23,6 +23,10 @@ interface NovelContextType {
   updateCharacter: (id: string, character: Partial<Character>) => void;
   deleteCharacter: (id: string) => void;
   getCharacter: (id: string) => Character | undefined;
+  addPage: (page: Omit<Page, "id">) => void;
+  updatePage: (id: string, page: Partial<Page>) => void;
+  deletePage: (id: string) => void;
+  getPage: (id: string) => Page | undefined;
   addScene: (scene: Omit<Scene, "id">) => void;
   updateScene: (id: string, scene: Partial<Scene>) => void;
   deleteScene: (id: string) => void;
@@ -51,7 +55,10 @@ export function NovelProvider({ children }: { children: ReactNode }) {
         const parsedProject = JSON.parse(savedProject);
         // Ensure the structure is valid
         return {
-          books: Array.isArray(parsedProject.books) ? parsedProject.books : [],
+          books: Array.isArray(parsedProject.books) ? parsedProject.books.map((book: any) => ({
+            ...book,
+            pages: Array.isArray(book.pages) ? book.pages : []
+          })) : [],
           currentBookId: parsedProject.currentBookId || null,
           chatHistory: Array.isArray(parsedProject.chatHistory) ? parsedProject.chatHistory : []
         };
@@ -84,7 +91,8 @@ export function NovelProvider({ children }: { children: ReactNode }) {
       characters: Array.isArray(book.characters) ? book.characters : [],
       scenes: Array.isArray(book.scenes) ? book.scenes : [],
       events: Array.isArray(book.events) ? book.events : [],
-      notes: Array.isArray(book.notes) ? book.notes : []
+      notes: Array.isArray(book.notes) ? book.notes : [],
+      pages: Array.isArray(book.pages) ? book.pages : []
     };
     setProject(prev => ({
       ...prev,
@@ -139,7 +147,12 @@ export function NovelProvider({ children }: { children: ReactNode }) {
   const addCharacter = (character: Omit<Character, "id">) => {
     if (!currentBook) return;
     
-    const newCharacter = { ...character, id: uuidv4() };
+    const newCharacter = { 
+      ...character, 
+      id: uuidv4(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
     setProject((prev) => {
       const updatedBooks = prev.books.map(book => {
         if (book.id === prev.currentBookId) {
@@ -205,6 +218,86 @@ export function NovelProvider({ children }: { children: ReactNode }) {
   const getCharacter = (id: string): Character | undefined => {
     if (!currentBook) return undefined;
     return currentBook.characters.find((c) => c.id === id);
+  };
+
+  const addPage = (page: Omit<Page, "id">) => {
+    if (!currentBook) return;
+    
+    const newPage = { 
+      ...page, 
+      id: uuidv4(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setProject((prev) => {
+      const updatedBooks = prev.books.map(book => {
+        if (book.id === prev.currentBookId) {
+          return {
+            ...book,
+            pages: [...book.pages, newPage]
+          };
+        }
+        return book;
+      });
+      
+      return {
+        ...prev,
+        books: updatedBooks
+      };
+    });
+  };
+
+  const updatePage = (id: string, page: Partial<Page>) => {
+    if (!currentBook) return;
+    
+    setProject((prev) => {
+      const updatedBooks = prev.books.map(book => {
+        if (book.id === prev.currentBookId) {
+          return {
+            ...book,
+            pages: book.pages.map((p) => 
+              p.id === id ? { 
+                ...p, 
+                ...page,
+                updatedAt: new Date().toISOString()
+              } : p
+            )
+          };
+        }
+        return book;
+      });
+      
+      return {
+        ...prev,
+        books: updatedBooks
+      };
+    });
+  };
+
+  const deletePage = (id: string) => {
+    if (!currentBook) return;
+    
+    setProject((prev) => {
+      const updatedBooks = prev.books.map(book => {
+        if (book.id === prev.currentBookId) {
+          return {
+            ...book,
+            pages: book.pages.filter((p) => p.id !== id)
+          };
+        }
+        return book;
+      });
+      
+      return {
+        ...prev,
+        books: updatedBooks
+      };
+    });
+  };
+
+  const getPage = (id: string): Page | undefined => {
+    if (!currentBook) return undefined;
+    return currentBook.pages.find((p) => p.id === id);
   };
 
   const addScene = (scene: Omit<Scene, "id">) => {
@@ -563,7 +656,8 @@ export function NovelProvider({ children }: { children: ReactNode }) {
       ...book.scenes.map(s => ({ type: "scenes", id: s.id, date: s.updatedAt || s.createdAt || "" })),
       ...book.characters.map(c => ({ type: "characters", id: c.id, date: c.updatedAt || c.createdAt || "" })),
       ...book.events.map(e => ({ type: "events", id: e.id, date: e.updatedAt || e.createdAt || "" })),
-      ...book.notes.map(n => ({ type: "notes", id: n.id, date: n.updatedAt || n.createdAt || "" }))
+      ...book.notes.map(n => ({ type: "notes", id: n.id, date: n.updatedAt || n.createdAt || "" })),
+      ...book.pages.map(p => ({ type: "pages", id: p.id, date: p.updatedAt || p.createdAt || "" }))
     ];
     
     if (items.length === 0) return null;
@@ -607,6 +701,10 @@ export function NovelProvider({ children }: { children: ReactNode }) {
     updateCharacter,
     deleteCharacter,
     getCharacter,
+    addPage,
+    updatePage,
+    deletePage,
+    getPage,
     addScene,
     updateScene,
     deleteScene,

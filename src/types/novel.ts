@@ -34,6 +34,16 @@ export interface Scene {
   updatedAt?: string;
 }
 
+export interface Page {
+  id: string;
+  title: string;
+  content: string;
+  order: number;
+  chapterId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Event {
   id: string;
   name: string;
@@ -77,6 +87,7 @@ export interface Book {
   scenes: Scene[];
   events: Event[];
   notes: Note[];
+  pages: Page[];
   references?: {
     characters?: string[]; // IDs of characters from other books
     scenes?: string[]; // IDs of scenes from other books

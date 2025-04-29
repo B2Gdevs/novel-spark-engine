@@ -28,7 +28,8 @@ export function HomePage() {
       characters: [],
       scenes: [],
       events: [],
-      notes: []
+      notes: [],
+      pages: []
     });
   };
   
@@ -41,8 +42,8 @@ export function HomePage() {
     if (lastItem) {
       navigate(`/${lastItem.type}/${lastItem.id}`);
     } else {
-      // If no items exist yet, navigate to characters page
-      navigate("/characters");
+      // If no items exist yet, navigate to pages as default
+      navigate("/pages");
     }
   };
 

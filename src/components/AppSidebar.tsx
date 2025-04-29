@@ -1,5 +1,5 @@
 
-import { Book, BookOpen, User, PenTool, CalendarDays, Library, CreditCard, Trash2 } from "lucide-react";
+import { Book, BookOpen, User, PenTool, CalendarDays, Library, CreditCard, FileText } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -29,6 +29,12 @@ export function AppSidebar() {
       label: "Characters",
       action: () => navigate("/characters"),
       tooltip: "Manage Characters"
+    },
+    {
+      icon: FileText,
+      label: "Pages",
+      action: () => navigate("/pages"),
+      tooltip: "Manage Pages"
     },
     {
       icon: PenTool,
