@@ -1,16 +1,18 @@
 
 import { Book } from "@/types/novel";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Trash2 } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
+import { toast } from "sonner";
 
 interface BookCardProps {
   book: Book;
   onSelect?: () => void;
+  onDelete?: (id: string) => void;
   showActions?: boolean;
 }
 
-export function BookCard({ book, onSelect, showActions = false }: BookCardProps) {
+export function BookCard({ book, onSelect, onDelete, showActions = false }: BookCardProps) {
   const getBookIcon = () => {
     // Simple icon based on first letter of title
     return (
@@ -20,8 +22,16 @@ export function BookCard({ book, onSelect, showActions = false }: BookCardProps)
     );
   };
 
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete(book.id);
+      toast.success("Book deleted successfully");
+    }
+  };
+
   return (
-    <Card className="bg-zinc-900/70 border-zinc-800/50 overflow-hidden">
+    <Card className="bg-zinc-900/70 border-zinc-800/50 overflow-hidden relative">
       <CardContent className="p-6 flex flex-col items-center">
         {getBookIcon()}
         
@@ -45,12 +55,22 @@ export function BookCard({ book, onSelect, showActions = false }: BookCardProps)
           </div>
         )}
         
-        <Button 
-          className="w-full bg-zinc-800 hover:bg-zinc-700 text-white"
-          onClick={onSelect}
-        >
-          Open Book
-        </Button>
+        <div className="w-full space-y-2">
+          <Button 
+            className="w-full bg-zinc-800 hover:bg-zinc-700 text-white"
+            onClick={onSelect}
+          >
+            Open Book
+          </Button>
+          
+          <Button 
+            className="w-full bg-transparent hover:bg-red-900/30 text-red-500 border border-red-800/30"
+            onClick={handleDelete}
+            size="sm"
+          >
+            <Trash2 className="h-4 w-4 mr-2" /> Delete Book
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

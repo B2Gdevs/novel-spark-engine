@@ -1,14 +1,15 @@
 
 import { useNovel } from "@/contexts/NovelContext";
 import { BookCard } from "@/components/BookCard";
-import { AiPromptSection } from "@/components/AiPromptSection";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, BookOpen } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function HomePage() {
-  const { project, currentBook, addBook, switchBook, addMockData } = useNovel();
+  const { project, currentBook, addBook, switchBook, deleteBook, getLastModifiedItem } = useNovel();
   const [showWelcome, setShowWelcome] = useState(true);
+  const navigate = useNavigate();
   
   useEffect(() => {
     // Show welcome screen if no books
@@ -23,6 +24,7 @@ export function HomePage() {
     addBook({
       title: "New Book",
       description: "Start writing your new story...",
+      genre: "Fiction",
       characters: [],
       scenes: [],
       events: [],
@@ -32,6 +34,20 @@ export function HomePage() {
   
   const handleSelectBook = (bookId: string) => {
     switchBook(bookId);
+    
+    // Navigate to the most recently updated page
+    const lastItem = getLastModifiedItem(bookId);
+    
+    if (lastItem) {
+      navigate(`/${lastItem.type}/${lastItem.id}`);
+    } else {
+      // If no items exist yet, navigate to characters page
+      navigate("/characters");
+    }
+  };
+
+  const handleDeleteBook = (bookId: string) => {
+    deleteBook(bookId);
   };
 
   return (
@@ -50,32 +66,19 @@ export function HomePage() {
               <PlusCircle className="h-4 w-4" />
               <span>New Book</span>
             </Button>
-            
-            <div>
-              <p className="text-zinc-400 mb-4">or</p>
-              <p className="text-zinc-300 mb-2">Try a prompt:</p>
-              <div className="max-w-md mx-auto">
-                <AiPromptSection />
-              </div>
-            </div>
           </div>
         ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-              {project.books.map((book) => (
-                <BookCard
-                  key={book.id}
-                  book={book}
-                  showActions={false}
-                  onSelect={() => handleSelectBook(book.id)}
-                />
-              ))}
-            </div>
-            
-            <div className="mt-12">
-              <AiPromptSection />
-            </div>
-          </>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {project.books.map((book) => (
+              <BookCard
+                key={book.id}
+                book={book}
+                showActions={true}
+                onSelect={() => handleSelectBook(book.id)}
+                onDelete={handleDeleteBook}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>

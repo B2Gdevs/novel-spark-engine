@@ -1,5 +1,5 @@
 
-import { Book, BookOpen, User, PenTool, CalendarDays, Library } from "lucide-react";
+import { Book, BookOpen, User, PenTool, CalendarDays, Library, CreditCard, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +14,8 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { useNovel } from "@/contexts/NovelContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "./ui/button";
 
 export function AppSidebar() {
   const [expanded, setExpanded] = useState(false);
@@ -94,6 +96,36 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
+        <SidebarFooter className="p-3 border-t border-zinc-800/50">
+          <div className="flex flex-col space-y-3">
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/billing")}
+              className="flex items-center justify-start text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-md transition-colors w-full"
+            >
+              <CreditCard className="h-5 w-5" />
+              <span className={cn(
+                "ml-3 transition-all duration-200",
+                expanded ? "opacity-100" : "opacity-0"
+              )}>
+                Billing
+              </span>
+            </Button>
+            <div className="flex items-center p-1">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="" />
+                <AvatarFallback className="bg-purple-700">NS</AvatarFallback>
+              </Avatar>
+              <span className={cn(
+                "ml-3 text-zinc-300 text-sm transition-all duration-200",
+                expanded ? "opacity-100" : "opacity-0"
+              )}>
+                User
+              </span>
+            </div>
+          </div>
+        </SidebarFooter>
       </Sidebar>
     </div>
   );
