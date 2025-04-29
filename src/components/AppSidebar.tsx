@@ -22,7 +22,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { currentBook } = useNovel();
   
-  // Only show sidebar items if a book is selected
+  // Book-related sidebar items
   const bookSidebarItems = [
     {
       icon: User,
@@ -47,12 +47,6 @@ export function AppSidebar() {
       label: "Timeline",
       action: () => navigate("/events"),
       tooltip: "Manage Timeline"
-    },
-    {
-      icon: Library,
-      label: "Notes",
-      action: () => navigate("/notes"),
-      tooltip: "View Notes"
     },
     {
       icon: BookOpen,

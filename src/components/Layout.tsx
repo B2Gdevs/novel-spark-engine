@@ -49,7 +49,8 @@ export function Layout({ children }: { children: ReactNode }) {
       <div className="min-h-screen flex flex-col w-full bg-zinc-900 text-white">
         <Toolbar />
         <div className="flex flex-1 h-[calc(100vh-3rem)] overflow-hidden">
-          <AppSidebar />
+          {/* Only render the sidebar if a book is selected */}
+          {currentBook && <AppSidebar />}
           <main className="flex-1 overflow-auto">
             {children}
           </main>
