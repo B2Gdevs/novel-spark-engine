@@ -6,9 +6,14 @@ import { ReactNode, useEffect, useState } from "react";
 import { DialogProvider } from "@/components/DialogProvider";
 import { ChatInterface } from "@/components/ChatInterface";
 import { toast } from "sonner";
+import { useNovel } from "@/contexts/NovelContext";
+import { useLocation } from "react-router-dom";
 
 export function Layout({ children }: { children: ReactNode }) {
   const [showChatDialog, setShowChatDialog] = useState(false);
+  const { currentBook } = useNovel();
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
   
   useEffect(() => {
     // Add keyboard shortcut for chat (Cmd+K / Ctrl+K)
@@ -31,6 +36,8 @@ export function Layout({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const showSidebar = !isHomePage || (isHomePage && currentBook);
+
   return (
     <SidebarProvider>
       <DialogProvider
@@ -44,7 +51,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <div className="min-h-screen flex flex-col w-full bg-zinc-900 text-white">
         <Toolbar />
         <div className="flex flex-1 h-[calc(100vh-3rem)] overflow-hidden">
-          <AppSidebar />
+          {showSidebar && <AppSidebar />}
           <main className="flex-1 overflow-auto">
             {children}
           </main>
