@@ -36,8 +36,6 @@ export function Layout({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const showSidebar = !isHomePage || (isHomePage && currentBook);
-
   return (
     <SidebarProvider>
       <DialogProvider
@@ -51,7 +49,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <div className="min-h-screen flex flex-col w-full bg-zinc-900 text-white">
         <Toolbar />
         <div className="flex flex-1 h-[calc(100vh-3rem)] overflow-hidden">
-          {showSidebar && <AppSidebar />}
+          <AppSidebar />
           <main className="flex-1 overflow-auto">
             {children}
           </main>

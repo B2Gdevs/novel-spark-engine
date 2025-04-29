@@ -1,14 +1,24 @@
 
-import { Settings, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
 import { BookOpen } from "lucide-react";
 import { Button } from "./ui/button";
 import { useNovel } from "@/contexts/NovelContext";
 
 export function Toolbar() {
   const location = useLocation();
-  const { currentBook } = useNovel();
+  const { currentBook, addBook } = useNovel();
+  
+  const handleAddNewBook = () => {
+    addBook({
+      title: "New Book",
+      description: "Start writing your new story...",
+      characters: [],
+      scenes: [],
+      events: [],
+      notes: []
+    });
+  };
   
   return (
     <div className="h-12 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800/50 flex items-center justify-between px-4 z-10">
@@ -31,19 +41,10 @@ export function Toolbar() {
         <Button
           variant="ghost"
           className="text-zinc-300 hover:text-white hover:bg-zinc-800 flex gap-2 items-center px-3 py-1.5 h-8 text-sm"
+          onClick={handleAddNewBook}
         >
           <span className="text-sm">+ New Book</span>
         </Button>
-        
-        <Link to="/settings">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="text-zinc-300 hover:text-white hover:bg-zinc-800 h-8 w-8"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-        </Link>
       </div>
     </div>
   );

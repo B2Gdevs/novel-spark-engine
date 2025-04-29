@@ -1,6 +1,5 @@
 
 import { useNovel } from "@/contexts/NovelContext";
-import { NovelProvider } from "@/contexts/NovelContext";
 import { BookCard } from "@/components/BookCard";
 import { AiPromptSection } from "@/components/AiPromptSection";
 import { Button } from "@/components/ui/button";
@@ -62,16 +61,6 @@ export function HomePage() {
           </div>
         ) : (
           <>
-            <div className="flex justify-center mb-8">
-              <Button
-                onClick={handleAddNewBook}
-                className="bg-zinc-800 hover:bg-zinc-700 text-white flex items-center gap-2"
-              >
-                <PlusCircle className="h-4 w-4" />
-                <span>New Book</span>
-              </Button>
-            </div>
-            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
               {project.books.map((book) => (
                 <BookCard

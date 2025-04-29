@@ -27,7 +27,7 @@ export function BookCard({ book, onSelect, showActions = false }: BookCardProps)
         
         <h3 className="text-xl font-bold text-white mb-1">{book.title}</h3>
         <div className="text-sm text-zinc-400 mb-4">
-          {book?.genre || "Sci-Fi"}
+          {book.genre || "Sci-Fi"}
         </div>
         
         <div className="text-sm text-zinc-300 text-center mb-6 max-w-64">
