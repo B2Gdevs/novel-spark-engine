@@ -72,6 +72,7 @@ export interface Book {
   id: string;
   title: string;
   description: string;
+  genre?: string;
   characters: Character[];
   scenes: Scene[];
   events: Event[];

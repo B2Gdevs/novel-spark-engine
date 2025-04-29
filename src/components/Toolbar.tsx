@@ -13,6 +13,7 @@ export function Toolbar() {
     addBook({
       title: "New Book",
       description: "Start writing your new story...",
+      genre: "Fiction",
       characters: [],
       scenes: [],
       events: [],
