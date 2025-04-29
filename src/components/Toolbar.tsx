@@ -17,7 +17,8 @@ export function Toolbar() {
       characters: [],
       scenes: [],
       events: [],
-      notes: []
+      notes: [],
+      pages: [] // Added missing pages property
     });
   };
   

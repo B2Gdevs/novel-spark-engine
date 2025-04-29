@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
@@ -619,10 +620,12 @@ export function NovelProvider({ children }: { children: ReactNode }) {
             id: uuidv4(),
             title: "The Dark Mage's Redemption",
             description: "A tale of magic, betrayal, and redemption",
+            genre: "Fiction",
             characters: mockCharacters,
             scenes: mockScenes,
             events: mockEvents,
             notes: [],
+            pages: [], // Added missing pages property
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           };
