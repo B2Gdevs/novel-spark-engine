@@ -48,7 +48,7 @@ export function BookCard({ book, onSelect, onDelete, showActions = false }: Book
   };
 
   return (
-    <Card className="bg-zinc-900/70 border-zinc-800/50 overflow-hidden relative">
+    <Card className="bg-zinc-900/70 border-zinc-800/50 overflow-hidden relative cursor-pointer hover:border-zinc-700/70 transition-all" onClick={onSelect}>
       <CardContent className="p-6 flex flex-col items-center">
         {getBookIcon()}
         
@@ -57,26 +57,27 @@ export function BookCard({ book, onSelect, onDelete, showActions = false }: Book
           {book.genre || "Fiction"}
         </div>
         
-        <div className="text-sm text-zinc-300 text-center mb-6 max-w-64">
-          {book.description}
+        <div className="text-sm text-zinc-300 text-center mb-6 max-w-64 h-24 overflow-y-auto">
+          {book.description || "No description available."}
         </div>
         
-        <div className="w-full space-y-2">
-          <Button 
-            className="w-full bg-zinc-800 hover:bg-zinc-700 text-white"
-            onClick={onSelect}
-          >
-            Open Book
-          </Button>
-          
-          <Button 
-            className="w-full bg-transparent hover:bg-red-900/30 text-red-500 border border-red-800/30"
-            onClick={handleDelete}
-            size="sm"
-          >
-            <Trash2 className="h-4 w-4 mr-2" /> Delete Book
-          </Button>
-        </div>
+        <Button 
+          className="w-full bg-zinc-800 hover:bg-zinc-700 text-white mt-auto"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onSelect) onSelect();
+          }}
+        >
+          Open Book
+        </Button>
+        
+        <Button 
+          className="w-full bg-transparent hover:bg-red-900/30 text-red-500 border border-red-800/30 mt-2"
+          onClick={handleDelete}
+          size="sm"
+        >
+          <Trash2 className="h-4 w-4 mr-2" /> Delete Book
+        </Button>
       </CardContent>
     </Card>
   );

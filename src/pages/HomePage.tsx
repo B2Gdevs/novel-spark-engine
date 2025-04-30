@@ -149,16 +149,29 @@ export function HomePage() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {project.books.map((book) => (
-              <BookCard
-                key={book.id}
-                book={book}
-                onSelect={() => handleSelectBook(book.id)}
-                onDelete={handleDeleteBook}
-              />
-            ))}
-          </div>
+          <>
+            <div className="flex justify-between items-center mb-8">
+              <h1 className="text-2xl font-bold text-white">Your Books</h1>
+              <Button 
+                onClick={handleAddNewBook}
+                className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+              >
+                <PlusCircle className="h-4 w-4" />
+                <span>New Book</span>
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {project.books.map((book) => (
+                <BookCard
+                  key={book.id}
+                  book={book}
+                  onSelect={() => handleSelectBook(book.id)}
+                  onDelete={handleDeleteBook}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
