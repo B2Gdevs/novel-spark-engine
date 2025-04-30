@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, BookOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export function HomePage() {
   const { project, currentBook, addBook, switchBook, deleteBook, getLastModifiedItem } = useNovel();
@@ -12,25 +14,82 @@ export function HomePage() {
   const navigate = useNavigate();
   
   useEffect(() => {
-    // Show welcome screen if no books
-    if (project.books.length > 0) {
-      setShowWelcome(false);
+    // Fetch books from Supabase on component mount
+    const fetchBooks = async () => {
+      try {
+        const { data, error } = await supabase.from('books').select('*');
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          // Convert Supabase books to our app format
+          data.forEach(book => {
+            addBook({
+              title: book.title,
+              description: book.description || "",
+              genre: book.genre || "Fiction",
+              characters: [],
+              scenes: [],
+              events: [],
+              notes: [],
+              pages: []
+            });
+          });
+          
+          setShowWelcome(false);
+        }
+      } catch (error) {
+        console.error("Error fetching books:", error);
+        toast.error("Failed to load books");
+      }
+    };
+    
+    // Only fetch books if we don't have any yet
+    if (project.books.length === 0) {
+      fetchBooks();
     } else {
-      setShowWelcome(true);
+      setShowWelcome(project.books.length === 0);
     }
-  }, [project.books]);
+  }, []);
   
-  const handleAddNewBook = () => {
-    addBook({
-      title: "New Book",
-      description: "Start writing your new story...",
-      genre: "Fiction",
-      characters: [],
-      scenes: [],
-      events: [],
-      notes: [],
-      pages: []
-    });
+  const handleAddNewBook = async () => {
+    try {
+      // Insert a new book into Supabase
+      const { data: newBook, error } = await supabase
+        .from('books')
+        .insert([
+          {
+            title: "New Book",
+            description: "Start writing your new story...",
+            genre: "Fiction"
+          }
+        ])
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Add the book to local state
+      addBook({
+        title: newBook.title,
+        description: newBook.description || "",
+        genre: newBook.genre || "Fiction",
+        characters: [],
+        scenes: [],
+        events: [],
+        notes: [],
+        pages: []
+      });
+      
+      setShowWelcome(false);
+    } catch (error) {
+      console.error("Error creating new book:", error);
+      toast.error("Failed to create new book");
+    }
   };
   
   const handleSelectBook = (bookId: string) => {
@@ -47,8 +106,29 @@ export function HomePage() {
     }
   };
 
-  const handleDeleteBook = (bookId: string) => {
-    deleteBook(bookId);
+  const handleDeleteBook = async (bookId: string) => {
+    try {
+      // Delete from Supabase first
+      const { error } = await supabase
+        .from('books')
+        .delete()
+        .eq('id', bookId);
+        
+      if (error) {
+        throw error;
+      }
+      
+      // Then update local state
+      deleteBook(bookId);
+      
+      // Show welcome screen if no books left
+      if (project.books.length <= 1) {
+        setShowWelcome(true);
+      }
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      toast.error("Failed to delete book");
+    }
   };
 
   return (
@@ -74,7 +154,6 @@ export function HomePage() {
               <BookCard
                 key={book.id}
                 book={book}
-                showActions={true}
                 onSelect={() => handleSelectBook(book.id)}
                 onDelete={handleDeleteBook}
               />

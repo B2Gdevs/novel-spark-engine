@@ -4,6 +4,7 @@ import { BookOpen, Trash2 } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BookCardProps {
   book: Book;
@@ -22,11 +23,27 @@ export function BookCard({ book, onSelect, onDelete, showActions = false }: Book
     );
   };
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onDelete) {
-      onDelete(book.id);
-      toast.success("Book deleted successfully");
+      try {
+        // Delete from Supabase first
+        const { error } = await supabase
+          .from('books')
+          .delete()
+          .eq('id', book.id);
+          
+        if (error) {
+          throw error;
+        }
+        
+        // Then update local state
+        onDelete(book.id);
+        toast.success("Book deleted successfully");
+      } catch (error) {
+        console.error("Error deleting book:", error);
+        toast.error("Failed to delete book");
+      }
     }
   };
 
@@ -43,17 +60,6 @@ export function BookCard({ book, onSelect, onDelete, showActions = false }: Book
         <div className="text-sm text-zinc-300 text-center mb-6 max-w-64">
           {book.description}
         </div>
-        
-        {showActions && (
-          <div className="w-full">
-            <h4 className="text-sm font-medium text-zinc-400 mb-2">Quick Actions:</h4>
-            <ul className="list-disc pl-5 text-sm text-zinc-300 space-y-1 mb-4">
-              <li>Create a new character</li>
-              <li>Generate a chapter outline</li>
-              <li>Resume writing last scene</li>
-            </ul>
-          </div>
-        )}
         
         <div className="w-full space-y-2">
           <Button 

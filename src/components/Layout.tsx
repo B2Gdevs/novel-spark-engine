@@ -36,8 +36,8 @@ export function Layout({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Only wrap content in SidebarProvider if a book is selected
-  if (!currentBook) {
+  // Only wrap content in SidebarProvider if not on homepage or if a book is selected
+  if (isHomePage && !currentBook) {
     return (
       <>
         <DialogProvider

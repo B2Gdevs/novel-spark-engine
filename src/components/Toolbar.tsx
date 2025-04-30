@@ -4,22 +4,50 @@ import { Link, useLocation } from "react-router-dom";
 import { BookOpen } from "lucide-react";
 import { Button } from "./ui/button";
 import { useNovel } from "@/contexts/NovelContext";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export function Toolbar() {
   const location = useLocation();
   const { currentBook, addBook } = useNovel();
   
-  const handleAddNewBook = () => {
-    addBook({
-      title: "New Book",
-      description: "Start writing your new story...",
-      genre: "Fiction",
-      characters: [],
-      scenes: [],
-      events: [],
-      notes: [],
-      pages: [] // Added missing pages property
-    });
+  const handleAddNewBook = async () => {
+    try {
+      // Insert a new book into Supabase
+      const { data: newBook, error } = await supabase
+        .from('books')
+        .insert([
+          {
+            title: "New Book",
+            description: "Start writing your new story...",
+            genre: "Fiction"
+          }
+        ])
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Add the book to local state
+      addBook({
+        title: newBook.title,
+        description: newBook.description || "",
+        genre: newBook.genre || "Fiction",
+        characters: [],
+        scenes: [],
+        events: [],
+        notes: [],
+        pages: []
+      });
+      
+      toast.success("New book created");
+    } catch (error) {
+      console.error("Error creating new book:", error);
+      toast.error("Failed to create new book");
+    }
   };
   
   return (

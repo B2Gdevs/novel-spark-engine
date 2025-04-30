@@ -9,7 +9,247 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      books: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          genre: string | null
+          id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          genre?: string | null
+          id?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          genre?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      characters: {
+        Row: {
+          age: number | null
+          backstory: string | null
+          book_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          role: string | null
+          traits: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          age?: number | null
+          backstory?: string | null
+          book_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          role?: string | null
+          traits?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          age?: number | null
+          backstory?: string | null
+          book_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          role?: string | null
+          traits?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "characters_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          book_id: string | null
+          characters: string[] | null
+          consequences: string[] | null
+          created_at: string | null
+          date: string | null
+          description: string | null
+          id: string
+          impact: string | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          book_id?: string | null
+          characters?: string[] | null
+          consequences?: string[] | null
+          created_at?: string | null
+          date?: string | null
+          description?: string | null
+          id?: string
+          impact?: string | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          book_id?: string | null
+          characters?: string[] | null
+          consequences?: string[] | null
+          created_at?: string | null
+          date?: string | null
+          description?: string | null
+          id?: string
+          impact?: string | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes: {
+        Row: {
+          book_id: string | null
+          content: string | null
+          created_at: string | null
+          id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          book_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          book_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pages: {
+        Row: {
+          book_id: string | null
+          content: string | null
+          created_at: string | null
+          id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          book_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          book_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pages_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scenes: {
+        Row: {
+          book_id: string | null
+          characters: string[] | null
+          content: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          location: string | null
+          notes: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          book_id?: string | null
+          characters?: string[] | null
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          book_id?: string | null
+          characters?: string[] | null
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenes_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
