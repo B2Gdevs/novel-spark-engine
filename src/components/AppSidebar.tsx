@@ -1,5 +1,5 @@
 
-import { Book, BookOpen, User, PenTool, CalendarDays, Library, CreditCard, FileText } from "lucide-react";
+import { Book, User, PenTool, CalendarDays, Library, CreditCard, FileText } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -49,16 +49,18 @@ export function AppSidebar() {
       tooltip: "Manage Timeline"
     },
     {
-      icon: BookOpen,
+      icon: Book,
       label: "AI Assistant",
       action: () => navigate("/assistant"),
       tooltip: "Open AI Chat"
     }
   ];
 
-  // If no book is selected, don't render the sidebar content
+  // If no book is selected, don't render any sidebar content
   if (!currentBook) {
-    return null;
+    return (
+      <div className="bg-zinc-900 border-r border-zinc-700 transition-all duration-300 ease-in-out w-0"></div>
+    );
   }
 
   return (
