@@ -56,7 +56,7 @@ export function TrashBinDialog({ open, onOpenChange }: TrashBinDialogProps) {
       }
       
       if (data) {
-        const transformedBooks = data.map(dbBook => ({
+        const transformedBooks: Book[] = data.map(dbBook => ({
           id: dbBook.id,
           title: dbBook.title,
           description: dbBook.description || "",
@@ -66,6 +66,7 @@ export function TrashBinDialog({ open, onOpenChange }: TrashBinDialogProps) {
           events: [],
           notes: [],
           pages: [],
+          places: [], // Add the places property
           createdAt: dbBook.created_at,
           updatedAt: dbBook.updated_at,
           deletedAt: dbBook.deleted_at

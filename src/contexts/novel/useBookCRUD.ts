@@ -37,6 +37,7 @@ export function useBookCRUD(
         events: Array.isArray(book.events) ? book.events : [],
         notes: Array.isArray(book.notes) ? book.notes : [],
         pages: Array.isArray(book.pages) ? book.pages : [],
+        places: Array.isArray(book.places) ? book.places : [], // Add the places property
         createdAt: newDbBook.created_at,
         updatedAt: newDbBook.updated_at
       };

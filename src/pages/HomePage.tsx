@@ -69,7 +69,8 @@ export function HomePage() {
         scenes: [],
         events: [],
         notes: [],
-        pages: []
+        pages: [],
+        places: [] // Add the places property
       });
       
       setShowWelcome(false);

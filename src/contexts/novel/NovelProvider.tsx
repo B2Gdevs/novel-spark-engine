@@ -48,6 +48,7 @@ export function NovelProvider({ children }: { children: ReactNode }) {
                 events: existingBook?.events || [],
                 notes: existingBook?.notes || [],
                 pages: existingBook?.pages || [],
+                places: existingBook?.places || [], // Add the places property
                 createdAt: dbBook.created_at,
                 updatedAt: dbBook.updated_at
               };
