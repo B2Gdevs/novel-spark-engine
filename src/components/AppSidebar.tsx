@@ -1,5 +1,5 @@
 
-import { Book, User, PenTool, CalendarDays, Library, CreditCard, FileText } from "lucide-react";
+import { Book, User, PenTool, CalendarDays, Library, CreditCard, FileText, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -49,7 +49,7 @@ export function AppSidebar() {
       tooltip: "Manage Timeline"
     },
     {
-      icon: Book,
+      icon: MessageSquare,
       label: "AI Assistant",
       action: () => navigate("/assistant"),
       tooltip: "Open AI Chat"
@@ -71,7 +71,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {currentBook ? (
-                  // Show book navigation items when a book is selected
+                  // Show book navigation items ONLY when a book is selected
                   bookSidebarItems.map((item, index) => (
                     <SidebarMenuItem key={index}>
                       <SidebarMenuButton
@@ -90,12 +90,15 @@ export function AppSidebar() {
                     </SidebarMenuItem>
                   ))
                 ) : (
-                  // Show a message when no book is selected
-                  <div className={cn(
-                    "text-zinc-400 p-3 text-sm text-center",
-                    expanded ? "opacity-100" : "opacity-0"
-                  )}>
-                    Select a book to see options
+                  // Message displayed when no book is selected
+                  <div className="flex flex-col items-center justify-center p-3 text-center">
+                    <Book className="h-5 w-5 text-zinc-400 mb-2" />
+                    <div className={cn(
+                      "text-zinc-400 text-xs transition-opacity duration-200",
+                      expanded ? "opacity-100" : "opacity-0"
+                    )}>
+                      Select a book to see options
+                    </div>
                   </div>
                 )}
               </SidebarMenu>
