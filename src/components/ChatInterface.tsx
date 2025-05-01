@@ -1,13 +1,12 @@
 
-import { useState, useEffect, useRef } from 'react';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useState, useEffect } from 'react';
 import { useNovel } from "@/contexts/NovelContext";
-import { ChatMessage as ChatMessageType } from "@/types/novel";
 import { toast } from "sonner";
 import { ChatHeader } from './chat/ChatHeader';
-import { ChatMessage } from './chat/ChatMessage';
+import { ChatMessageList } from './chat/ChatMessageList';
 import { ChatInput } from './chat/ChatInput';
 import { useEntitySearch } from "@/contexts/novel/provider/EntitySearchProvider";
+import { processMentionsInMessage } from './chat/MentionUtils';
 
 export function ChatInterface() {
   const { 
@@ -47,20 +46,6 @@ export function ChatInterface() {
     bookId?: string;
     bookTitle?: string;
   }>>([]);
-  const [mentionedEntities, setMentionedEntities] = useState<Array<{
-    type: 'character' | 'scene' | 'place' | 'page';
-    id: string;
-    name: string;
-    fullText: string;
-    bookId?: string;
-    bookTitle?: string;
-  }>>([]);
-  
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [project.chatHistory]);
 
   useEffect(() => {
     if (project.currentChatContext) {
@@ -103,7 +88,12 @@ export function ChatInterface() {
     
     try {
       // Process the message for @ mentions before sending
-      const processedMessage = processMentionsInMessage(message);
+      const processedMessage = processMentionsInMessage(
+        message, 
+        searchEntities, 
+        currentBook,
+        getAllBooks
+      );
       
       // Add user message to chat history with any detected mentions
       addChatMessage({
@@ -122,7 +112,6 @@ export function ChatInterface() {
       
       const currentMessage = message;
       setMessage("");
-      setMentionedEntities([]);
       
       // Create system prompt based on current book context and any linked entity
       let systemPrompt = `
@@ -136,6 +125,7 @@ export function ChatInterface() {
         - ${currentBook.places?.length || 0} places
         - ${currentBook.pages.length} pages
         - ${currentBook.notes.length} notes
+        - ${currentBook.summary || 'No summary yet'}
         
         When extracting information about characters, scenes, pages or places, format them as follows:
         
@@ -236,94 +226,6 @@ export function ChatInterface() {
       setLoading(false);
     }
   };
-  
-  // Enhanced process message to extract and handle @ mentions including cross-book references
-  const processMentionsInMessage = (text: string) => {
-    // Enhanced regex to catch both formats:
-    // @type/name and @book/type/name
-    const mentionRegex = /@(([^/]+)\/)?([a-z]+)\/([^@\s]+)/g;
-    const mentions: Array<{
-      type: 'character' | 'scene' | 'place' | 'page';
-      id: string;
-      name: string;
-      fullText: string;
-      bookId?: string;
-      bookTitle?: string;
-    }> = [];
-    
-    let lastIndex = 0;
-    let processedText = '';
-    let match: RegExpExecArray | null;
-    
-    // Reset the regex to start from the beginning
-    mentionRegex.lastIndex = 0;
-    
-    while ((match = mentionRegex.exec(text)) !== null) {
-      // Add text before the match
-      processedText += text.substring(lastIndex, match.index);
-      
-      const fullMatch = match[0]; // The entire @book/type/name or @type/name match
-      const bookTitle = match[2]; // Optional book title (might be undefined)
-      const entityType = match[3] as 'character' | 'scene' | 'place' | 'page';
-      const entityName = match[4];
-      
-      // Determine which book to search in
-      let targetBookId: string | undefined;
-      let searchResults;
-      
-      if (bookTitle) {
-        // Cross-book reference
-        const books = getAllBooks();
-        const matchingBook = books.find(b => 
-          b.title.toLowerCase() === bookTitle.toLowerCase()
-        );
-        
-        if (matchingBook) {
-          targetBookId = matchingBook.id;
-          // Search in the specific book
-          searchResults = searchEntities(`${entityType}/${entityName}`);
-          // Filter to only results from that book
-          searchResults = searchResults.filter(entity => entity.bookId === targetBookId);
-        } else {
-          // Book not found, search everywhere
-          searchResults = searchEntities(`${entityType}/${entityName}`);
-        }
-      } else {
-        // Normal reference, search current book first
-        searchResults = searchEntities(`${entityType}/${entityName}`);
-      }
-      
-      if (searchResults && searchResults.length > 0) {
-        const entity = searchResults[0]; // Take the first match
-        
-        // Add this entity to our mentions list
-        mentions.push({
-          type: entityType,
-          id: entity.id,
-          name: entity.name,
-          fullText: fullMatch,
-          bookId: entity.bookId,
-          bookTitle: entity.bookTitle
-        });
-        
-        // Replace the @mention with just the name in the processed text
-        processedText += entity.name;
-      } else {
-        // If entity not found, keep the original text
-        processedText += fullMatch;
-      }
-      
-      lastIndex = match.index + fullMatch.length;
-    }
-    
-    // Add any remaining text
-    processedText += text.substring(lastIndex);
-    
-    return {
-      messageContent: processedText,
-      mentionedEntities: mentions
-    };
-  };
 
   const handleCreateEntity = (entityType: string, entityData: any) => {
     try {
@@ -419,13 +321,6 @@ export function ChatInterface() {
         : `@${suggestion.type}/${suggestion.name} `;
       
       const newMessage = `${beforeAt}${mentionText}${afterSearch}`;
-      
-      // Add to mentioned entities
-      setMentionedEntities([...mentionedEntities, {
-        ...suggestion,
-        fullText: mentionText.trim()
-      }]);
-      
       setMessage(newMessage);
     }
   };
@@ -450,35 +345,13 @@ export function ChatInterface() {
         onClearChat={handleClearChat}
       />
       
-      <ScrollArea className="flex-1 p-4">
-        <div className="max-w-3xl mx-auto space-y-6">
-          {project.chatHistory.length === 0 ? (
-            <div className="text-center py-8 text-zinc-400">
-              <p className="text-lg font-medium mb-2">{`How can I help with "${currentBook.title}"?`}</p>
-              <p className="text-sm">Ask me to create characters, scenes, or help with your story.</p>
-            </div>
-          ) : (
-            project.chatHistory.map((msg, index) => (
-              <ChatMessage
-                key={msg.id}
-                message={msg}
-                currentBook={currentBook}
-                onCreateEntity={handleCreateEntity}
-                onUpdateEntity={handleUpdateEntity}
-                index={index}
-              />
-            ))
-          )}
-          <div ref={chatEndRef} />
-          {loading && (
-            <div className="flex items-center gap-2 text-zinc-400 animate-pulse">
-              <div className="w-2 h-2 rounded-full bg-current" />
-              <div className="w-2 h-2 rounded-full bg-current animation-delay-200" />
-              <div className="w-2 h-2 rounded-full bg-current animation-delay-400" />
-            </div>
-          )}
-        </div>
-      </ScrollArea>
+      <ChatMessageList
+        messages={project.chatHistory}
+        currentBook={currentBook}
+        onCreateEntity={handleCreateEntity}
+        onUpdateEntity={handleUpdateEntity}
+        loading={loading}
+      />
 
       <ChatInput 
         message={message}
@@ -488,6 +361,7 @@ export function ChatInterface() {
         mentionSearch={mentionSearch}
         mentionSuggestions={mentionSuggestions}
         onMentionSelect={handleMentionSelect}
+        currentBookId={currentBook.id}
       />
     </div>
   );

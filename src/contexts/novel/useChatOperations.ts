@@ -98,8 +98,6 @@ export function useChatOperations(
         };
       }
       
-      // Return the AI response but don't add it to chat history yet
-      // (that will be handled by the caller)
       if (data && data.text) {
         return {
           success: true,
@@ -121,24 +119,12 @@ export function useChatOperations(
       };
     }
   };
-  
-  const parseMentionsInMessage = (message: string) => {
-    const mentionRegex = /@(\w+)\/([A-Za-z0-9_-]+)/g;
-    const matches = Array.from(message.matchAll(mentionRegex));
-    
-    return matches.map((match) => ({
-      fullMatch: match[0],
-      type: match[1],
-      id: match[2]
-    }));
-  };
 
   return {
     addChatMessage,
     clearChatHistory,
     sendMessageToAI,
     associateChatWithEntity,
-    rollbackEntity,
-    parseMentionsInMessage
+    rollbackEntity
   };
 }

@@ -50,7 +50,7 @@ export function EntitySearchProvider({
   const [showMentionDialog, setShowMentionDialog] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   
-  // Wrapper for the search function that includes fuzzy matching
+  // Wrapper for the search function that includes improved fuzzy matching
   const searchEntities = (
     query: string,
     types?: Array<'character' | 'scene' | 'place' | 'page'>

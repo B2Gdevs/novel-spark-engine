@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
@@ -7,6 +8,18 @@ export interface TextareaProps
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, ...props }, ref) => {
+    // Automatically adjust textarea height based on content
+    const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+      const textarea = e.currentTarget;
+      
+      // Reset height first to get correct scrollHeight
+      textarea.style.height = 'auto';
+      
+      // Set height based on scrollHeight, with a minimum height
+      const newHeight = Math.max(80, Math.min(textarea.scrollHeight, 200));
+      textarea.style.height = `${newHeight}px`;
+    };
+    
     return (
       <textarea
         className={cn(
@@ -14,6 +27,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           className
         )}
         ref={ref}
+        onInput={handleInput}
         {...props}
       />
     )

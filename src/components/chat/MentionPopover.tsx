@@ -20,9 +20,10 @@ interface MentionPopoverProps {
     bookId?: string;
     bookTitle?: string;
   }) => void;
+  currentBookId?: string;
 }
 
-export function MentionPopover({ onSelectMention }: MentionPopoverProps) {
+export function MentionPopover({ onSelectMention, currentBookId }: MentionPopoverProps) {
   const { searchEntities } = useEntitySearch();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -78,6 +79,15 @@ export function MentionPopover({ onSelectMention }: MentionPopoverProps) {
     }
   };
   
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      if (results.length > 0) {
+        handleMentionSelect(results[0]);
+        e.preventDefault();
+      }
+    }
+  };
+  
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
@@ -106,16 +116,20 @@ export function MentionPopover({ onSelectMention }: MentionPopoverProps) {
               className="pl-8 bg-zinc-800 border-zinc-700"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
             />
           </div>
           
           <div className="mt-2">
             {results.length > 0 ? (
               <div className="max-h-60 overflow-y-auto">
-                {results.map((result) => (
+                {results.map((result, index) => (
                   <div
                     key={`${result.type}-${result.id}`}
-                    className="flex items-center p-2 hover:bg-zinc-800 rounded cursor-pointer"
+                    className={cn(
+                      "flex items-center p-2 hover:bg-zinc-800 rounded cursor-pointer",
+                      index === 0 ? "bg-zinc-800/50" : ""
+                    )}
                     onClick={() => handleMentionSelect(result)}
                   >
                     <span className={cn(
@@ -132,7 +146,7 @@ export function MentionPopover({ onSelectMention }: MentionPopoverProps) {
                           {result.type}
                         </Badge>
                       </div>
-                      {result.bookTitle && result.bookId && (
+                      {result.bookTitle && result.bookId && result.bookId !== currentBookId && (
                         <p className="text-xs text-zinc-400 truncate">
                           From: {result.bookTitle}
                         </p>
