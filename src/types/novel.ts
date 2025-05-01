@@ -76,6 +76,8 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  entityType?: string | null;
+  entityId?: string | null;
 }
 
 export interface Book {
@@ -102,4 +104,8 @@ export interface NovelProject {
   books: Book[];
   currentBookId: string | null;
   chatHistory: ChatMessage[];
+  currentChatContext?: {
+    entityType?: string | null;
+    entityId?: string | null;
+  };
 }
