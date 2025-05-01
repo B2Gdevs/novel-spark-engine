@@ -66,11 +66,18 @@ export function AppSidebar() {
     
     setHasActiveBook(bookExists);
     
+    // If we're on the home page, we should always show the "no book selected" state
+    if (location.pathname === "/") {
+      setHasActiveBook(false);
+    }
+    
     console.log("Sidebar state:", { 
       currentBookId: project.currentBookId,
       currentBook: currentBook,
       hasActiveBook: bookExists,
-      booksCount: project.books.length
+      booksCount: project.books.length,
+      pathname: location.pathname,
+      showingSidebarItems: hasActiveBook
     });
   }, [currentBook, project, location.pathname]);
 
@@ -128,15 +135,15 @@ export function AppSidebar() {
             <Button 
               variant="ghost"
               size="sm"
-              onClick={() => navigate("/billing")}
+              onClick={() => navigate("/")}
               className="flex items-center justify-start text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-md transition-colors w-full"
             >
-              <CreditCard className="h-5 w-5" />
+              <Library className="h-5 w-5" />
               <span className={cn(
                 "ml-3 transition-all duration-200",
                 expanded ? "opacity-100" : "opacity-0"
               )}>
-                Billing
+                Library
               </span>
             </Button>
             <div className="flex items-center p-1">

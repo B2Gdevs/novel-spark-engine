@@ -33,6 +33,5 @@ export interface NovelContextType {
   clearChatHistory: () => void;
   saveProject: () => void;
   loadProject: (project: NovelProject) => void;
-  addMockData: () => void;
   getLastModifiedItem: (bookId: string) => { type: string; id: string } | null;
 }

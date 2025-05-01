@@ -9,6 +9,7 @@ export function useBookOperations(initialProject: NovelProject, setProject: Reac
   
   // Update currentBook whenever initialProject changes
   useEffect(() => {
+    // Clear current book when on home page or when the current book doesn't exist
     const book = initialProject.currentBookId 
       ? initialProject.books.find(book => book.id === initialProject.currentBookId) || null
       : null;

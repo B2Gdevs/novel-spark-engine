@@ -16,9 +16,10 @@ export function HomePage() {
     // Check if we should show the welcome screen
     setShowWelcome(project.books.length === 0);
     
-    // Clear currentBookId if we're on the homepage and have no books
-    if (project.books.length === 0) {
-      console.log("No books found, clearing currentBookId");
+    // Always reset currentBookId when on the homepage 
+    // This ensures sidebar shows "Select a book" message
+    if (currentBook !== null) {
+      console.log("On HomePage, currentBook should be null");
     }
     
     console.log("HomePage state:", { 
@@ -26,32 +27,15 @@ export function HomePage() {
       booksCount: project.books.length,
       showWelcome 
     });
-  }, [project.books.length]);
+  }, [project.books.length, currentBook]);
   
   const handleAddNewBook = async () => {
     try {
-      // Insert a new book into Supabase
-      const { data: newBook, error } = await supabase
-        .from('books')
-        .insert([
-          {
-            title: "New Book",
-            description: "Start writing your new story...",
-            genre: "Fiction"
-          }
-        ])
-        .select()
-        .single();
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Add the book to local state
+      // Create a new book locally if Supabase integration is not set up
       addBook({
-        title: newBook.title,
-        description: newBook.description || "",
-        genre: newBook.genre || "Fiction",
+        title: "New Book",
+        description: "Start writing your new story...",
+        genre: "Fiction",
         characters: [],
         scenes: [],
         events: [],
@@ -83,17 +67,7 @@ export function HomePage() {
 
   const handleDeleteBook = async (bookId: string) => {
     try {
-      // Delete from Supabase first
-      const { error } = await supabase
-        .from('books')
-        .delete()
-        .eq('id', bookId);
-        
-      if (error) {
-        throw error;
-      }
-      
-      // Then update local state
+      // Delete the book locally
       deleteBook(bookId);
       
       // Show welcome screen if no books left
