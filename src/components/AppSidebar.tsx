@@ -56,13 +56,6 @@ export function AppSidebar() {
     }
   ];
 
-  // If no book is selected, don't render any sidebar content
-  if (!currentBook) {
-    return (
-      <div className="bg-zinc-900 border-r border-zinc-700 transition-all duration-300 ease-in-out w-0"></div>
-    );
-  }
-
   return (
     <div 
       className={cn(
@@ -77,23 +70,34 @@ export function AppSidebar() {
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
-                {bookSidebarItems.map((item, index) => (
-                  <SidebarMenuItem key={index}>
-                    <SidebarMenuButton
-                      onClick={item.action}
-                      tooltip={expanded ? undefined : item.tooltip}
-                      className="flex items-center justify-start p-3 w-full text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-md transition-colors"
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span className={cn(
-                        "ml-3 transition-all duration-200",
-                        expanded ? "opacity-100" : "opacity-0"
-                      )}>
-                        {item.label}
-                      </span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {currentBook ? (
+                  // Show book navigation items when a book is selected
+                  bookSidebarItems.map((item, index) => (
+                    <SidebarMenuItem key={index}>
+                      <SidebarMenuButton
+                        onClick={item.action}
+                        tooltip={expanded ? undefined : item.tooltip}
+                        className="flex items-center justify-start p-3 w-full text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-md transition-colors"
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span className={cn(
+                          "ml-3 transition-all duration-200",
+                          expanded ? "opacity-100" : "opacity-0"
+                        )}>
+                          {item.label}
+                        </span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))
+                ) : (
+                  // Show a message when no book is selected
+                  <div className={cn(
+                    "text-zinc-400 p-3 text-sm text-center",
+                    expanded ? "opacity-100" : "opacity-0"
+                  )}>
+                    Select a book to see options
+                  </div>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
