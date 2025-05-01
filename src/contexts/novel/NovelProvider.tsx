@@ -1,5 +1,5 @@
 
-import { useContext, useState, useEffect, ReactNode } from "react";
+import { useContext, ReactNode, useEffect } from "react";
 import { NovelContextType } from "./types";
 import { useBookOperations } from "./useBookOperations";
 import { useCharacterOperations } from "./useCharacterOperations";
@@ -9,7 +9,6 @@ import { usePageOperations } from "./usePageOperations";
 import { useNoteOperations } from "./useNoteOperations";
 import { useChatOperations } from "./useChatOperations";
 import { useStorage } from "./useStorage";
-import { NovelProject } from "@/types/novel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import NovelContext from "./NovelContext";
@@ -73,58 +72,15 @@ export function NovelProvider({ children }: { children: ReactNode }) {
     fetchBooks();
   }, [setProject]);
 
-  const { 
-    currentBook, 
-    addBook, 
-    deleteBook, 
-    switchBook, 
-    getLastModifiedItem 
-  } = useBookOperations(project, setProject);
-  
-  const { 
-    addCharacter, 
-    updateCharacter, 
-    deleteCharacter, 
-    getCharacter 
-  } = useCharacterOperations(project, setProject);
-  
-  const { 
-    addScene, 
-    updateScene, 
-    deleteScene, 
-    getScene 
-  } = useSceneOperations(project, setProject);
-  
-  const { 
-    addEvent, 
-    updateEvent, 
-    deleteEvent, 
-    getEvent 
-  } = useEventOperations(project, setProject);
-  
-  const { 
-    addPage, 
-    updatePage, 
-    deletePage, 
-    getPage 
-  } = usePageOperations(project, setProject);
-  
-  const { 
-    addNote, 
-    updateNote, 
-    deleteNote, 
-    getNote 
-  } = useNoteOperations(project, setProject);
-  
-  const { 
-    addChatMessage, 
-    clearChatHistory 
-  } = useChatOperations(setProject);
-  
-  const { 
-    saveProject, 
-    loadProject 
-  } = useStorage(project, setProject, apiKey, setApiKey);
+  // Get all operations
+  const { currentBook, addBook, deleteBook, switchBook, getLastModifiedItem } = useBookOperations(project, setProject);
+  const { addCharacter, updateCharacter, deleteCharacter, getCharacter } = useCharacterOperations(project, setProject);
+  const { addScene, updateScene, deleteScene, getScene } = useSceneOperations(project, setProject);
+  const { addEvent, updateEvent, deleteEvent, getEvent } = useEventOperations(project, setProject);
+  const { addPage, updatePage, deletePage, getPage } = usePageOperations(project, setProject);
+  const { addNote, updateNote, deleteNote, getNote } = useNoteOperations(project, setProject);
+  const { addChatMessage, clearChatHistory } = useChatOperations(setProject);
+  const { saveProject, loadProject } = useStorage(project, setProject, apiKey, setApiKey);
 
   // Log the current state for debugging
   useEffect(() => {
