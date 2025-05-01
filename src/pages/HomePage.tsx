@@ -10,6 +10,7 @@ import { BookOpen } from "lucide-react";
 export function HomePage() {
   const { project, currentBook, addBook, switchBook, deleteBook, getLastModifiedItem } = useNovel();
   const [showWelcome, setShowWelcome] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -30,9 +31,9 @@ export function HomePage() {
   }, [project.books.length, currentBook]);
   
   const handleAddNewBook = async () => {
+    setIsLoading(true);
     try {
-      // Create a new book locally if Supabase integration is not set up
-      addBook({
+      await addBook({
         title: "New Book",
         description: "Start writing your new story...",
         genre: "Fiction",
@@ -44,10 +45,11 @@ export function HomePage() {
       });
       
       setShowWelcome(false);
-      toast.success("New book created successfully");
     } catch (error) {
       console.error("Error creating new book:", error);
       toast.error("Failed to create new book");
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -67,18 +69,14 @@ export function HomePage() {
 
   const handleDeleteBook = async (bookId: string) => {
     try {
-      // Delete the book locally
-      deleteBook(bookId);
+      await deleteBook(bookId);
       
       // Show welcome screen if no books left
       if (project.books.length <= 1) {
         setShowWelcome(true);
       }
-      
-      toast.success("Book deleted successfully");
     } catch (error) {
       console.error("Error deleting book:", error);
-      toast.error("Failed to delete book");
     }
   };
 
@@ -92,7 +90,11 @@ export function HomePage() {
             <p className="text-zinc-400 mb-8 max-w-lg">Start by creating your first book</p>
             
             <div className="w-64">
-              <BookCard isNewBookCard onCreateNew={handleAddNewBook} />
+              <BookCard 
+                isNewBookCard 
+                onCreateNew={handleAddNewBook} 
+                isLoading={isLoading}
+              />
             </div>
           </div>
         ) : (
@@ -114,6 +116,7 @@ export function HomePage() {
               <BookCard
                 isNewBookCard
                 onCreateNew={handleAddNewBook}
+                isLoading={isLoading}
               />
             </div>
           </>

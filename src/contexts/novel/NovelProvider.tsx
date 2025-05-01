@@ -10,6 +10,8 @@ import { useNoteOperations } from "./useNoteOperations";
 import { useChatOperations } from "./useChatOperations";
 import { useStorage } from "./useStorage";
 import { NovelProject } from "@/types/novel";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const defaultProject: NovelProject = {
   books: [],
@@ -51,6 +53,62 @@ export function NovelProvider({ children }: { children: ReactNode }) {
       return "";
     }
   });
+
+  // Fetch books from Supabase on initialization
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('books')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          setProject(prev => {
+            const transformedBooks = data.map(dbBook => {
+              // Find if we already have this book in local state to preserve its entities
+              const existingBook = prev.books.find(book => book.id === dbBook.id);
+              
+              return {
+                id: dbBook.id,
+                title: dbBook.title,
+                description: dbBook.description || "",
+                genre: dbBook.genre || "Fiction",
+                characters: existingBook?.characters || [],
+                scenes: existingBook?.scenes || [],
+                events: existingBook?.events || [],
+                notes: existingBook?.notes || [],
+                pages: existingBook?.pages || [],
+                createdAt: dbBook.created_at,
+                updatedAt: dbBook.updated_at
+              };
+            });
+            
+            console.log("Books loaded from Supabase:", transformedBooks);
+            
+            return {
+              ...prev,
+              books: transformedBooks,
+              // If we previously had a currentBookId but it's no longer in the books array
+              // then set currentBookId to null
+              currentBookId: transformedBooks.some(book => book.id === prev.currentBookId) 
+                ? prev.currentBookId 
+                : null
+            };
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching books from Supabase:", error);
+        toast.error("Failed to load books from database");
+      }
+    };
+    
+    fetchBooks();
+  }, []);
 
   const { 
     currentBook, 
