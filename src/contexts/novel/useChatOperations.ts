@@ -11,7 +11,7 @@ export function useChatOperations(
     const newMessage: ChatMessage = {
       ...message,
       id: uuidv4(),
-      timestamp: Date.now(), // Use number timestamp as per the type
+      timestamp: Date.now(),
       entityType: message.entityType || null,
       entityId: message.entityId || null
     };

@@ -7,6 +7,7 @@ import { useNovel } from "@/contexts/NovelContext";
 import { Send, Check, X, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Character } from "@/types/novel";
+import { toast } from "sonner";
 
 export function ChatInterface() {
   const { 
@@ -41,6 +42,16 @@ export function ChatInterface() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [project.chatHistory]);
 
+  useEffect(() => {
+    if (project.currentChatContext) {
+      setLinkedEntityType(project.currentChatContext.entityType);
+      setLinkedEntityId(project.currentChatContext.entityId);
+    } else {
+      setLinkedEntityType(null);
+      setLinkedEntityId(null);
+    }
+  }, [project.currentChatContext]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim() || loading || !currentBook) return;
@@ -51,8 +62,13 @@ export function ChatInterface() {
       // Add user message to chat history
       addChatMessage({
         role: 'user',
-        content: message
+        content: message,
+        entityType: linkedEntityType,
+        entityId: linkedEntityId
       });
+      
+      const currentMessage = message;
+      setMessage("");
       
       // Create system prompt based on current book context and any linked entity
       let systemPrompt = `
@@ -89,22 +105,28 @@ export function ChatInterface() {
         // Similar for other entity types
       }
       
-      // Send message to AI
-      const currentMessage = message;
-      setMessage("");
-      
+      // Send message to AI and wait for response
       const result = await sendMessageToAI(currentMessage, project.chatHistory, systemPrompt);
       
       if (!result.success) {
         console.error("Error from AI:", result.error);
+        toast.error(`AI error: ${result.error || "Unknown error"}`);
         return;
       }
+
+      // Add AI response to chat
+      addChatMessage({
+        role: 'assistant',
+        content: result.message || "I'm sorry, I couldn't process your request.",
+        entityType: linkedEntityType,
+        entityId: linkedEntityId
+      });
       
       // Process AI response for entity creation or updates
       const response = result.message || "";
       
       // Check if the response contains character creation intent
-      if ((response.includes("create a character") || response.includes("new character")) && 
+      if ((response.toLowerCase().includes("create a character") || response.toLowerCase().includes("new character")) && 
           !response.toLowerCase().includes("don't create") && 
           !response.toLowerCase().includes("do not create")) {
         const nameMatch = response.match(/name:\s*([^,\n]+)/i);
@@ -166,6 +188,7 @@ export function ChatInterface() {
       
     } catch (error) {
       console.error("Error sending message:", error);
+      toast.error("Failed to communicate with AI");
     } finally {
       setLoading(false);
     }
@@ -180,7 +203,9 @@ export function ChatInterface() {
           const newCharacterId = addCharacter(pendingEntity.data);
           addChatMessage({
             role: 'assistant',
-            content: `I've created the character ${pendingEntity.data.name} for you!`
+            content: `I've created the character ${pendingEntity.data.name} for you!`,
+            entityType: 'character',
+            entityId: newCharacterId
           });
           
           // Associate this chat with the new character

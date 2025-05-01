@@ -17,11 +17,28 @@ serve(async (req) => {
     // Get OpenAI API key from environment variables
     const apiKey = Deno.env.get('OPENAI_API_KEY');
     if (!apiKey) {
-      throw new Error('OpenAI API key not found in environment variables');
+      console.error('OpenAI API key not found in environment variables');
+      return new Response(JSON.stringify({ 
+        text: "Error: OpenAI API key not configured in Supabase Edge Function secrets", 
+        success: false 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      });
     }
 
     // Parse request body
     const { messages, systemPrompt } = await req.json();
+    
+    if (!messages || !Array.isArray(messages)) {
+      return new Response(JSON.stringify({ 
+        text: "Error: Invalid messages format", 
+        success: false 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400
+      });
+    }
     
     // Format messages for OpenAI
     const formattedMessages = [
@@ -32,7 +49,7 @@ serve(async (req) => {
       }))
     ];
 
-    console.log('Sending request to OpenAI with messages:', JSON.stringify(formattedMessages.slice(0, 2)));
+    console.log('Sending request to OpenAI with messages:', JSON.stringify(formattedMessages[0]));
 
     // Call OpenAI API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -52,7 +69,13 @@ serve(async (req) => {
     if (!response.ok) {
       const errorData = await response.json();
       console.error('OpenAI API error:', errorData);
-      throw new Error(errorData.error?.message || 'Failed to get response from OpenAI');
+      return new Response(JSON.stringify({ 
+        text: `Error: ${errorData.error?.message || 'Failed to get response from OpenAI'}`, 
+        success: false 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: response.status
+      });
     }
 
     const data = await response.json();

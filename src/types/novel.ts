@@ -1,4 +1,3 @@
-
 export interface Character {
   id: string;
   name: string;
@@ -73,7 +72,7 @@ export interface Note {
 
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: number;
   entityType?: string | null;
@@ -105,7 +104,7 @@ export interface NovelProject {
   currentBookId: string | null;
   chatHistory: ChatMessage[];
   currentChatContext?: {
-    entityType?: string | null;
-    entityId?: string | null;
-  };
+    entityType: string;
+    entityId: string;
+  } | null;
 }
