@@ -25,6 +25,12 @@ export function ChatInterface() {
     setLoading(true);
     
     try {
+      // Add user message to chat history
+      addChatMessage({
+        role: 'user',
+        content: message
+      });
+      
       // Create system prompt based on current book context
       const systemPrompt = `
         You are an AI assistant specialized in helping writers develop their novels.
@@ -40,11 +46,18 @@ export function ChatInterface() {
         - ${currentBook.notes.length} notes` : 'The user has not selected a specific book to work on yet.'}
       `;
       
-      await sendMessageToAI(message, project.chatHistory, systemPrompt);
+      // Send message to AI
+      const currentMessage = message;
+      setMessage("");
+      
+      const result = await sendMessageToAI(currentMessage, project.chatHistory, systemPrompt);
+      
+      if (!result.success) {
+        console.error("Error from AI:", result.error);
+      }
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
-      setMessage("");
       setLoading(false);
     }
   };

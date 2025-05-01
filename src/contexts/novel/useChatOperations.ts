@@ -1,27 +1,27 @@
 
-import { v4 as uuidv4 } from "uuid";
-import { toast } from "sonner";
-import { ChatMessage, NovelProject } from "@/types/novel";
-import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from 'uuid';
+import { ChatMessage, NovelProject } from '@/types/novel';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-export function useChatOperations(setProject: React.Dispatch<React.SetStateAction<NovelProject>>) {
+export function useChatOperations(
+  setProject: React.Dispatch<React.SetStateAction<NovelProject>>
+) {
   const addChatMessage = (message: Omit<ChatMessage, "id" | "timestamp">) => {
-    const newMessage = { 
-      ...message, 
+    const newMessage = {
+      ...message,
       id: uuidv4(),
-      timestamp: Date.now()
+      timestamp: new Date().toISOString()
     };
     
-    setProject((prev) => ({
+    setProject(prev => ({
       ...prev,
       chatHistory: [...prev.chatHistory, newMessage]
     }));
-
-    return newMessage;
   };
-
+  
   const clearChatHistory = () => {
-    setProject((prev) => ({
+    setProject(prev => ({
       ...prev,
       chatHistory: []
     }));
@@ -29,51 +29,66 @@ export function useChatOperations(setProject: React.Dispatch<React.SetStateActio
   };
 
   const sendMessageToAI = async (
-    userMessage: string, 
+    userMessage: string,
     chatHistory: ChatMessage[],
     systemPrompt?: string
-  ) => {
-    // Add user message to chat
-    const newUserMessage = addChatMessage({
-      role: "user",
-      content: userMessage
-    });
-    
+  ): Promise<{ success: boolean; message?: string; error?: string }> => {
     try {
-      // Call Supabase edge function
+      // Format recent messages (last 10) for context
+      const recentMessages = chatHistory
+        .slice(-10)
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
+      
+      // Add the new user message
+      recentMessages.push({
+        role: 'user',
+        content: userMessage
+      });
+
+      // Call our Supabase Edge Function
       const { data, error } = await supabase.functions.invoke('chat-assistant', {
         body: {
-          messages: [...chatHistory, newUserMessage],
+          messages: recentMessages,
           systemPrompt
         }
       });
-
+      
       if (error) {
-        throw new Error(error.message);
+        console.error('Error calling chat-assistant function:', error);
+        toast.error("Failed to get AI response");
+        return {
+          success: false,
+          error: error.message
+        };
       }
-
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to get response');
+      
+      // Add AI response to chat history
+      if (data && data.text) {
+        addChatMessage({
+          role: 'assistant',
+          content: data.text
+        });
+        
+        return {
+          success: true,
+          message: data.text
+        };
+      } else {
+        toast.error("Received empty response from AI");
+        return {
+          success: false,
+          error: "Received empty response"
+        };
       }
-
-      // Add AI response to chat
-      addChatMessage({
-        role: "assistant",
-        content: data.text
-      });
-
-      return {
-        success: true,
-        message: data.text
-      };
     } catch (error) {
-      console.error("Error sending message to AI:", error);
-      
-      toast.error(`Failed to get AI response: ${error.message}`);
-      
+      console.error('Error in sendMessageToAI:', error);
+      toast.error("Failed to communicate with AI assistant");
       return {
         success: false,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       };
     }
   };

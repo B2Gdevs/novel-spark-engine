@@ -15,7 +15,7 @@ import NovelContext from "./NovelContext";
 import { useProjectState } from "./useProjectState";
 
 export function NovelProvider({ children }: { children: ReactNode }) {
-  const { project, setProject, apiKey, setApiKey } = useProjectState();
+  const { project, setProject } = useProjectState();
 
   // Fetch books from Supabase on initialization
   useEffect(() => {
@@ -80,7 +80,7 @@ export function NovelProvider({ children }: { children: ReactNode }) {
   const { addPage, updatePage, deletePage, getPage } = usePageOperations(project, setProject);
   const { addNote, updateNote, deleteNote, getNote } = useNoteOperations(project, setProject);
   const { addChatMessage, clearChatHistory, sendMessageToAI } = useChatOperations(setProject);
-  const { saveProject, loadProject } = useStorage(project, setProject, apiKey, setApiKey);
+  const { saveProject, loadProject } = useStorage(project, setProject);
 
   // Log the current state for debugging
   useEffect(() => {
@@ -94,8 +94,6 @@ export function NovelProvider({ children }: { children: ReactNode }) {
   const contextValue: NovelContextType = {
     project,
     currentBook,
-    apiKey,
-    setApiKey,
     addBook,
     deleteBook,
     switchBook,

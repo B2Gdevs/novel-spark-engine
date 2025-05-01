@@ -4,9 +4,7 @@ import { NovelProject } from "@/types/novel";
 
 export function useStorage(
   project: NovelProject,
-  setProject: React.Dispatch<React.SetStateAction<NovelProject>>,
-  apiKey: string,
-  setApiKey: React.Dispatch<React.SetStateAction<string>>
+  setProject: React.Dispatch<React.SetStateAction<NovelProject>>
 ) {
   const saveProject = () => {
     try {

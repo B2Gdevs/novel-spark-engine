@@ -1,10 +1,9 @@
+
 import { Book, Character, Scene, Event, Note, ChatMessage, NovelProject, Page } from "@/types/novel";
 
 export interface NovelContextType {
   project: NovelProject;
   currentBook: Book | null;
-  apiKey: string;
-  setApiKey: (key: string) => void;
   addBook: (book: Omit<Book, "id">) => void;
   deleteBook: (id: string) => void;
   switchBook: (id: string) => void;

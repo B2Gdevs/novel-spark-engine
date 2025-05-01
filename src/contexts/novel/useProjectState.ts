@@ -32,24 +32,6 @@ export function useProjectState() {
     }
   });
 
-  const [apiKey, setApiKey] = useState(() => {
-    try {
-      const savedKey = localStorage.getItem("openaiApiKey");
-      return savedKey || "";
-    } catch (e) {
-      console.error("Error loading API key from localStorage:", e);
-      return "";
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("openaiApiKey", apiKey);
-    } catch (e) {
-      console.error("Error saving API key to localStorage:", e);
-    }
-  }, [apiKey]);
-
   useEffect(() => {
     try {
       localStorage.setItem("novelProject", JSON.stringify(project));
@@ -60,8 +42,6 @@ export function useProjectState() {
 
   return {
     project,
-    setProject,
-    apiKey,
-    setApiKey
+    setProject
   };
 }
