@@ -145,8 +145,11 @@ export function HomePage() {
         )}
       </div>
 
-      {/* Trash zone for drag-to-delete */}
-      <TrashZone isActive={!!draggedBookId} onDrop={handleTrashDrop} />
+      {/* Always visible trash zone */}
+      <TrashZone 
+        onDrop={handleTrashDrop}
+        draggedItemExists={!!draggedBookId}
+      />
 
       {/* Confirmation dialog */}
       <AlertDialog open={!!confirmDeleteBook} onOpenChange={() => setConfirmDeleteBook(null)}>

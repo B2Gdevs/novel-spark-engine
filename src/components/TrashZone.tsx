@@ -4,11 +4,11 @@ import { Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TrashZoneProps {
-  isActive: boolean;
   onDrop: () => void;
+  draggedItemExists: boolean;
 }
 
-export function TrashZone({ isActive, onDrop }: TrashZoneProps) {
+export function TrashZone({ onDrop, draggedItemExists }: TrashZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -26,15 +26,15 @@ export function TrashZone({ isActive, onDrop }: TrashZoneProps) {
     onDrop();
   };
 
-  if (!isActive) return null;
-
   return (
     <div
       className={cn(
         "fixed bottom-10 right-10 w-20 h-20 rounded-full flex items-center justify-center transition-all",
         isDragOver 
           ? "bg-red-600 scale-125 shadow-lg" 
-          : "bg-zinc-800 border-2 border-dashed border-zinc-600",
+          : draggedItemExists
+            ? "bg-zinc-800 border-2 border-zinc-600"
+            : "bg-zinc-800/60 border border-zinc-700/50",
       )}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -44,7 +44,7 @@ export function TrashZone({ isActive, onDrop }: TrashZoneProps) {
         <Trash2 
           className={cn(
             "w-8 h-8 transition-all", 
-            isDragOver ? "text-white" : "text-zinc-400"
+            isDragOver ? "text-white" : draggedItemExists ? "text-zinc-400" : "text-zinc-500/70"
           )} 
         />
         {isDragOver && (

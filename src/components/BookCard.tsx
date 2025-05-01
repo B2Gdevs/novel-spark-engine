@@ -1,3 +1,4 @@
+
 import { Book } from "@/types/novel";
 import { BookOpen, Trash2, PlusCircle, Loader2 } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
@@ -25,6 +26,7 @@ export function BookCard({
   setDraggedBookId
 }: BookCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Handle the "New Book" card
   if (isNewBookCard) {
@@ -78,7 +80,7 @@ export function BookCard({
 
   const handleDeleteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onDelete) {
+    if (onDelete && !isDeleting) {
       try {
         setIsDeleting(true);
         await onDelete(book.id);
@@ -107,7 +109,26 @@ export function BookCard({
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Trash icon in top right corner that appears on hover */}
+      {isHovered && !isDeleting && (
+        <div 
+          className="absolute top-3 right-3 p-2 bg-zinc-800/80 hover:bg-red-900/80 rounded-full transition-colors z-10"
+          onClick={handleDeleteClick}
+        >
+          <Trash2 className="h-4 w-4 text-zinc-400 hover:text-white" />
+        </div>
+      )}
+      
+      {/* Loading indicator when deleting */}
+      {isDeleting && (
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
+          <Loader2 className="h-8 w-8 text-red-500 animate-spin" />
+        </div>
+      )}
+
       <CardContent className="p-6 flex flex-col items-center">
         {getBookIcon()}
         
@@ -133,24 +154,6 @@ export function BookCard({
         <div className="mt-2 text-xs text-zinc-500 italic">
           Drag to trash bin to delete
         </div>
-        
-        {/* Keeping the old delete button as a fallback but visually less prominent */}
-        <Button 
-          className="w-full bg-transparent hover:bg-red-900/30 text-red-500 border border-red-800/30 mt-2 opacity-60"
-          onClick={handleDeleteClick}
-          disabled={isDeleting}
-          size="sm"
-        >
-          {isDeleting ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Deleting...
-            </>
-          ) : (
-            <>
-              <Trash2 className="h-4 w-4 mr-2" /> Delete Book
-            </>
-          )}
-        </Button>
       </CardContent>
     </Card>
   );
