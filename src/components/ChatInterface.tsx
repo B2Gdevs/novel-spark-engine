@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +8,7 @@ import { Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ChatInterface() {
-  const { project, addChatMessage } = useNovel();
+  const { project, addChatMessage, sendMessageToAI, currentBook } = useNovel();
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -17,34 +18,35 @@ export function ChatInterface() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [project.chatHistory]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim() || loading) return;
-
-    addChatMessage({
-      role: "user",
-      content: message
-    });
     
-    setMessage("");
     setLoading(true);
     
-    setTimeout(() => {
-      const responses = [
-        "I've analyzed your character. Try giving them a more complex motivation that contradicts their stated goals.",
-        "Your scene structure is solid. Consider adding a moment where the character reflects on their past choices.",
-        "I've noted the connection between your characters. This creates an interesting dynamic for later conflict.",
-        "The setting you've created has great potential. What historical events shaped this world?",
-        "Consider how your protagonist's flaw directly leads to the central conflict of your story."
-      ];
+    try {
+      // Create system prompt based on current book context
+      const systemPrompt = `
+        You are an AI assistant specialized in helping writers develop their novels.
+        You're helpful, creative, and supportive. You focus on craft, world building, character development, and plot coherence.
+        
+        When asked about writing topics, you provide constructive feedback and creative ideas.
+        When the user references characters or scenes with @ symbols, assist them in developing those elements.
+        
+        ${currentBook ? `The user is currently working on a book titled "${currentBook.title}" with:
+        - ${currentBook.characters.length} characters
+        - ${currentBook.scenes.length} scenes
+        - ${currentBook.events.length} events
+        - ${currentBook.notes.length} notes` : 'The user has not selected a specific book to work on yet.'}
+      `;
       
-      addChatMessage({
-        role: "assistant",
-        content: responses[Math.floor(Math.random() * responses.length)]
-      });
-      
+      await sendMessageToAI(message, project.chatHistory, systemPrompt);
+    } catch (error) {
+      console.error("Error sending message:", error);
+    } finally {
+      setMessage("");
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

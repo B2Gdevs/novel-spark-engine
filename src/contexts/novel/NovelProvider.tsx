@@ -79,7 +79,7 @@ export function NovelProvider({ children }: { children: ReactNode }) {
   const { addEvent, updateEvent, deleteEvent, getEvent } = useEventOperations(project, setProject);
   const { addPage, updatePage, deletePage, getPage } = usePageOperations(project, setProject);
   const { addNote, updateNote, deleteNote, getNote } = useNoteOperations(project, setProject);
-  const { addChatMessage, clearChatHistory } = useChatOperations(setProject);
+  const { addChatMessage, clearChatHistory, sendMessageToAI } = useChatOperations(setProject);
   const { saveProject, loadProject } = useStorage(project, setProject, apiKey, setApiKey);
 
   // Log the current state for debugging
@@ -121,10 +121,11 @@ export function NovelProvider({ children }: { children: ReactNode }) {
     getNote,
     addChatMessage,
     clearChatHistory,
+    sendMessageToAI,
     saveProject,
     loadProject,
     getLastModifiedItem,
-    setProject,  // Expose setProject
+    setProject,
   };
 
   return (

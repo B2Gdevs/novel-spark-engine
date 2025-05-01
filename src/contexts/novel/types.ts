@@ -1,4 +1,3 @@
-
 import { Book, Character, Scene, Event, Note, ChatMessage, NovelProject, Page } from "@/types/novel";
 
 export interface NovelContextType {
@@ -31,6 +30,11 @@ export interface NovelContextType {
   getNote: (id: string) => Note | undefined;
   addChatMessage: (message: Omit<ChatMessage, "id" | "timestamp">) => void;
   clearChatHistory: () => void;
+  sendMessageToAI: (userMessage: string, chatHistory: ChatMessage[], systemPrompt?: string) => Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+  }>;
   saveProject: () => void;
   loadProject: (project: NovelProject) => void;
   getLastModifiedItem: (bookId: string) => { type: string; id: string } | null;
