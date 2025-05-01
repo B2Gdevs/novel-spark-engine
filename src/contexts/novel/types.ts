@@ -1,4 +1,3 @@
-
 import { Book, Character, Scene, Event, Note, ChatMessage, NovelProject, Page, Place } from "@/types/novel";
 
 export interface NovelContextType {
@@ -44,11 +43,19 @@ export interface NovelContextType {
   setProject: React.Dispatch<React.SetStateAction<NovelProject>>;
   associateChatWithEntity: (entityType: string, entityId: string) => void;
   rollbackEntity: (entityType: string, entityId: string, version: string) => void;
-  findEntitiesByPartialName: (partialName: string, entityTypes: Array<'character' | 'scene' | 'place' | 'page'>) => Array<{
+  findEntitiesByPartialName: (
+    partialName: string,
+    entityTypes: Array<'character' | 'scene' | 'place' | 'page'>,
+    includeAllBooks?: boolean
+  ) => Array<{
     type: 'character' | 'scene' | 'place' | 'page';
     id: string;
     name: string;
     description?: string;
+    bookId?: string;
+    bookTitle?: string;
   }>;
-  getEntityInfo: (entityType: string, entityId: string) => any;
+  getEntityInfo: (entityType: string, entityId: string, bookId?: string) => any;
+  getAllBooks: () => Book[];
+  generateBookSummary: (bookId: string) => Promise<string | null>;
 }

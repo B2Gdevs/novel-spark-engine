@@ -2,15 +2,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send } from "lucide-react";
+import { Send, AtSign } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { MentionPopover } from './MentionPopover';
 
 interface MentionSuggestion {
   type: 'character' | 'scene' | 'place' | 'page';
   id: string;
   name: string;
   description?: string;
+  bookId?: string;
+  bookTitle?: string;
 }
 
 interface ChatInputProps {
@@ -37,9 +40,12 @@ export function ChatInput({
   const inputRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   
+  // Active mentions that have been inserted
+  const [activeMentions, setActiveMentions] = useState<MentionSuggestion[]>([]);
+  
   // Show mentions popover when @ is typed and there's a search term
   useEffect(() => {
-    if (mentionSearch && mentionSearch.length >= 2) {
+    if (mentionSearch && mentionSearch.length >= 1) {
       setShowMentions(true);
     } else {
       setShowMentions(false);
@@ -51,6 +57,11 @@ export function ChatInput({
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       onSubmit(e);
+    }
+    
+    // Handle @ key for showing entity selector
+    if (e.key === "@") {
+      // No need to prevent default as we want the @ to appear
     }
     
     // Handle arrow keys for mention selection
@@ -71,15 +82,94 @@ export function ChatInput({
     onMentionSelect(suggestion);
     setShowMentions(false);
     
+    // Add to active mentions
+    if (!activeMentions.find(m => m.id === suggestion.id && m.type === suggestion.type)) {
+      setActiveMentions([...activeMentions, suggestion]);
+    }
+    
     // Focus back on textarea after selection
     setTimeout(() => {
       textareaRef.current?.focus();
     }, 0);
   };
+  
+  const handleMentionViaPopover = (suggestion: MentionSuggestion) => {
+    // Format based on whether there's a book reference needed
+    const mentionText = suggestion.bookId && suggestion.bookId !== (inputRef.current?.dataset.currentBookId || '')
+      ? `@${suggestion.bookTitle}/${suggestion.type}/${suggestion.name} `
+      : `@${suggestion.type}/${suggestion.name} `;
+    
+    // Insert at cursor position
+    const textarea = textareaRef.current;
+    if (textarea) {
+      const startPos = textarea.selectionStart;
+      const endPos = textarea.selectionEnd;
+      const textBefore = message.substring(0, startPos);
+      const textAfter = message.substring(endPos);
+      
+      setMessage(textBefore + mentionText + textAfter);
+      
+      // Add to active mentions
+      if (!activeMentions.find(m => m.id === suggestion.id && m.type === suggestion.type)) {
+        setActiveMentions([...activeMentions, suggestion]);
+      }
+      
+      // Focus and set cursor position after the inserted text
+      setTimeout(() => {
+        textarea.focus();
+        const newCursorPos = startPos + mentionText.length;
+        textarea.selectionStart = newCursorPos;
+        textarea.selectionEnd = newCursorPos;
+      }, 0);
+    }
+  };
 
   return (
     <form onSubmit={onSubmit} className="p-4 border-t border-zinc-800">
-      <div ref={inputRef} className="relative max-w-3xl mx-auto">
+      <div 
+        ref={inputRef} 
+        className="relative max-w-3xl mx-auto"
+        data-current-book-id={inputRef.current?.dataset.currentBookId || ''}
+      >
+        <div className="flex items-center mb-1 space-x-1">
+          <MentionPopover onSelectMention={handleMentionViaPopover} />
+          
+          {activeMentions.length > 0 && (
+            <div className="flex items-center flex-wrap gap-1">
+              {activeMentions.slice(0, 3).map((mention) => (
+                <div 
+                  key={`${mention.type}-${mention.id}`}
+                  className={cn(
+                    "px-2 py-0.5 text-xs rounded-full flex items-center space-x-1",
+                    mention.type === 'character' ? "bg-purple-900/50 text-purple-200" :
+                    mention.type === 'scene' ? "bg-blue-900/50 text-blue-200" :
+                    mention.type === 'place' ? "bg-green-900/50 text-green-200" :
+                    "bg-amber-900/50 text-amber-200"
+                  )}
+                >
+                  <span>{mention.name}</span>
+                </div>
+              ))}
+              {activeMentions.length > 3 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="bg-zinc-800 text-xs px-2 py-0.5 rounded-full">
+                      +{activeMentions.length - 3} more
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="text-sm">
+                      {activeMentions.slice(3).map((mention, i) => (
+                        <div key={i}>{mention.name} ({mention.type})</div>
+                      ))}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )}
+        </div>
+        
         <Textarea
           ref={textareaRef}
           value={message}
@@ -120,7 +210,12 @@ export function ChatInput({
                       "bg-amber-500"
                     )}/>
                     <div className="flex flex-col">
-                      <span className="font-medium text-white">@{suggestion.type}/{suggestion.name}</span>
+                      <span className="font-medium text-white">
+                        {suggestion.bookTitle && suggestion.bookId !== inputRef.current?.dataset.currentBookId 
+                          ? `@${suggestion.bookTitle}/${suggestion.type}/${suggestion.name}`
+                          : `@${suggestion.type}/${suggestion.name}`
+                        }
+                      </span>
                       {suggestion.description && (
                         <span className="text-xs text-zinc-400 truncate max-w-80">
                           {suggestion.description}

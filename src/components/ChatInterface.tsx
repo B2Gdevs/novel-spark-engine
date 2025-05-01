@@ -1,11 +1,13 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useNovel } from "@/contexts/NovelContext";
+import { useNovel } from "@/contexts/novel/NovelContext";
 import { ChatMessage as ChatMessageType } from "@/types/novel";
 import { toast } from "sonner";
 import { ChatHeader } from './chat/ChatHeader';
 import { ChatMessage } from './chat/ChatMessage';
 import { ChatInput } from './chat/ChatInput';
+import { useEntitySearch } from "@/contexts/novel/provider/EntitySearchProvider";
 
 export function ChatInterface() {
   const { 
@@ -24,9 +26,11 @@ export function ChatInterface() {
     addPlace,
     updatePlace,
     associateChatWithEntity,
-    findEntitiesByPartialName,
-    getEntityInfo
+    getEntityInfo,
+    getAllBooks
   } = useNovel();
+  
+  const { searchEntities } = useEntitySearch();
   
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,12 +44,16 @@ export function ChatInterface() {
     id: string;
     name: string;
     description?: string;
+    bookId?: string;
+    bookTitle?: string;
   }>>([]);
   const [mentionedEntities, setMentionedEntities] = useState<Array<{
     type: 'character' | 'scene' | 'place' | 'page';
     id: string;
     name: string;
     fullText: string;
+    bookId?: string;
+    bookTitle?: string;
   }>>([]);
   
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -64,7 +72,7 @@ export function ChatInterface() {
     }
   }, [project.currentChatContext]);
 
-  // Effect to watch for @ mentions in the message
+  // Enhanced effect to watch for @ mentions in the message
   useEffect(() => {
     const atIndex = message.lastIndexOf('@');
     
@@ -72,45 +80,20 @@ export function ChatInterface() {
       // Find the part of the message after the last @
       const afterAt = message.substring(atIndex + 1);
       
-      // If there's a slash, extract the entity type and search term
-      const slashIndex = afterAt.indexOf('/');
-      
-      if (slashIndex !== -1) {
-        const entityType = afterAt.substring(0, slashIndex);
-        const searchTerm = afterAt.substring(slashIndex + 1);
-        
-        // Only search if we have a valid entity type and search term
-        if (['character', 'scene', 'place', 'page'].includes(entityType) && searchTerm.length >= 2) {
-          const suggestions = findEntitiesByPartialName(
-            searchTerm, 
-            [entityType as 'character' | 'scene' | 'place' | 'page']
-          );
-          setMentionSuggestions(suggestions);
-          setMentionSearch(searchTerm);
-        } else {
-          setMentionSuggestions([]);
-          setMentionSearch("");
-        }
+      // Check if we've already typed enough to search
+      if (afterAt.length >= 1) {
+        const results = searchEntities(afterAt);
+        setMentionSuggestions(results);
+        setMentionSearch(afterAt);
       } else {
-        // If no slash yet, show all entity types that match the search
-        const searchTerm = afterAt.trim();
-        if (searchTerm.length >= 2) {
-          const suggestions = findEntitiesByPartialName(
-            searchTerm, 
-            ['character', 'scene', 'place', 'page']
-          );
-          setMentionSuggestions(suggestions);
-          setMentionSearch(searchTerm);
-        } else {
-          setMentionSuggestions([]);
-          setMentionSearch("");
-        }
+        setMentionSuggestions([]);
+        setMentionSearch("");
       }
     } else {
       setMentionSuggestions([]);
       setMentionSearch("");
     }
-  }, [message, findEntitiesByPartialName]);
+  }, [message, searchEntities]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,7 +185,7 @@ export function ChatInterface() {
         systemPrompt += "\n\nThe user's message mentions these entities:";
         
         processedMessage.mentionedEntities.forEach(entity => {
-          const entityData = getEntityInfo(entity.type, entity.id);
+          const entityData = getEntityInfo(entity.type, entity.id, entity.bookId);
           if (entityData) {
             systemPrompt += `\n- ${entity.type} "${entityData.name || entityData.title}": `;
             
@@ -219,6 +202,10 @@ export function ChatInterface() {
               case 'place':
                 systemPrompt += `${entityData.description || 'No description'}, Geography: ${entityData.geography || 'Unknown'}`;
                 break;
+            }
+            
+            if (entityData.bookId && entityData.bookId !== currentBook.id) {
+              systemPrompt += ` (from book: ${entityData.bookTitle})`;
             }
           }
         });
@@ -250,14 +237,18 @@ export function ChatInterface() {
     }
   };
   
-  // Process message to extract and handle @ mentions
+  // Enhanced process message to extract and handle @ mentions including cross-book references
   const processMentionsInMessage = (text: string) => {
-    const mentionRegex = /@(character|scene|place|page)\/([^@\s]+)/g;
+    // Enhanced regex to catch both formats:
+    // @type/name and @book/type/name
+    const mentionRegex = /@(([^/]+)\/)?([a-z]+)\/([^@\s]+)/g;
     const mentions: Array<{
       type: 'character' | 'scene' | 'place' | 'page';
       id: string;
       name: string;
       fullText: string;
+      bookId?: string;
+      bookTitle?: string;
     }> = [];
     
     let lastIndex = 0;
@@ -271,22 +262,48 @@ export function ChatInterface() {
       // Add text before the match
       processedText += text.substring(lastIndex, match.index);
       
-      const entityType = match[1] as 'character' | 'scene' | 'place' | 'page';
-      const entityName = match[2];
-      const fullMatch = match[0]; // The entire @type/name match
+      const fullMatch = match[0]; // The entire @book/type/name or @type/name match
+      const bookTitle = match[2]; // Optional book title (might be undefined)
+      const entityType = match[3] as 'character' | 'scene' | 'place' | 'page';
+      const entityName = match[4];
       
-      // Find the entity in the current book
-      const entities = findEntitiesByPartialName(entityName, [entityType]);
+      // Determine which book to search in
+      let targetBookId: string | undefined;
+      let searchResults;
       
-      if (entities.length > 0) {
-        const entity = entities[0]; // Take the first match
+      if (bookTitle) {
+        // Cross-book reference
+        const books = getAllBooks();
+        const matchingBook = books.find(b => 
+          b.title.toLowerCase() === bookTitle.toLowerCase()
+        );
+        
+        if (matchingBook) {
+          targetBookId = matchingBook.id;
+          // Search in the specific book
+          searchResults = searchEntities(`${entityType}/${entityName}`);
+          // Filter to only results from that book
+          searchResults = searchResults.filter(entity => entity.bookId === targetBookId);
+        } else {
+          // Book not found, search everywhere
+          searchResults = searchEntities(`${entityType}/${entityName}`);
+        }
+      } else {
+        // Normal reference, search current book first
+        searchResults = searchEntities(`${entityType}/${entityName}`);
+      }
+      
+      if (searchResults && searchResults.length > 0) {
+        const entity = searchResults[0]; // Take the first match
         
         // Add this entity to our mentions list
         mentions.push({
           type: entityType,
           id: entity.id,
           name: entity.name,
-          fullText: fullMatch
+          fullText: fullMatch,
+          bookId: entity.bookId,
+          bookTitle: entity.bookTitle
         });
         
         // Replace the @mention with just the name in the processed text
@@ -385,6 +402,8 @@ export function ChatInterface() {
     type: 'character' | 'scene' | 'place' | 'page';
     id: string;
     name: string;
+    bookId?: string;
+    bookTitle?: string;
   }) => {
     // Find the last @ in the message
     const atIndex = message.lastIndexOf('@');
@@ -394,12 +413,17 @@ export function ChatInterface() {
       const beforeAt = message.substring(0, atIndex);
       const afterSearch = message.substring(atIndex + mentionSearch.length + 1);
       
-      const newMessage = `${beforeAt}@${suggestion.type}/${suggestion.name} ${afterSearch}`;
+      // Format based on whether cross-book reference is needed
+      const mentionText = suggestion.bookId && suggestion.bookId !== currentBook?.id
+        ? `@${suggestion.bookTitle}/${suggestion.type}/${suggestion.name} `
+        : `@${suggestion.type}/${suggestion.name} `;
+      
+      const newMessage = `${beforeAt}${mentionText}${afterSearch}`;
       
       // Add to mentioned entities
       setMentionedEntities([...mentionedEntities, {
         ...suggestion,
-        fullText: `@${suggestion.type}/${suggestion.name}`
+        fullText: mentionText.trim()
       }]);
       
       setMessage(newMessage);
