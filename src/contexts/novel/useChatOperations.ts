@@ -11,7 +11,7 @@ export function useChatOperations(
     const newMessage = {
       ...message,
       id: uuidv4(),
-      timestamp: new Date().toISOString()
+      timestamp: Date.now() // Change from ISO string to number timestamp
     };
     
     setProject(prev => ({
