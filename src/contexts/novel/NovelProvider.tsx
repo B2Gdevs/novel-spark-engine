@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { NovelContextType } from "./types";
 import { useBookOperations } from "./useBookOperations";
@@ -61,6 +60,7 @@ export function NovelProvider({ children }: { children: ReactNode }) {
         const { data, error } = await supabase
           .from('books')
           .select('*')
+          .eq('is_deleted', false)
           .order('created_at', { ascending: false });
           
         if (error) {

@@ -1,4 +1,3 @@
-
 import { Book } from "@/types/novel";
 import { BookOpen, Trash2, PlusCircle, Loader2 } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
@@ -13,6 +12,7 @@ interface BookCardProps {
   isNewBookCard?: boolean;
   onCreateNew?: () => void;
   isLoading?: boolean;
+  setDraggedBookId?: (id: string | null) => void;
 }
 
 export function BookCard({ 
@@ -21,7 +21,8 @@ export function BookCard({
   onDelete, 
   isNewBookCard = false, 
   onCreateNew,
-  isLoading = false 
+  isLoading = false,
+  setDraggedBookId
 }: BookCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -54,16 +55,28 @@ export function BookCard({
   // Handle regular book card
   if (!book) return null;
 
-  const getBookIcon = () => {
-    // Simple icon based on first letter of title
-    return (
-      <div className="h-12 w-12 bg-red-500 rounded-sm flex items-center justify-center mb-3">
-        <BookOpen className="h-6 w-6 text-white" />
-      </div>
-    );
+  const handleDragStart = (e: React.DragEvent) => {
+    if (setDraggedBookId && book) {
+      // Set data for drag operation
+      e.dataTransfer.setData('text/plain', book.id);
+      // Show trash zone
+      setDraggedBookId(book.id);
+      // Set ghost image (optional)
+      const ghost = document.createElement('div');
+      ghost.innerHTML = `<div style="padding: 10px; background: rgba(0,0,0,0.7); border-radius: 5px; color: white;">${book.title}</div>`;
+      document.body.appendChild(ghost);
+      e.dataTransfer.setDragImage(ghost, 50, 25);
+      setTimeout(() => document.body.removeChild(ghost), 0);
+    }
   };
 
-  const handleDelete = async (e: React.MouseEvent) => {
+  const handleDragEnd = () => {
+    if (setDraggedBookId) {
+      setDraggedBookId(null);
+    }
+  };
+
+  const handleDeleteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onDelete) {
       try {
@@ -78,8 +91,23 @@ export function BookCard({
     }
   };
 
+  const getBookIcon = () => {
+    // Simple icon based on first letter of title
+    return (
+      <div className="h-12 w-12 bg-red-500 rounded-sm flex items-center justify-center mb-3">
+        <BookOpen className="h-6 w-6 text-white" />
+      </div>
+    );
+  };
+
   return (
-    <Card className="bg-zinc-900/70 border-zinc-800/50 overflow-hidden relative cursor-pointer hover:border-zinc-700/70 transition-all" onClick={onSelect}>
+    <Card 
+      className="bg-zinc-900/70 border-zinc-800/50 overflow-hidden relative cursor-pointer hover:border-zinc-700/70 transition-all" 
+      onClick={onSelect}
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <CardContent className="p-6 flex flex-col items-center">
         {getBookIcon()}
         
@@ -101,10 +129,15 @@ export function BookCard({
         >
           Open Book
         </Button>
+
+        <div className="mt-2 text-xs text-zinc-500 italic">
+          Drag to trash bin to delete
+        </div>
         
+        {/* Keeping the old delete button as a fallback but visually less prominent */}
         <Button 
-          className="w-full bg-transparent hover:bg-red-900/30 text-red-500 border border-red-800/30 mt-2"
-          onClick={handleDelete}
+          className="w-full bg-transparent hover:bg-red-900/30 text-red-500 border border-red-800/30 mt-2 opacity-60"
+          onClick={handleDeleteClick}
           disabled={isDeleting}
           size="sm"
         >

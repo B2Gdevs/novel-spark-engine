@@ -12,25 +12,31 @@ export type Database = {
       books: {
         Row: {
           created_at: string | null
+          deleted_at: string | null
           description: string | null
           genre: string | null
           id: string
+          is_deleted: boolean | null
           title: string
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          deleted_at?: string | null
           description?: string | null
           genre?: string | null
           id?: string
+          is_deleted?: boolean | null
           title: string
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          deleted_at?: string | null
           description?: string | null
           genre?: string | null
           id?: string
+          is_deleted?: boolean | null
           title?: string
           updated_at?: string | null
         }
@@ -255,7 +261,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cleanup_deleted_books: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

@@ -77,16 +77,13 @@ export function useBookOperations(initialProject: NovelProject, setProject: Reac
 
   const deleteBook = async (id: string) => {
     try {
-      // Don't delete if it's the only book
-      if (initialProject.books.length === 1) {
-        toast.error("Cannot delete the only book");
-        return;
-      }
-      
-      // Delete from Supabase
+      // Soft delete the book in Supabase
       const { error } = await supabase
         .from('books')
-        .delete()
+        .update({
+          is_deleted: true,
+          deleted_at: new Date().toISOString()
+        })
         .eq('id', id);
         
       if (error) {
@@ -107,7 +104,7 @@ export function useBookOperations(initialProject: NovelProject, setProject: Reac
         };
       });
       
-      toast.success("Book deleted");
+      toast.success("Book moved to trash");
     } catch (error) {
       console.error("Error deleting book:", error);
       toast.error("Failed to delete book");
