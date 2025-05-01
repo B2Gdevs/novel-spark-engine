@@ -38,4 +38,6 @@ export interface NovelContextType {
   loadProject: (project: NovelProject) => void;
   getLastModifiedItem: (bookId: string) => { type: string; id: string } | null;
   setProject: React.Dispatch<React.SetStateAction<NovelProject>>;
+  associateChatWithEntity: (entityType: string, entityId: string) => void;
+  rollbackEntity: (entityType: string, entityId: string, version: string) => void;
 }

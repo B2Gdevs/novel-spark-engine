@@ -20,28 +20,36 @@ export function Layout({ children }: { children: ReactNode }) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        setShowChatDialog(prev => !prev);
+        if (currentBook) { // Only show chat if a book is selected
+          setShowChatDialog(prev => !prev);
+        } else {
+          toast.warning("Please select a book first to use the AI assistant");
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     
     // Show toast about keyboard shortcut
-    toast("Press Cmd+K or Ctrl+K to open the AI chat", {
+    const toastMessage = currentBook 
+      ? "Press Cmd+K or Ctrl+K to open the AI chat"
+      : "Select a book first to use the AI assistant with Cmd+K or Ctrl+K";
+      
+    toast(toastMessage, {
       duration: 5000,
     });
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [currentBook]);
 
   return (
     <SidebarProvider>
       <DialogProvider
         open={showChatDialog} 
         onOpenChange={setShowChatDialog}
-        title="AI Assistant"
+        title={currentBook ? `AI Assistant - ${currentBook.title}` : "AI Assistant"}
       >
         <ChatInterface />
       </DialogProvider>

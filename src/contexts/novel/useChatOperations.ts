@@ -28,6 +28,32 @@ export function useChatOperations(
     toast.success("Chat history cleared");
   };
 
+  const associateChatWithEntity = (entityType: string, entityId: string) => {
+    // This would be used to associate a chat with a specific entity
+    // For now, we'll just add a message to indicate this
+    addChatMessage({
+      role: 'assistant',
+      content: `Now discussing ${entityType} with ID: ${entityId}`
+    });
+    
+    // In a real implementation, we would store this association
+    // and filter messages based on the current entity
+  };
+
+  const rollbackEntity = (entityType: string, entityId: string, version: string) => {
+    // This would restore a previous version of an entity
+    // For now, we'll just add a message about it
+    addChatMessage({
+      role: 'assistant',
+      content: `Rolled back ${entityType} (ID: ${entityId}) to version ${version}`
+    });
+    
+    toast.success(`Rolled back ${entityType} to previous version`);
+    
+    // In a real implementation, we would store versioning information
+    // and use it to restore entities to previous states
+  };
+
   const sendMessageToAI = async (
     userMessage: string,
     chatHistory: ChatMessage[],
@@ -96,6 +122,8 @@ export function useChatOperations(
   return {
     addChatMessage,
     clearChatHistory,
-    sendMessageToAI
+    sendMessageToAI,
+    associateChatWithEntity,
+    rollbackEntity
   };
 }
