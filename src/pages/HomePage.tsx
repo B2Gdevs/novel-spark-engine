@@ -13,45 +13,20 @@ export function HomePage() {
   const navigate = useNavigate();
   
   useEffect(() => {
-    // Fetch books from Supabase on component mount
-    const fetchBooks = async () => {
-      try {
-        const { data, error } = await supabase.from('books').select('*');
-        
-        if (error) {
-          throw error;
-        }
-        
-        if (data && data.length > 0) {
-          // Convert Supabase books to our app format
-          data.forEach(book => {
-            addBook({
-              title: book.title,
-              description: book.description || "",
-              genre: book.genre || "Fiction",
-              characters: [],
-              scenes: [],
-              events: [],
-              notes: [],
-              pages: []
-            });
-          });
-          
-          setShowWelcome(false);
-        }
-      } catch (error) {
-        console.error("Error fetching books:", error);
-        toast.error("Failed to load books");
-      }
-    };
+    // Check if we should show the welcome screen
+    setShowWelcome(project.books.length === 0);
     
-    // Only fetch books if we don't have any yet
+    // Clear currentBookId if we're on the homepage and have no books
     if (project.books.length === 0) {
-      fetchBooks();
-    } else {
-      setShowWelcome(project.books.length === 0);
+      console.log("No books found, clearing currentBookId");
     }
-  }, []);
+    
+    console.log("HomePage state:", { 
+      currentBookId: project.currentBookId, 
+      booksCount: project.books.length,
+      showWelcome 
+    });
+  }, [project.books.length]);
   
   const handleAddNewBook = async () => {
     try {
@@ -85,6 +60,7 @@ export function HomePage() {
       });
       
       setShowWelcome(false);
+      toast.success("New book created successfully");
     } catch (error) {
       console.error("Error creating new book:", error);
       toast.error("Failed to create new book");
@@ -124,6 +100,8 @@ export function HomePage() {
       if (project.books.length <= 1) {
         setShowWelcome(true);
       }
+      
+      toast.success("Book deleted successfully");
     } catch (error) {
       console.error("Error deleting book:", error);
       toast.error("Failed to delete book");
@@ -155,7 +133,7 @@ export function HomePage() {
                   key={book.id}
                   book={book}
                   onSelect={() => handleSelectBook(book.id)}
-                  onDelete={handleDeleteBook}
+                  onDelete={() => handleDeleteBook(book.id)}
                 />
               ))}
               

@@ -1,8 +1,8 @@
 
 import { Book, User, PenTool, CalendarDays, Library, CreditCard, FileText, MessageSquare } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -20,7 +20,9 @@ import { Button } from "./ui/button";
 export function AppSidebar() {
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
-  const { currentBook } = useNovel();
+  const location = useLocation();
+  const { project, currentBook } = useNovel();
+  const [hasActiveBook, setHasActiveBook] = useState(false);
   
   // Book-related sidebar items
   const bookSidebarItems = [
@@ -56,6 +58,22 @@ export function AppSidebar() {
     }
   ];
 
+  // Force re-check of currentBook on route changes or project changes
+  useEffect(() => {
+    // Double-check if we have a current book that actually exists
+    const bookExists = !!currentBook && 
+      !!project.books.find(book => book.id === currentBook.id);
+    
+    setHasActiveBook(bookExists);
+    
+    console.log("Sidebar state:", { 
+      currentBookId: project.currentBookId,
+      currentBook: currentBook,
+      hasActiveBook: bookExists,
+      booksCount: project.books.length
+    });
+  }, [currentBook, project, location.pathname]);
+
   return (
     <div 
       className={cn(
@@ -70,7 +88,7 @@ export function AppSidebar() {
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
-                {currentBook ? (
+                {hasActiveBook ? (
                   // Show book navigation items ONLY when a book is selected
                   bookSidebarItems.map((item, index) => (
                     <SidebarMenuItem key={index}>

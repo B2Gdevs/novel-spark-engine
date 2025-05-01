@@ -1,13 +1,27 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 import { Book, NovelProject } from "@/types/novel";
 
 export function useBookOperations(initialProject: NovelProject, setProject: React.Dispatch<React.SetStateAction<NovelProject>>) {
-  const currentBook = initialProject.currentBookId 
-    ? initialProject.books.find(book => book.id === initialProject.currentBookId) || null
-    : null;
+  const [currentBook, setCurrentBook] = useState<Book | null>(null);
+  
+  // Update currentBook whenever initialProject changes
+  useEffect(() => {
+    const book = initialProject.currentBookId 
+      ? initialProject.books.find(book => book.id === initialProject.currentBookId) || null
+      : null;
+      
+    setCurrentBook(book);
+    
+    // Log for debugging
+    console.log("useBookOperations updated currentBook:", {
+      currentBookId: initialProject.currentBookId,
+      foundBook: !!book,
+      bookTitle: book?.title
+    });
+  }, [initialProject]);
 
   const addBook = (book: Omit<Book, "id">) => {
     const newBook = { 

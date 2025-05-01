@@ -9,7 +9,6 @@ import { usePageOperations } from "./usePageOperations";
 import { useNoteOperations } from "./useNoteOperations";
 import { useChatOperations } from "./useChatOperations";
 import { useStorage } from "./useStorage";
-import { useMockData } from "./useMockData";
 import { NovelProject } from "@/types/novel";
 
 const defaultProject: NovelProject = {
@@ -105,10 +104,6 @@ export function NovelProvider({ children }: { children: ReactNode }) {
     saveProject, 
     loadProject 
   } = useStorage(project, setProject, apiKey, setApiKey);
-  
-  const { 
-    addMockData 
-  } = useMockData(setProject);
 
   useEffect(() => {
     try {
@@ -125,6 +120,15 @@ export function NovelProvider({ children }: { children: ReactNode }) {
       console.error("Error saving project to localStorage:", e);
     }
   }, [project]);
+
+  // Log the current state for debugging
+  useEffect(() => {
+    console.log("NovelProvider state:", { 
+      currentBookId: project.currentBookId,
+      currentBook: currentBook,
+      booksCount: project.books.length 
+    });
+  }, [project, currentBook]);
 
   const contextValue: NovelContextType = {
     project,
@@ -158,7 +162,6 @@ export function NovelProvider({ children }: { children: ReactNode }) {
     clearChatHistory,
     saveProject,
     loadProject,
-    addMockData,
     getLastModifiedItem,
   };
 
