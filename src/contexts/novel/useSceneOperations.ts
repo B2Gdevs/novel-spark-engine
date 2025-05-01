@@ -1,14 +1,14 @@
-
 import { v4 as uuidv4 } from "uuid";
 import { Scene, NovelProject } from "@/types/novel";
 
 export function useSceneOperations(project: NovelProject, setProject: React.Dispatch<React.SetStateAction<NovelProject>>) {
-  const addScene = (scene: Omit<Scene, "id">) => {
-    if (!project.currentBookId) return;
+  const addScene = (scene: Omit<Scene, "id">): string | undefined => {
+    if (!project.currentBookId) return undefined;
     
+    const newId = uuidv4();
     const newScene = { 
       ...scene, 
-      id: uuidv4(),
+      id: newId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString() 
     };
@@ -29,6 +29,8 @@ export function useSceneOperations(project: NovelProject, setProject: React.Disp
         books: updatedBooks
       };
     });
+    
+    return newId; // Return the new ID
   };
 
   const updateScene = (id: string, scene: Partial<Scene>) => {

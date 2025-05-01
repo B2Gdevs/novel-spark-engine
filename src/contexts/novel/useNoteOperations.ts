@@ -1,14 +1,14 @@
-
 import { v4 as uuidv4 } from "uuid";
 import { Note, NovelProject } from "@/types/novel";
 
 export function useNoteOperations(project: NovelProject, setProject: React.Dispatch<React.SetStateAction<NovelProject>>) {
-  const addNote = (note: Omit<Note, "id">) => {
-    if (!project.currentBookId) return;
+  const addNote = (note: Omit<Note, "id">): string | undefined => {
+    if (!project.currentBookId) return undefined;
     
+    const newId = uuidv4();
     const newNote = { 
       ...note, 
-      id: uuidv4(),
+      id: newId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -29,6 +29,8 @@ export function useNoteOperations(project: NovelProject, setProject: React.Dispa
         books: updatedBooks
       };
     });
+    
+    return newId; // Return the new ID
   };
 
   const updateNote = (id: string, note: Partial<Note>) => {

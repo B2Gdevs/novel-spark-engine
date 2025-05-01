@@ -1,14 +1,14 @@
-
 import { v4 as uuidv4 } from "uuid";
 import { Page, NovelProject } from "@/types/novel";
 
 export function usePageOperations(project: NovelProject, setProject: React.Dispatch<React.SetStateAction<NovelProject>>) {
-  const addPage = (page: Omit<Page, "id">) => {
-    if (!project.currentBookId) return;
+  const addPage = (page: Omit<Page, "id">): string | undefined => {
+    if (!project.currentBookId) return undefined;
     
+    const newId = uuidv4();
     const newPage = { 
       ...page, 
-      id: uuidv4(),
+      id: newId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -29,6 +29,8 @@ export function usePageOperations(project: NovelProject, setProject: React.Dispa
         books: updatedBooks
       };
     });
+    
+    return newId; // Return the new ID
   };
 
   const updatePage = (id: string, page: Partial<Page>) => {

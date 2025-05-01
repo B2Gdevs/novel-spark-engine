@@ -1,14 +1,14 @@
-
 import { v4 as uuidv4 } from "uuid";
 import { Event, NovelProject } from "@/types/novel";
 
 export function useEventOperations(project: NovelProject, setProject: React.Dispatch<React.SetStateAction<NovelProject>>) {
-  const addEvent = (event: Omit<Event, "id">) => {
-    if (!project.currentBookId) return;
+  const addEvent = (event: Omit<Event, "id">): string | undefined => {
+    if (!project.currentBookId) return undefined;
     
+    const newId = uuidv4();
     const newEvent = { 
       ...event, 
-      id: uuidv4(),
+      id: newId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -29,6 +29,8 @@ export function useEventOperations(project: NovelProject, setProject: React.Disp
         books: updatedBooks
       };
     });
+    
+    return newId; // Return the new ID
   };
 
   const updateEvent = (id: string, event: Partial<Event>) => {
