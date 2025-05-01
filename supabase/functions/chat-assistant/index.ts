@@ -42,7 +42,7 @@ serve(async (req) => {
     
     // Format messages for OpenAI
     const formattedMessages = [
-      { role: "system", content: systemPrompt || "You are a helpful AI assistant for fiction writers." },
+      { role: "system", content: systemPrompt || "You are a helpful AI assistant for fiction writers. Use markdown formatting in your responses. When describing characters, scenes, or pages, use the specified format with **bold** titles." },
       ...messages.map(msg => ({
         role: msg.role,
         content: msg.content

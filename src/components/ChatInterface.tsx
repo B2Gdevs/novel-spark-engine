@@ -6,8 +6,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNovel } from "@/contexts/NovelContext";
 import { Send, Check, X, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Character } from "@/types/novel";
+import { Character, ChatMessage as ChatMessageType } from "@/types/novel";
 import { toast } from "sonner";
+import { MarkdownMessage } from './chat/MarkdownMessage';
 
 export function ChatInterface() {
   const { 
@@ -20,7 +21,9 @@ export function ChatInterface() {
     updateCharacter,
     getCharacter,
     addScene,
+    updateScene,
     addPage,
+    updatePage,
     associateChatWithEntity
   } = useNovel();
   
@@ -82,11 +85,27 @@ export function ChatInterface() {
         - ${currentBook.pages.length} pages
         - ${currentBook.notes.length} notes
         
-        When the user wants to create a new character, extract relevant information like name, traits, description, role.
-        If they want to update an existing character, determine which fields they want to change.
-        Do the same for scenes (title, description, characters involved, location) and pages (title, content, chapter).
+        When extracting information about characters, scenes, pages or places, format them as follows:
         
-        Present a structured summary of what will be created/updated and ask for confirmation with a YES/NO choice.
+        For characters:
+        **Character: [Name]**
+        - **Name:** Full name
+        - **Traits:** Trait1, Trait2, Trait3
+        - **Description:** Physical appearance and notable features
+        - **Role:** Character's role in the story
+        
+        For scenes:
+        **Scene: [Title]**
+        - **Title:** Scene title
+        - **Description:** Brief description of what happens
+        - **Location:** Where the scene takes place
+        
+        For pages:
+        **Page: [Title]**
+        - **Title:** Page title
+        - **Content:** Brief content summary
+        
+        Use Markdown formatting in your responses.
       `;
       
       // If we're linked to a specific entity, add more context
@@ -97,9 +116,7 @@ export function ChatInterface() {
             systemPrompt += `\n\nThis conversation is specifically about the character "${character.name}". 
             Current traits: ${character.traits?.join(', ') || 'None'}.
             Current description: ${character.description || 'None'}.
-            Current role: ${character.role || 'None'}.
-            
-            When user messages suggest character updates, clearly identify what aspects of the character they want to change.`;
+            Current role: ${character.role || 'None'}.`;
           }
         }
         // Similar for other entity types
@@ -121,71 +138,6 @@ export function ChatInterface() {
         entityType: linkedEntityType,
         entityId: linkedEntityId
       });
-      
-      // Process AI response for entity creation or updates
-      const response = result.message || "";
-      
-      // Check if the response contains character creation intent
-      if ((response.toLowerCase().includes("create a character") || response.toLowerCase().includes("new character")) && 
-          !response.toLowerCase().includes("don't create") && 
-          !response.toLowerCase().includes("do not create")) {
-        const nameMatch = response.match(/name:\s*([^,\n]+)/i);
-        const traitsMatch = response.match(/traits:\s*([^,\n]+)/i);
-        const roleMatch = response.match(/role:\s*([^,\n]+)/i);
-        const descriptionMatch = response.match(/description:\s*([^,\n.]{3,})/i);
-        
-        if (nameMatch) {
-          const characterData = {
-            name: nameMatch[1].trim(),
-            traits: traitsMatch ? traitsMatch[1].trim().split(/\s*,\s*/) : [],
-            role: roleMatch ? roleMatch[1].trim() : "",
-            description: descriptionMatch ? descriptionMatch[1].trim() : "",
-          };
-          
-          // Set pending entity for confirmation
-          setPendingEntity({
-            type: 'character',
-            operation: 'create',
-            data: characterData
-          });
-        }
-      }
-      
-      // Check if response contains character update intent
-      else if (response.includes("update character") || response.includes("modify character")) {
-        const nameMatch = response.match(/name:\s*([^,\n]+)/i);
-        const characterName = nameMatch ? nameMatch[1].trim() : null;
-        
-        // Find character by name
-        const character = currentBook.characters.find(
-          c => c.name.toLowerCase() === (characterName?.toLowerCase() || '')
-        );
-        
-        if (character) {
-          const traitsMatch = response.match(/traits:\s*([^,\n]+)/i);
-          const roleMatch = response.match(/role:\s*([^,\n]+)/i);
-          const descriptionMatch = response.match(/description:\s*([^,\n.]{3,})/i);
-          
-          const updateData: Partial<Character> = {};
-          
-          if (traitsMatch) updateData.traits = traitsMatch[1].trim().split(/\s*,\s*/);
-          if (roleMatch) updateData.role = roleMatch[1].trim();
-          if (descriptionMatch) updateData.description = descriptionMatch[1].trim();
-          
-          // Only set pending update if there are actual changes
-          if (Object.keys(updateData).length > 0) {
-            setPendingEntity({
-              type: 'character',
-              operation: 'update',
-              data: updateData,
-              originalId: character.id
-            });
-          }
-        }
-      }
-      
-      // Similar checks for scenes and pages would go here
-      
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to communicate with AI");
@@ -194,71 +146,63 @@ export function ChatInterface() {
     }
   };
 
-  const confirmEntityCreation = () => {
-    if (!pendingEntity) return;
-    
-    if (pendingEntity.operation === 'create') {
-      switch (pendingEntity.type) {
+  const handleCreateEntity = (entityType: string, entityData: any) => {
+    try {
+      let newId: string | undefined;
+      
+      switch (entityType) {
         case 'character':
-          const newCharacterId = addCharacter(pendingEntity.data);
-          addChatMessage({
-            role: 'assistant',
-            content: `I've created the character ${pendingEntity.data.name} for you!`,
-            entityType: 'character',
-            entityId: newCharacterId
-          });
-          
-          // Associate this chat with the new character
-          if (newCharacterId) {
-            setLinkedEntityType('character');
-            setLinkedEntityId(newCharacterId);
-            associateChatWithEntity('character', newCharacterId);
-          }
+          newId = addCharacter(entityData);
           break;
         case 'scene':
-          addScene(pendingEntity.data);
-          addChatMessage({
-            role: 'assistant',
-            content: `I've created the scene ${pendingEntity.data.title} for you!`
-          });
+          newId = addScene(entityData);
           break;
         case 'page':
-          addPage(pendingEntity.data);
-          addChatMessage({
-            role: 'assistant',
-            content: `I've created the page ${pendingEntity.data.title} for you!`
-          });
+          newId = addPage(entityData);
           break;
       }
-    } 
-    else if (pendingEntity.operation === 'update' && pendingEntity.originalId) {
-      switch (pendingEntity.type) {
-        case 'character':
-          updateCharacter(pendingEntity.originalId, pendingEntity.data);
-          addChatMessage({
-            role: 'assistant',
-            content: `I've updated the character for you!`
-          });
-          break;
-        // Similar cases for other entity types
+      
+      if (newId) {
+        addChatMessage({
+          role: 'system',
+          content: `${entityType} ${entityData.name || entityData.title} created successfully!`,
+          entityType: entityType,
+          entityId: newId
+        });
+        
+        toast.success(`${entityType} created successfully!`);
       }
+    } catch (error) {
+      console.error(`Error creating ${entityType}:`, error);
+      toast.error(`Failed to create ${entityType}`);
     }
-    
-    setPendingEntity(null);
   };
 
-  const cancelEntityCreation = () => {
-    addChatMessage({
-      role: 'assistant',
-      content: `I've discarded the ${pendingEntity?.operation} operation for ${pendingEntity?.type}. Let me know if you want to try again!`
-    });
-    setPendingEntity(null);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
+  const handleUpdateEntity = (entityType: string, entityId: string, entityData: any) => {
+    try {
+      switch (entityType) {
+        case 'character':
+          updateCharacter(entityId, entityData);
+          break;
+        case 'scene':
+          updateScene(entityId, entityData);
+          break;
+        case 'page':
+          updatePage(entityId, entityData);
+          break;
+      }
+      
+      addChatMessage({
+        role: 'system',
+        content: `${entityType} updated successfully!`,
+        entityType: entityType,
+        entityId: entityId
+      });
+      
+      toast.success(`${entityType} updated successfully!`);
+    } catch (error) {
+      console.error(`Error updating ${entityType}:`, error);
+      toast.error(`Failed to update ${entityType}`);
     }
   };
 
@@ -266,6 +210,13 @@ export function ChatInterface() {
     // Only allow clearing if not linked to an entity
     if (!linkedEntityType && !linkedEntityId) {
       clearChatHistory();
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
     }
   };
 
@@ -328,70 +279,27 @@ export function ChatInterface() {
                     "relative group rounded-2xl px-4 py-3 max-w-[85%] text-sm",
                     msg.role === "user" 
                       ? "bg-purple-600 text-white" 
-                      : "bg-zinc-800 text-zinc-100"
+                      : msg.role === "system"
+                        ? "bg-blue-800 text-white"
+                        : "bg-zinc-800 text-zinc-100"
                   )}
                 >
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                  {msg.role === "assistant" ? (
+                    <MarkdownMessage 
+                      content={msg.content} 
+                      onCreateEntity={handleCreateEntity}
+                      onUpdateEntity={handleUpdateEntity}
+                      currentBook={currentBook}
+                    />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                  )}
                   <span className="absolute -bottom-5 text-[10px] text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity">
                     {new Date(msg.timestamp).toLocaleTimeString()}
                   </span>
                 </div>
               </div>
             ))
-          )}
-          {pendingEntity && (
-            <div className="flex justify-start gap-4 animate-fade-in-up">
-              <div className="bg-amber-900/40 border border-amber-500/30 rounded-2xl px-4 py-3 max-w-[85%]">
-                <p className="text-amber-200 font-medium mb-2">
-                  {pendingEntity.operation === 'create' ? 
-                    `Ready to create a new ${pendingEntity.type}:` :
-                    `Ready to update this ${pendingEntity.type}:`
-                  }
-                </p>
-                {pendingEntity.type === 'character' && pendingEntity.operation === 'create' && (
-                  <div className="space-y-1 mb-3">
-                    <p><span className="text-amber-400">Name:</span> {pendingEntity.data.name}</p>
-                    <p><span className="text-amber-400">Role:</span> {pendingEntity.data.role}</p>
-                    <p><span className="text-amber-400">Description:</span> {pendingEntity.data.description}</p>
-                    {pendingEntity.data.traits?.length > 0 && (
-                      <p><span className="text-amber-400">Traits:</span> {pendingEntity.data.traits.join(', ')}</p>
-                    )}
-                  </div>
-                )}
-                {pendingEntity.type === 'character' && pendingEntity.operation === 'update' && (
-                  <div className="space-y-1 mb-3">
-                    {pendingEntity.data.role && (
-                      <p><span className="text-amber-400">New Role:</span> {pendingEntity.data.role}</p>
-                    )}
-                    {pendingEntity.data.description && (
-                      <p><span className="text-amber-400">New Description:</span> {pendingEntity.data.description}</p>
-                    )}
-                    {pendingEntity.data.traits?.length > 0 && (
-                      <p><span className="text-amber-400">New Traits:</span> {pendingEntity.data.traits.join(', ')}</p>
-                    )}
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    className="bg-amber-600 hover:bg-amber-700 text-white flex gap-1"
-                    onClick={confirmEntityCreation}
-                  >
-                    <Check className="h-4 w-4" />
-                    {pendingEntity.operation === 'create' ? 'Create' : 'Update'}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-amber-500/50 text-amber-300 hover:bg-amber-950/50"
-                    onClick={cancelEntityCreation}
-                  >
-                    <X className="h-4 w-4" />
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </div>
           )}
           <div ref={chatEndRef} />
           {loading && (

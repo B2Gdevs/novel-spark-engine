@@ -1,3 +1,4 @@
+
 export interface Character {
   id: string;
   name: string;
@@ -77,6 +78,11 @@ export interface ChatMessage {
   timestamp: number;
   entityType?: string | null;
   entityId?: string | null;
+  parsedEntity?: {
+    type: 'character' | 'scene' | 'place' | 'page';
+    data: any;
+    exists: boolean;
+  } | null;
 }
 
 export interface Book {
