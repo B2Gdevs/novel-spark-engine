@@ -124,6 +124,7 @@ export function NovelProvider({ children }: { children: ReactNode }) {
     saveProject,
     loadProject,
     getLastModifiedItem,
+    setProject,  // Expose setProject
   };
 
   return (

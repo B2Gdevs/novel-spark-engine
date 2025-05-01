@@ -34,4 +34,5 @@ export interface NovelContextType {
   saveProject: () => void;
   loadProject: (project: NovelProject) => void;
   getLastModifiedItem: (bookId: string) => { type: string; id: string } | null;
+  setProject: React.Dispatch<React.SetStateAction<NovelProject>>;
 }
