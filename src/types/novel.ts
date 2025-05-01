@@ -95,6 +95,7 @@ export interface Book {
   };
   createdAt?: string;
   updatedAt?: string;
+  deletedAt?: string; // Add this property for soft-deleted books
 }
 
 export interface NovelProject {

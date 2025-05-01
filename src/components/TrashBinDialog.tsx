@@ -158,8 +158,10 @@ export function TrashBinDialog({ open, onOpenChange }: TrashBinDialogProps) {
                 <TableBody>
                   {deletedBooks.map((book) => {
                     // Calculate days remaining before permanent deletion
-                    const deletedAt = book.deletedAt ? new Date(book.deletedAt) : new Date();
-                    const daysRemaining = 30 - Math.floor((new Date().getTime() - deletedAt.getTime()) / (1000 * 3600 * 24));
+                    const deletedDate = book.deletedAt ? new Date(book.deletedAt) : new Date();
+                    const today = new Date();
+                    const daysDeleted = Math.floor((today.getTime() - deletedDate.getTime()) / (1000 * 3600 * 24));
+                    const daysRemaining = 30 - daysDeleted;
                     
                     return (
                       <TableRow 
@@ -184,7 +186,7 @@ export function TrashBinDialog({ open, onOpenChange }: TrashBinDialogProps) {
                                 {book.genre || "Fiction"}
                               </span>
                               <span className="text-xs bg-zinc-800 rounded-full px-2 py-0.5">
-                                Deleted {daysRemaining} days ago
+                                Deleted {daysDeleted} days ago
                               </span>
                             </span>
                             <span className="text-xs text-red-400">
