@@ -1,5 +1,5 @@
 
-import { Book, Character, Scene, Event, Note, ChatMessage, NovelProject, Page } from "@/types/novel";
+import { Book, Character, Scene, Event, Note, ChatMessage, NovelProject, Page, Place } from "@/types/novel";
 
 export interface NovelContextType {
   project: NovelProject;
@@ -23,6 +23,10 @@ export interface NovelContextType {
   updateEvent: (id: string, event: Partial<Event>) => void;
   deleteEvent: (id: string) => void;
   getEvent: (id: string) => Event | undefined;
+  addPlace: (place: Omit<Place, "id">) => string | undefined; // Return new ID
+  updatePlace: (id: string, place: Partial<Place>) => void;
+  deletePlace: (id: string) => void;
+  getPlace: (id: string) => Place | undefined;
   addNote: (note: Omit<Note, "id">) => string | undefined; // Return new ID
   updateNote: (id: string, note: Partial<Note>) => void;
   deleteNote: (id: string) => void;
@@ -40,4 +44,11 @@ export interface NovelContextType {
   setProject: React.Dispatch<React.SetStateAction<NovelProject>>;
   associateChatWithEntity: (entityType: string, entityId: string) => void;
   rollbackEntity: (entityType: string, entityId: string, version: string) => void;
+  findEntitiesByPartialName: (partialName: string, entityTypes: Array<'character' | 'scene' | 'place' | 'page'>) => Array<{
+    type: 'character' | 'scene' | 'place' | 'page';
+    id: string;
+    name: string;
+    description?: string;
+  }>;
+  getEntityInfo: (entityType: string, entityId: string) => any;
 }

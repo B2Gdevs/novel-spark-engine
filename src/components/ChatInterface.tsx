@@ -1,14 +1,11 @@
-
 import { useState, useEffect, useRef } from 'react';
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNovel } from "@/contexts/NovelContext";
-import { Send, Check, X, Trash } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Character, ChatMessage as ChatMessageType } from "@/types/novel";
+import { ChatMessage as ChatMessageType } from "@/types/novel";
 import { toast } from "sonner";
-import { MarkdownMessage } from './chat/MarkdownMessage';
+import { ChatHeader } from './chat/ChatHeader';
+import { ChatMessage } from './chat/ChatMessage';
+import { ChatInput } from './chat/ChatInput';
 
 export function ChatInterface() {
   const { 
@@ -24,22 +21,34 @@ export function ChatInterface() {
     updateScene,
     addPage,
     updatePage,
-    associateChatWithEntity
+    addPlace,
+    updatePlace,
+    associateChatWithEntity,
+    findEntitiesByPartialName,
+    getEntityInfo
   } = useNovel();
   
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [linkedEntityType, setLinkedEntityType] = useState<string | null>(null);
   const [linkedEntityId, setLinkedEntityId] = useState<string | null>(null);
-  const [pendingEntity, setPendingEntity] = useState<{
-    type: 'character' | 'scene' | 'page';
-    operation: 'create' | 'update';
-    data: any;
-    originalId?: string;
-  } | null>(null);
+  
+  // For mention functionality
+  const [mentionSearch, setMentionSearch] = useState("");
+  const [mentionSuggestions, setMentionSuggestions] = useState<Array<{
+    type: 'character' | 'scene' | 'place' | 'page';
+    id: string;
+    name: string;
+    description?: string;
+  }>>([]);
+  const [mentionedEntities, setMentionedEntities] = useState<Array<{
+    type: 'character' | 'scene' | 'place' | 'page';
+    id: string;
+    name: string;
+    fullText: string;
+  }>>([]);
   
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -55,6 +64,54 @@ export function ChatInterface() {
     }
   }, [project.currentChatContext]);
 
+  // Effect to watch for @ mentions in the message
+  useEffect(() => {
+    const atIndex = message.lastIndexOf('@');
+    
+    if (atIndex !== -1 && atIndex < message.length - 1) {
+      // Find the part of the message after the last @
+      const afterAt = message.substring(atIndex + 1);
+      
+      // If there's a slash, extract the entity type and search term
+      const slashIndex = afterAt.indexOf('/');
+      
+      if (slashIndex !== -1) {
+        const entityType = afterAt.substring(0, slashIndex);
+        const searchTerm = afterAt.substring(slashIndex + 1);
+        
+        // Only search if we have a valid entity type and search term
+        if (['character', 'scene', 'place', 'page'].includes(entityType) && searchTerm.length >= 2) {
+          const suggestions = findEntitiesByPartialName(
+            searchTerm, 
+            [entityType as 'character' | 'scene' | 'place' | 'page']
+          );
+          setMentionSuggestions(suggestions);
+          setMentionSearch(searchTerm);
+        } else {
+          setMentionSuggestions([]);
+          setMentionSearch("");
+        }
+      } else {
+        // If no slash yet, show all entity types that match the search
+        const searchTerm = afterAt.trim();
+        if (searchTerm.length >= 2) {
+          const suggestions = findEntitiesByPartialName(
+            searchTerm, 
+            ['character', 'scene', 'place', 'page']
+          );
+          setMentionSuggestions(suggestions);
+          setMentionSearch(searchTerm);
+        } else {
+          setMentionSuggestions([]);
+          setMentionSearch("");
+        }
+      }
+    } else {
+      setMentionSuggestions([]);
+      setMentionSearch("");
+    }
+  }, [message, findEntitiesByPartialName]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim() || loading || !currentBook) return;
@@ -62,16 +119,27 @@ export function ChatInterface() {
     setLoading(true);
     
     try {
-      // Add user message to chat history
+      // Process the message for @ mentions before sending
+      const processedMessage = processMentionsInMessage(message);
+      
+      // Add user message to chat history with any detected mentions
       addChatMessage({
         role: 'user',
-        content: message,
+        content: processedMessage.messageContent,
         entityType: linkedEntityType,
-        entityId: linkedEntityId
+        entityId: linkedEntityId,
+        mentionedEntities: processedMessage.mentionedEntities.length > 0 
+          ? processedMessage.mentionedEntities.map(m => ({
+              type: m.type,
+              id: m.id,
+              name: m.name
+            })) 
+          : undefined
       });
       
       const currentMessage = message;
       setMessage("");
+      setMentionedEntities([]);
       
       // Create system prompt based on current book context and any linked entity
       let systemPrompt = `
@@ -82,6 +150,7 @@ export function ChatInterface() {
         - ${currentBook.characters.length} characters
         - ${currentBook.scenes.length} scenes
         - ${currentBook.events.length} events
+        - ${currentBook.places?.length || 0} places
         - ${currentBook.pages.length} pages
         - ${currentBook.notes.length} notes
         
@@ -105,6 +174,12 @@ export function ChatInterface() {
         - **Title:** Page title
         - **Content:** Brief content summary
         
+        For places:
+        **Place: [Name]**
+        - **Name:** Place name
+        - **Description:** Brief description
+        - **Geography:** Notable geographic features
+
         Use Markdown formatting in your responses.
       `;
       
@@ -120,6 +195,35 @@ export function ChatInterface() {
           }
         }
         // Similar for other entity types
+      }
+      
+      // Add context for any mentioned entities in the message
+      if (processedMessage.mentionedEntities.length > 0) {
+        systemPrompt += "\n\nThe user's message mentions these entities:";
+        
+        processedMessage.mentionedEntities.forEach(entity => {
+          const entityData = getEntityInfo(entity.type, entity.id);
+          if (entityData) {
+            systemPrompt += `\n- ${entity.type} "${entityData.name || entityData.title}": `;
+            
+            switch(entity.type) {
+              case 'character':
+                systemPrompt += `${entityData.description || 'No description'}, Role: ${entityData.role || 'Unknown'}`;
+                break;
+              case 'scene':
+                systemPrompt += `${entityData.description || 'No description'}, Location: ${entityData.location || 'Unknown'}`;
+                break;
+              case 'page':
+                systemPrompt += entityData.content?.substring(0, 100) || 'No content';
+                break;
+              case 'place':
+                systemPrompt += `${entityData.description || 'No description'}, Geography: ${entityData.geography || 'Unknown'}`;
+                break;
+            }
+          }
+        });
+        
+        systemPrompt += "\n\nUse this entity information to provide context to your response.";
       }
       
       // Send message to AI and wait for response
@@ -145,6 +249,64 @@ export function ChatInterface() {
       setLoading(false);
     }
   };
+  
+  // Process message to extract and handle @ mentions
+  const processMentionsInMessage = (text: string) => {
+    const mentionRegex = /@(character|scene|place|page)\/([^@\s]+)/g;
+    const mentions: Array<{
+      type: 'character' | 'scene' | 'place' | 'page';
+      id: string;
+      name: string;
+      fullText: string;
+    }> = [];
+    
+    let lastIndex = 0;
+    let processedText = '';
+    let match: RegExpExecArray | null;
+    
+    // Reset the regex to start from the beginning
+    mentionRegex.lastIndex = 0;
+    
+    while ((match = mentionRegex.exec(text)) !== null) {
+      // Add text before the match
+      processedText += text.substring(lastIndex, match.index);
+      
+      const entityType = match[1] as 'character' | 'scene' | 'place' | 'page';
+      const entityName = match[2];
+      const fullMatch = match[0]; // The entire @type/name match
+      
+      // Find the entity in the current book
+      const entities = findEntitiesByPartialName(entityName, [entityType]);
+      
+      if (entities.length > 0) {
+        const entity = entities[0]; // Take the first match
+        
+        // Add this entity to our mentions list
+        mentions.push({
+          type: entityType,
+          id: entity.id,
+          name: entity.name,
+          fullText: fullMatch
+        });
+        
+        // Replace the @mention with just the name in the processed text
+        processedText += entity.name;
+      } else {
+        // If entity not found, keep the original text
+        processedText += fullMatch;
+      }
+      
+      lastIndex = match.index + fullMatch.length;
+    }
+    
+    // Add any remaining text
+    processedText += text.substring(lastIndex);
+    
+    return {
+      messageContent: processedText,
+      mentionedEntities: mentions
+    };
+  };
 
   const handleCreateEntity = (entityType: string, entityData: any) => {
     try {
@@ -159,6 +321,9 @@ export function ChatInterface() {
           break;
         case 'page':
           newId = addPage(entityData);
+          break;
+        case 'place':
+          newId = addPlace(entityData);
           break;
       }
       
@@ -190,6 +355,9 @@ export function ChatInterface() {
         case 'page':
           updatePage(entityId, entityData);
           break;
+        case 'place':
+          updatePlace(entityId, entityData);
+          break;
       }
       
       addChatMessage({
@@ -212,11 +380,29 @@ export function ChatInterface() {
       clearChatHistory();
     }
   };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
+  
+  const handleMentionSelect = (suggestion: {
+    type: 'character' | 'scene' | 'place' | 'page';
+    id: string;
+    name: string;
+  }) => {
+    // Find the last @ in the message
+    const atIndex = message.lastIndexOf('@');
+    
+    if (atIndex !== -1) {
+      // Replace from the @ to the current cursor position with the entity mention
+      const beforeAt = message.substring(0, atIndex);
+      const afterSearch = message.substring(atIndex + mentionSearch.length + 1);
+      
+      const newMessage = `${beforeAt}@${suggestion.type}/${suggestion.name} ${afterSearch}`;
+      
+      // Add to mentioned entities
+      setMentionedEntities([...mentionedEntities, {
+        ...suggestion,
+        fullText: `@${suggestion.type}/${suggestion.name}`
+      }]);
+      
+      setMessage(newMessage);
     }
   };
 
@@ -233,26 +419,12 @@ export function ChatInterface() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center p-2 border-b border-zinc-800">
-        <div className="text-sm text-zinc-400">
-          {linkedEntityType && linkedEntityId ? 
-            `Chat for ${linkedEntityType}: ${linkedEntityId}` : 
-            `General chat for ${currentBook.title}`
-          }
-        </div>
-        
-        {!linkedEntityType && !linkedEntityId && (
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={handleClearChat}
-            className="text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
-          >
-            <Trash className="h-4 w-4 mr-1" />
-            Clear Chat
-          </Button>
-        )}
-      </div>
+      <ChatHeader 
+        currentBook={currentBook}
+        linkedEntityType={linkedEntityType}
+        linkedEntityId={linkedEntityId}
+        onClearChat={handleClearChat}
+      />
       
       <ScrollArea className="flex-1 p-4">
         <div className="max-w-3xl mx-auto space-y-6">
@@ -263,42 +435,14 @@ export function ChatInterface() {
             </div>
           ) : (
             project.chatHistory.map((msg, index) => (
-              <div
+              <ChatMessage
                 key={msg.id}
-                className={cn(
-                  "flex gap-4 animate-fade-in-up",
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                )}
-                style={{ 
-                  animationDelay: `${index * 0.1}s`,
-                  animationFillMode: 'backwards' 
-                }}
-              >
-                <div
-                  className={cn(
-                    "relative group rounded-2xl px-4 py-3 max-w-[85%] text-sm",
-                    msg.role === "user" 
-                      ? "bg-purple-600 text-white" 
-                      : msg.role === "system"
-                        ? "bg-blue-800 text-white"
-                        : "bg-zinc-800 text-zinc-100"
-                  )}
-                >
-                  {msg.role === "assistant" ? (
-                    <MarkdownMessage 
-                      content={msg.content} 
-                      onCreateEntity={handleCreateEntity}
-                      onUpdateEntity={handleUpdateEntity}
-                      currentBook={currentBook}
-                    />
-                  ) : (
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
-                  )}
-                  <span className="absolute -bottom-5 text-[10px] text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {new Date(msg.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-              </div>
+                message={msg}
+                currentBook={currentBook}
+                onCreateEntity={handleCreateEntity}
+                onUpdateEntity={handleUpdateEntity}
+                index={index}
+              />
             ))
           )}
           <div ref={chatEndRef} />
@@ -312,27 +456,15 @@ export function ChatInterface() {
         </div>
       </ScrollArea>
 
-      <form onSubmit={handleSubmit} className="p-4 border-t border-zinc-800">
-        <div className="relative max-w-3xl mx-auto">
-          <Textarea
-            ref={textareaRef}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyPress}
-            placeholder="Message AI assistant..."
-            className="pr-12 resize-none bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:ring-purple-500"
-            rows={1}
-          />
-          <Button
-            type="submit"
-            size="icon"
-            disabled={loading || !message.trim()}
-            className="absolute right-2 bottom-2 h-8 w-8 bg-transparent hover:bg-zinc-700"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
-      </form>
+      <ChatInput 
+        message={message}
+        setMessage={setMessage}
+        onSubmit={handleSubmit}
+        loading={loading}
+        mentionSearch={mentionSearch}
+        mentionSuggestions={mentionSuggestions}
+        onMentionSelect={handleMentionSelect}
+      />
     </div>
   );
 }

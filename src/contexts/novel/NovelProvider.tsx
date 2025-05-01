@@ -7,6 +7,7 @@ import { useSceneOperations } from "./useSceneOperations";
 import { useEventOperations } from "./useEventOperations";
 import { usePageOperations } from "./usePageOperations";
 import { useNoteOperations } from "./useNoteOperations";
+import { usePlaceOperations } from "./usePlaceOperations";
 import { useChatOperations } from "./useChatOperations";
 import { useStorage } from "./useStorage";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,6 +79,7 @@ export function NovelProvider({ children }: { children: ReactNode }) {
   const { addScene, updateScene, deleteScene, getScene } = useSceneOperations(project, setProject);
   const { addEvent, updateEvent, deleteEvent, getEvent } = useEventOperations(project, setProject);
   const { addPage, updatePage, deletePage, getPage } = usePageOperations(project, setProject);
+  const { addPlace, updatePlace, deletePlace, getPlace } = usePlaceOperations(project, setProject);
   const { addNote, updateNote, deleteNote, getNote } = useNoteOperations(project, setProject);
   const { 
     addChatMessage, 
@@ -96,6 +98,106 @@ export function NovelProvider({ children }: { children: ReactNode }) {
       booksCount: project.books.length 
     });
   }, [project, currentBook]);
+
+  // Add a new function to find entities by partial name for the @ mentions
+  const findEntitiesByPartialName = (
+    partialName: string,
+    entityTypes: Array<'character' | 'scene' | 'place' | 'page'>
+  ) => {
+    if (!currentBook || partialName.length < 2) return [];
+    
+    const results: Array<{
+      type: 'character' | 'scene' | 'place' | 'page';
+      id: string;
+      name: string;
+      description?: string;
+    }> = [];
+    
+    const normalizedPartial = partialName.toLowerCase();
+    
+    if (entityTypes.includes('character')) {
+      const matchingCharacters = currentBook.characters.filter(
+        char => char.name.toLowerCase().includes(normalizedPartial)
+      );
+      
+      results.push(
+        ...matchingCharacters.map(char => ({
+          type: 'character' as const,
+          id: char.id,
+          name: char.name,
+          description: char.description
+        }))
+      );
+    }
+    
+    if (entityTypes.includes('scene')) {
+      const matchingScenes = currentBook.scenes.filter(
+        scene => scene.title.toLowerCase().includes(normalizedPartial)
+      );
+      
+      results.push(
+        ...matchingScenes.map(scene => ({
+          type: 'scene' as const,
+          id: scene.id,
+          name: scene.title,
+          description: scene.description
+        }))
+      );
+    }
+    
+    if (entityTypes.includes('page')) {
+      const matchingPages = currentBook.pages.filter(
+        page => page.title.toLowerCase().includes(normalizedPartial)
+      );
+      
+      results.push(
+        ...matchingPages.map(page => ({
+          type: 'page' as const,
+          id: page.id,
+          name: page.title,
+          description: page.content.substring(0, 100) + (page.content.length > 100 ? '...' : '')
+        }))
+      );
+    }
+    
+    if (entityTypes.includes('place') && currentBook.places) {
+      const matchingPlaces = currentBook.places.filter(
+        place => place.name.toLowerCase().includes(normalizedPartial)
+      );
+      
+      results.push(
+        ...matchingPlaces.map(place => ({
+          type: 'place' as const,
+          id: place.id,
+          name: place.name,
+          description: place.description
+        }))
+      );
+    }
+    
+    // Return top 5 matches
+    return results.slice(0, 5);
+  };
+  
+  // Add a function to get entity info by type and id
+  const getEntityInfo = (entityType: string, entityId: string) => {
+    switch(entityType) {
+      case 'character':
+        return getCharacter(entityId);
+      case 'scene':
+        return getScene(entityId);
+      case 'page':
+        return getPage(entityId);
+      case 'place':
+        return getPlace(entityId);
+      case 'note':
+        return getNote(entityId);
+      case 'event':
+        return getEvent(entityId);
+      default:
+        return null;
+    }
+  };
 
   const contextValue: NovelContextType = {
     project,
@@ -119,6 +221,10 @@ export function NovelProvider({ children }: { children: ReactNode }) {
     updateEvent,
     deleteEvent,
     getEvent,
+    addPlace,
+    updatePlace,
+    deletePlace,
+    getPlace,
     addNote,
     updateNote,
     deleteNote,
@@ -131,7 +237,9 @@ export function NovelProvider({ children }: { children: ReactNode }) {
     getLastModifiedItem,
     setProject,
     associateChatWithEntity,
-    rollbackEntity
+    rollbackEntity,
+    findEntitiesByPartialName,
+    getEntityInfo
   };
 
   return (

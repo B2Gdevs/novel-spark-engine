@@ -56,6 +56,17 @@ export interface Event {
   updatedAt?: string;
 }
 
+export interface Place {
+  id: string;
+  name: string;
+  description: string;
+  geography?: string;
+  culturalNotes?: string;
+  relatedEvents?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Note {
   id: string;
   title: string;
@@ -83,6 +94,11 @@ export interface ChatMessage {
     data: any;
     exists: boolean;
   } | null;
+  mentionedEntities?: Array<{
+    type: 'character' | 'scene' | 'place' | 'page';
+    id: string;
+    name: string;
+  }>;
 }
 
 export interface Book {
@@ -95,6 +111,7 @@ export interface Book {
   events: Event[];
   notes: Note[];
   pages: Page[];
+  places: Place[];
   references?: {
     characters?: string[]; // IDs of characters from other books
     scenes?: string[]; // IDs of scenes from other books

@@ -121,12 +121,24 @@ export function useChatOperations(
       };
     }
   };
+  
+  const parseMentionsInMessage = (message: string) => {
+    const mentionRegex = /@(\w+)\/([A-Za-z0-9_-]+)/g;
+    const matches = Array.from(message.matchAll(mentionRegex));
+    
+    return matches.map((match) => ({
+      fullMatch: match[0],
+      type: match[1],
+      id: match[2]
+    }));
+  };
 
   return {
     addChatMessage,
     clearChatHistory,
     sendMessageToAI,
     associateChatWithEntity,
-    rollbackEntity
+    rollbackEntity,
+    parseMentionsInMessage
   };
 }

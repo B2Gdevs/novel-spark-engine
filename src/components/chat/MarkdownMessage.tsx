@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
-import { Book, Character, Page, Scene } from "@/types/novel";
+import { Book, Character, Page, Scene, Place } from "@/types/novel";
 import { cn } from "@/lib/utils";
 
 interface MarkdownMessageProps {
@@ -132,6 +132,38 @@ export function MarkdownMessage({
       }
     }
     
+    // Check for place pattern
+    const placeMatch = content.match(/\*\*Place:\s*([\w\s]+)\*\*/i);
+    if (placeMatch) {
+      const nameMatch = content.match(/\*\*Name:\*\*\s*([\w\s]+)/i);
+      const descriptionMatch = content.match(/\*\*Description:\*\*\s*([^\n]+)/i);
+      const geographyMatch = content.match(/\*\*Geography:\*\*\s*([^\n]+)/i);
+      
+      if (nameMatch) {
+        const name = nameMatch[1].trim();
+        
+        // Check if place exists in current book
+        const existingPlace = currentBook?.places?.find(
+          p => p.name.toLowerCase() === name.toLowerCase()
+        );
+        
+        const placeData = {
+          name,
+          description: descriptionMatch ? descriptionMatch[1].trim() : "",
+          geography: geographyMatch ? geographyMatch[1].trim() : "",
+        };
+        
+        setEntityData({
+          type: 'place',
+          data: placeData,
+          exists: !!existingPlace,
+          id: existingPlace?.id
+        });
+        
+        return;
+      }
+    }
+    
     // No entity patterns found
     setEntityData(null);
   };
@@ -148,9 +180,16 @@ export function MarkdownMessage({
     }
   };
 
+  // Process content to highlight mentions
+  const processContentWithMentions = (content: string) => {
+    // This is a simplified version - we'd need more complex processing to actually highlight mentions
+    // but this gives you an idea of how it would work
+    return content;
+  };
+
   return (
     <div className={cn("prose prose-invert max-w-none", className)}>
-      <ReactMarkdown>{content}</ReactMarkdown>
+      <ReactMarkdown>{processContentWithMentions(content)}</ReactMarkdown>
       
       {entityData && (
         <div className="mt-4 p-3 bg-amber-900/30 border border-amber-500/30 rounded-lg">

@@ -24,6 +24,8 @@ export function EntityProcessor({
     updateScene,
     addPage,
     updatePage,
+    addPlace,
+    updatePlace,
     addChatMessage
   } = useNovel();
 
@@ -46,8 +48,8 @@ export function EntityProcessor({
           successMessage = `Page "${data.title}" created successfully`;
           break;
         case 'place':
-          // Would need to implement Place entity first
-          successMessage = `Place created successfully`;
+          newId = addPlace(data);
+          successMessage = `Place "${data.name}" created successfully`;
           break;
       }
       
@@ -89,7 +91,7 @@ export function EntityProcessor({
           successMessage = `Page updated successfully`;
           break;
         case 'place':
-          // Would need to implement Place entity first
+          updatePlace(id, data);
           successMessage = `Place updated successfully`;
           break;
       }
