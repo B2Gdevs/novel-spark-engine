@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useNovel } from "@/contexts/novel/NovelContext";
+import { useNovel } from "@/contexts/NovelContext";
 import { ChatMessage as ChatMessageType } from "@/types/novel";
 import { toast } from "sonner";
 import { ChatHeader } from './chat/ChatHeader';

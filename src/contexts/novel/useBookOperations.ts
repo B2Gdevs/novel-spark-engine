@@ -1,4 +1,5 @@
-import { NovelProject } from "@/types/novel";
+
+import { NovelProject, Book } from "@/types/novel";
 import { useCurrentBook } from "./useCurrentBook";
 import { useBookCRUD } from "./useBookCRUD";
 import { useBookNavigation } from "./useBookNavigation";
