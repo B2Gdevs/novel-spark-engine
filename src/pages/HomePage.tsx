@@ -1,14 +1,13 @@
 
 import { useNovel } from "@/contexts/NovelContext";
-import { BookCard } from "@/components/BookCard";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BookOpen } from "lucide-react";
+import { WelcomeSection } from "@/components/home/WelcomeSection";
+import { BookGrid } from "@/components/home/BookGrid";
 import { TrashZone } from "@/components/TrashZone";
-import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel, AlertDialogFooter, AlertDialogHeader } from "@/components/ui/alert-dialog";
-import ReactDOM from 'react-dom';
+import { DeleteBookDialog } from "@/components/home/DeleteBookDialog";
+import { DragPreview } from "@/components/home/DragPreview";
 
 export function HomePage() {
   const { project, currentBook, addBook, switchBook, deleteBook, getLastModifiedItem } = useNovel();
@@ -51,8 +50,7 @@ export function HomePage() {
     // Check if we should show the welcome screen
     setShowWelcome(project.books.length === 0);
     
-    // Always reset currentBookId when on the homepage 
-    // This ensures sidebar shows "Select a book" message
+    // Always reset currentBookId when on the homepage
     if (currentBook !== null) {
       console.log("On HomePage, currentBook should be null");
     }
@@ -70,7 +68,7 @@ export function HomePage() {
         events: [],
         notes: [],
         pages: [],
-        places: [] // Add the places property
+        places: [] // Including the places property
       });
       
       setShowWelcome(false);
@@ -116,7 +114,6 @@ export function HomePage() {
   };
 
   const handleDeleteBook = (bookId: string) => {
-    // Open confirmation dialog
     setConfirmDeleteBook(bookId);
   };
 
@@ -132,43 +129,19 @@ export function HomePage() {
     <div className="p-6 pt-12">
       <div className="max-w-6xl mx-auto">
         {showWelcome ? (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
-            <BookOpen className="h-16 w-16 text-purple-400 mb-4" />
-            <h1 className="text-3xl font-bold text-white mb-2">Welcome to NovelSpark</h1>
-            <p className="text-zinc-400 mb-8 max-w-lg">Start by creating your first book</p>
-            
-            <div className="w-64">
-              <BookCard 
-                isNewBookCard 
-                onCreateNew={handleAddNewBook} 
-                isLoading={isLoading}
-              />
-            </div>
-          </div>
+          <WelcomeSection 
+            onCreateNew={handleAddNewBook} 
+            isLoading={isLoading} 
+          />
         ) : (
-          <>
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white">Your Books</h1>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {project.books.map((book) => (
-                <BookCard
-                  key={book.id}
-                  book={book}
-                  onSelect={() => handleSelectBook(book.id)}
-                  onDelete={handleDeleteBook}
-                  setDraggedBookId={setDraggedBookId}
-                />
-              ))}
-              
-              <BookCard
-                isNewBookCard
-                onCreateNew={handleAddNewBook}
-                isLoading={isLoading}
-              />
-            </div>
-          </>
+          <BookGrid 
+            books={project.books}
+            onSelectBook={handleSelectBook}
+            onDeleteBook={handleDeleteBook}
+            onCreateNew={handleAddNewBook}
+            setDraggedBookId={setDraggedBookId}
+            isLoading={isLoading}
+          />
         )}
       </div>
 
@@ -179,50 +152,14 @@ export function HomePage() {
       />
 
       {/* Confirmation dialog */}
-      <AlertDialog open={!!confirmDeleteBook} onOpenChange={() => setConfirmDeleteBook(null)}>
-        <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Delete Book</AlertDialogTitle>
-            <AlertDialogDescription className="text-zinc-400">
-              This book will be moved to trash and permanently deleted after 30 days.
-              This action is reversible by contacting support during this period.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-white">Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              className="bg-red-600 hover:bg-red-700 text-white" 
-              onClick={handleConfirmDelete}
-            >
-              Move to Trash
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteBookDialog
+        isOpen={!!confirmDeleteBook}
+        onClose={() => setConfirmDeleteBook(null)}
+        onConfirm={handleConfirmDelete}
+      />
 
-      {/* Drag Preview Portal - Only shown when dragging */}
-      {draggedBookPreview && document.body && ReactDOM.createPortal(
-        <div 
-          style={{
-            position: 'fixed',
-            left: `${draggedBookPreview.position.x - 100}px`,
-            top: `${draggedBookPreview.position.y - 50}px`,
-            transform: 'scale(0.8)',
-            pointerEvents: 'none',
-            zIndex: 9999,
-            opacity: 0.85,
-            transition: 'box-shadow 0.2s ease',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-            width: '200px'
-          }}
-          className="animate-fade-in"
-        >
-          <div className="bg-zinc-900 border border-purple-500 rounded-md p-3">
-            <h3 className="font-bold text-white">{draggedBookPreview.title}</h3>
-          </div>
-        </div>,
-        document.body
-      )}
+      {/* Drag Preview */}
+      <DragPreview draggedBookPreview={draggedBookPreview} />
     </div>
   );
 }
