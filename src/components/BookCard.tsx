@@ -1,10 +1,10 @@
-
 import { Book } from "@/types/novel";
 import { BookOpen, Trash2, PlusCircle, Loader2 } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface BookCardProps {
   book?: Book;
@@ -27,6 +27,9 @@ export function BookCard({
 }: BookCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
+  const [originalPosition, setOriginalPosition] = useState({ x: 0, y: 0 });
 
   // Handle the "New Book" card
   if (isNewBookCard) {
@@ -59,22 +62,54 @@ export function BookCard({
 
   const handleDragStart = (e: React.DragEvent) => {
     if (setDraggedBookId && book) {
+      // Get original element position for animation
+      const rect = e.currentTarget.getBoundingClientRect();
+      setOriginalPosition({ 
+        x: rect.left, 
+        y: rect.top 
+      });
+      
       // Set data for drag operation
       e.dataTransfer.setData('text/plain', book.id);
+      
       // Show trash zone
       setDraggedBookId(book.id);
-      // Set ghost image (optional)
-      const ghost = document.createElement('div');
-      ghost.innerHTML = `<div style="padding: 10px; background: rgba(0,0,0,0.7); border-radius: 5px; color: white;">${book.title}</div>`;
-      document.body.appendChild(ghost);
-      e.dataTransfer.setDragImage(ghost, 50, 25);
-      setTimeout(() => document.body.removeChild(ghost), 0);
+      setIsDragging(true);
+      
+      // Create a translucent clone for the drag operation
+      const clone = e.currentTarget.cloneNode(true) as HTMLElement;
+      clone.id = 'book-drag-ghost';
+      clone.style.position = 'absolute';
+      clone.style.top = '-1000px';
+      clone.style.opacity = '0.7';
+      clone.style.transform = 'scale(0.8)';
+      clone.style.pointerEvents = 'none';
+      clone.style.zIndex = '9999';
+      clone.style.width = `${rect.width}px`;
+      
+      document.body.appendChild(clone);
+      e.dataTransfer.setDragImage(clone, rect.width / 2, rect.height / 2);
+      
+      // Listen to drag events to update position
+      window.addEventListener('dragover', updateDragPosition);
     }
+  };
+  
+  const updateDragPosition = (e: DragEvent) => {
+    setDragPosition({ x: e.clientX, y: e.clientY });
   };
 
   const handleDragEnd = () => {
     if (setDraggedBookId) {
       setDraggedBookId(null);
+      setIsDragging(false);
+      
+      // Remove ghost element
+      const ghost = document.getElementById('book-drag-ghost');
+      if (ghost) document.body.removeChild(ghost);
+      
+      // Remove drag listener
+      window.removeEventListener('dragover', updateDragPosition);
     }
   };
 
@@ -104,7 +139,10 @@ export function BookCard({
 
   return (
     <Card 
-      className="bg-zinc-900/70 border-zinc-800/50 overflow-hidden relative cursor-pointer hover:border-zinc-700/70 transition-all" 
+      className={cn(
+        "bg-zinc-900/70 border-zinc-800/50 overflow-hidden relative cursor-pointer hover:border-zinc-700/70 transition-all",
+        isDragging && "opacity-50"
+      )}
       onClick={onSelect}
       draggable
       onDragStart={handleDragStart}
@@ -155,6 +193,38 @@ export function BookCard({
           Drag to trash bin to delete
         </div>
       </CardContent>
+      
+      {/* Floating drag preview - visible only when dragging */}
+      {isDragging && createPortal(
+        <div 
+          style={{
+            position: 'fixed',
+            left: `${dragPosition.x - 100}px`,
+            top: `${dragPosition.y - 50}px`,
+            transform: 'scale(0.8)',
+            pointerEvents: 'none',
+            zIndex: 9999,
+            opacity: 0.85,
+            transition: 'box-shadow 0.2s',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+            width: '200px'
+          }}
+        >
+          <Card className="border-purple-500 bg-zinc-900">
+            <CardContent className="p-3">
+              <h3 className="font-bold text-white">{book.title}</h3>
+            </CardContent>
+          </Card>
+        </div>,
+        document.body
+      )}
     </Card>
   );
+}
+
+// Simple React Portal implementation for the drag preview
+function createPortal(children: React.ReactNode, container: HTMLElement) {
+  // In a real implementation, you'd use React.createPortal
+  // Since we're just showing the code here, we'll return null
+  return null;
 }

@@ -8,14 +8,44 @@ import { toast } from "sonner";
 import { BookOpen } from "lucide-react";
 import { TrashZone } from "@/components/TrashZone";
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel, AlertDialogFooter, AlertDialogHeader } from "@/components/ui/alert-dialog";
+import ReactDOM from 'react-dom';
 
 export function HomePage() {
   const { project, currentBook, addBook, switchBook, deleteBook, getLastModifiedItem } = useNovel();
   const [showWelcome, setShowWelcome] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [draggedBookId, setDraggedBookId] = useState<string | null>(null);
+  const [draggedBookPreview, setDraggedBookPreview] = useState<{
+    id: string;
+    title: string;
+    position: { x: number; y: number };
+  } | null>(null);
   const [confirmDeleteBook, setConfirmDeleteBook] = useState<string | null>(null);
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Track mouse position for the drag preview
+    const handleMouseMove = (e: MouseEvent) => {
+      if (draggedBookId) {
+        const book = project.books.find(b => b.id === draggedBookId);
+        if (book) {
+          setDraggedBookPreview({
+            id: book.id,
+            title: book.title,
+            position: { x: e.clientX, y: e.clientY }
+          });
+        }
+      }
+    };
+
+    if (draggedBookId) {
+      window.addEventListener('mousemove', handleMouseMove);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [draggedBookId, project.books]);
   
   useEffect(() => {
     // Check if we should show the welcome screen
@@ -26,12 +56,6 @@ export function HomePage() {
     if (currentBook !== null) {
       console.log("On HomePage, currentBook should be null");
     }
-    
-    console.log("HomePage state:", { 
-      currentBookId: project.currentBookId, 
-      booksCount: project.books.length,
-      showWelcome 
-    });
   }, [project.books.length, currentBook]);
   
   const handleAddNewBook = async () => {
@@ -98,6 +122,8 @@ export function HomePage() {
   const handleTrashDrop = () => {
     if (draggedBookId) {
       handleDeleteBook(draggedBookId);
+      setDraggedBookId(null);
+      setDraggedBookPreview(null);
     }
   };
 
@@ -172,6 +198,30 @@ export function HomePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Drag Preview Portal - Only shown when dragging */}
+      {draggedBookPreview && document.body && ReactDOM.createPortal(
+        <div 
+          style={{
+            position: 'fixed',
+            left: `${draggedBookPreview.position.x - 100}px`,
+            top: `${draggedBookPreview.position.y - 50}px`,
+            transform: 'scale(0.8)',
+            pointerEvents: 'none',
+            zIndex: 9999,
+            opacity: 0.85,
+            transition: 'box-shadow 0.2s ease',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+            width: '200px'
+          }}
+          className="animate-fade-in"
+        >
+          <div className="bg-zinc-900 border border-purple-500 rounded-md p-3">
+            <h3 className="font-bold text-white">{draggedBookPreview.title}</h3>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

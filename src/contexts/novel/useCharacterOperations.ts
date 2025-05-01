@@ -1,14 +1,14 @@
-
 import { v4 as uuidv4 } from "uuid";
 import { Character, NovelProject } from "@/types/novel";
 
 export function useCharacterOperations(project: NovelProject, setProject: React.Dispatch<React.SetStateAction<NovelProject>>) {
   const addCharacter = (character: Omit<Character, "id">) => {
-    if (!project.currentBookId) return;
+    if (!project.currentBookId) return undefined;
     
+    const newId = uuidv4();
     const newCharacter = { 
       ...character, 
-      id: uuidv4(),
+      id: newId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -29,6 +29,8 @@ export function useCharacterOperations(project: NovelProject, setProject: React.
         books: updatedBooks
       };
     });
+    
+    return newId; // Return the new ID
   };
 
   const updateCharacter = (id: string, character: Partial<Character>) => {

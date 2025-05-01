@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNovel } from "@/contexts/NovelContext";
-import { Send, Check, X } from "lucide-react";
+import { Send, Check, X, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Character } from "@/types/novel";
 
@@ -12,18 +12,26 @@ export function ChatInterface() {
   const { 
     project, 
     addChatMessage, 
+    clearChatHistory,
     sendMessageToAI, 
     currentBook,
     addCharacter,
+    updateCharacter,
+    getCharacter,
     addScene,
-    addPage 
+    addPage,
+    associateChatWithEntity
   } = useNovel();
   
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [linkedEntityType, setLinkedEntityType] = useState<string | null>(null);
+  const [linkedEntityId, setLinkedEntityId] = useState<string | null>(null);
   const [pendingEntity, setPendingEntity] = useState<{
     type: 'character' | 'scene' | 'page';
+    operation: 'create' | 'update';
     data: any;
+    originalId?: string;
   } | null>(null);
   
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -46,8 +54,8 @@ export function ChatInterface() {
         content: message
       });
       
-      // Create system prompt based on current book context
-      const systemPrompt = `
+      // Create system prompt based on current book context and any linked entity
+      let systemPrompt = `
         You are an AI assistant specialized in helping writers develop their novels.
         You're helpful, creative, and supportive. You focus on craft, world building, character development, and plot coherence.
         
@@ -58,15 +66,28 @@ export function ChatInterface() {
         - ${currentBook.pages.length} pages
         - ${currentBook.notes.length} notes
         
-        When the user wants to create a new character, scene, or page, extract the relevant information 
-        and present it in a structured format. Then suggest creating the entity with a confirmation prompt.
+        When the user wants to create a new character, extract relevant information like name, traits, description, role.
+        If they want to update an existing character, determine which fields they want to change.
+        Do the same for scenes (title, description, characters involved, location) and pages (title, content, chapter).
         
-        For character creation, extract: name, traits, description, role.
-        For scene creation, extract: title, description, characters involved, location.
-        For page creation, extract: title, content, chapter information.
-        
-        Don't actually create these entities yourself, just prepare the data and ask for confirmation.
+        Present a structured summary of what will be created/updated and ask for confirmation with a YES/NO choice.
       `;
+      
+      // If we're linked to a specific entity, add more context
+      if (linkedEntityType && linkedEntityId) {
+        if (linkedEntityType === 'character') {
+          const character = getCharacter(linkedEntityId);
+          if (character) {
+            systemPrompt += `\n\nThis conversation is specifically about the character "${character.name}". 
+            Current traits: ${character.traits?.join(', ') || 'None'}.
+            Current description: ${character.description || 'None'}.
+            Current role: ${character.role || 'None'}.
+            
+            When user messages suggest character updates, clearly identify what aspects of the character they want to change.`;
+          }
+        }
+        // Similar for other entity types
+      }
       
       // Send message to AI
       const currentMessage = message;
@@ -79,11 +100,13 @@ export function ChatInterface() {
         return;
       }
       
-      // Process AI response for entity creation
+      // Process AI response for entity creation or updates
       const response = result.message || "";
       
       // Check if the response contains character creation intent
-      if (response.includes("create a character") || response.includes("new character")) {
+      if ((response.includes("create a character") || response.includes("new character")) && 
+          !response.toLowerCase().includes("don't create") && 
+          !response.toLowerCase().includes("do not create")) {
         const nameMatch = response.match(/name:\s*([^,\n]+)/i);
         const traitsMatch = response.match(/traits:\s*([^,\n]+)/i);
         const roleMatch = response.match(/role:\s*([^,\n]+)/i);
@@ -100,8 +123,42 @@ export function ChatInterface() {
           // Set pending entity for confirmation
           setPendingEntity({
             type: 'character',
+            operation: 'create',
             data: characterData
           });
+        }
+      }
+      
+      // Check if response contains character update intent
+      else if (response.includes("update character") || response.includes("modify character")) {
+        const nameMatch = response.match(/name:\s*([^,\n]+)/i);
+        const characterName = nameMatch ? nameMatch[1].trim() : null;
+        
+        // Find character by name
+        const character = currentBook.characters.find(
+          c => c.name.toLowerCase() === (characterName?.toLowerCase() || '')
+        );
+        
+        if (character) {
+          const traitsMatch = response.match(/traits:\s*([^,\n]+)/i);
+          const roleMatch = response.match(/role:\s*([^,\n]+)/i);
+          const descriptionMatch = response.match(/description:\s*([^,\n.]{3,})/i);
+          
+          const updateData: Partial<Character> = {};
+          
+          if (traitsMatch) updateData.traits = traitsMatch[1].trim().split(/\s*,\s*/);
+          if (roleMatch) updateData.role = roleMatch[1].trim();
+          if (descriptionMatch) updateData.description = descriptionMatch[1].trim();
+          
+          // Only set pending update if there are actual changes
+          if (Object.keys(updateData).length > 0) {
+            setPendingEntity({
+              type: 'character',
+              operation: 'update',
+              data: updateData,
+              originalId: character.id
+            });
+          }
         }
       }
       
@@ -117,28 +174,49 @@ export function ChatInterface() {
   const confirmEntityCreation = () => {
     if (!pendingEntity) return;
     
-    switch (pendingEntity.type) {
-      case 'character':
-        addCharacter(pendingEntity.data);
-        addChatMessage({
-          role: 'assistant',
-          content: `I've created the character ${pendingEntity.data.name} for you!`
-        });
-        break;
-      case 'scene':
-        addScene(pendingEntity.data);
-        addChatMessage({
-          role: 'assistant',
-          content: `I've created the scene ${pendingEntity.data.title} for you!`
-        });
-        break;
-      case 'page':
-        addPage(pendingEntity.data);
-        addChatMessage({
-          role: 'assistant',
-          content: `I've created the page ${pendingEntity.data.title} for you!`
-        });
-        break;
+    if (pendingEntity.operation === 'create') {
+      switch (pendingEntity.type) {
+        case 'character':
+          const newCharacterId = addCharacter(pendingEntity.data);
+          addChatMessage({
+            role: 'assistant',
+            content: `I've created the character ${pendingEntity.data.name} for you!`
+          });
+          
+          // Associate this chat with the new character
+          if (newCharacterId) {
+            setLinkedEntityType('character');
+            setLinkedEntityId(newCharacterId);
+            associateChatWithEntity('character', newCharacterId);
+          }
+          break;
+        case 'scene':
+          addScene(pendingEntity.data);
+          addChatMessage({
+            role: 'assistant',
+            content: `I've created the scene ${pendingEntity.data.title} for you!`
+          });
+          break;
+        case 'page':
+          addPage(pendingEntity.data);
+          addChatMessage({
+            role: 'assistant',
+            content: `I've created the page ${pendingEntity.data.title} for you!`
+          });
+          break;
+      }
+    } 
+    else if (pendingEntity.operation === 'update' && pendingEntity.originalId) {
+      switch (pendingEntity.type) {
+        case 'character':
+          updateCharacter(pendingEntity.originalId, pendingEntity.data);
+          addChatMessage({
+            role: 'assistant',
+            content: `I've updated the character for you!`
+          });
+          break;
+        // Similar cases for other entity types
+      }
     }
     
     setPendingEntity(null);
@@ -147,7 +225,7 @@ export function ChatInterface() {
   const cancelEntityCreation = () => {
     addChatMessage({
       role: 'assistant',
-      content: `I've discarded the ${pendingEntity?.type} creation. Let me know if you want to try again!`
+      content: `I've discarded the ${pendingEntity?.operation} operation for ${pendingEntity?.type}. Let me know if you want to try again!`
     });
     setPendingEntity(null);
   };
@@ -156,6 +234,13 @@ export function ChatInterface() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
+    }
+  };
+
+  const handleClearChat = () => {
+    // Only allow clearing if not linked to an entity
+    if (!linkedEntityType && !linkedEntityId) {
+      clearChatHistory();
     }
   };
 
@@ -172,6 +257,27 @@ export function ChatInterface() {
 
   return (
     <div className="flex flex-col h-full">
+      <div className="flex justify-between items-center p-2 border-b border-zinc-800">
+        <div className="text-sm text-zinc-400">
+          {linkedEntityType && linkedEntityId ? 
+            `Chat for ${linkedEntityType}: ${linkedEntityId}` : 
+            `General chat for ${currentBook.title}`
+          }
+        </div>
+        
+        {!linkedEntityType && !linkedEntityId && (
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={handleClearChat}
+            className="text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
+          >
+            <Trash className="h-4 w-4 mr-1" />
+            Clear Chat
+          </Button>
+        )}
+      </div>
+      
       <ScrollArea className="flex-1 p-4">
         <div className="max-w-3xl mx-auto space-y-6">
           {project.chatHistory.length === 0 ? (
@@ -212,15 +318,31 @@ export function ChatInterface() {
             <div className="flex justify-start gap-4 animate-fade-in-up">
               <div className="bg-amber-900/40 border border-amber-500/30 rounded-2xl px-4 py-3 max-w-[85%]">
                 <p className="text-amber-200 font-medium mb-2">
-                  {`Ready to create a new ${pendingEntity.type}:`}
+                  {pendingEntity.operation === 'create' ? 
+                    `Ready to create a new ${pendingEntity.type}:` :
+                    `Ready to update this ${pendingEntity.type}:`
+                  }
                 </p>
-                {pendingEntity.type === 'character' && (
+                {pendingEntity.type === 'character' && pendingEntity.operation === 'create' && (
                   <div className="space-y-1 mb-3">
                     <p><span className="text-amber-400">Name:</span> {pendingEntity.data.name}</p>
                     <p><span className="text-amber-400">Role:</span> {pendingEntity.data.role}</p>
                     <p><span className="text-amber-400">Description:</span> {pendingEntity.data.description}</p>
-                    {pendingEntity.data.traits.length > 0 && (
+                    {pendingEntity.data.traits?.length > 0 && (
                       <p><span className="text-amber-400">Traits:</span> {pendingEntity.data.traits.join(', ')}</p>
+                    )}
+                  </div>
+                )}
+                {pendingEntity.type === 'character' && pendingEntity.operation === 'update' && (
+                  <div className="space-y-1 mb-3">
+                    {pendingEntity.data.role && (
+                      <p><span className="text-amber-400">New Role:</span> {pendingEntity.data.role}</p>
+                    )}
+                    {pendingEntity.data.description && (
+                      <p><span className="text-amber-400">New Description:</span> {pendingEntity.data.description}</p>
+                    )}
+                    {pendingEntity.data.traits?.length > 0 && (
+                      <p><span className="text-amber-400">New Traits:</span> {pendingEntity.data.traits.join(', ')}</p>
                     )}
                   </div>
                 )}
@@ -231,7 +353,7 @@ export function ChatInterface() {
                     onClick={confirmEntityCreation}
                   >
                     <Check className="h-4 w-4" />
-                    Create
+                    {pendingEntity.operation === 'create' ? 'Create' : 'Update'}
                   </Button>
                   <Button
                     size="sm"

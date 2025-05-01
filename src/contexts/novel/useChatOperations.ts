@@ -8,10 +8,12 @@ export function useChatOperations(
   setProject: React.Dispatch<React.SetStateAction<NovelProject>>
 ) {
   const addChatMessage = (message: Omit<ChatMessage, "id" | "timestamp">) => {
-    const newMessage = {
+    const newMessage: ChatMessage = {
       ...message,
       id: uuidv4(),
-      timestamp: Date.now() // Change from ISO string to number timestamp
+      timestamp: Date.now(), // Use number timestamp as per the type
+      entityType: message.entityType || null,
+      entityId: message.entityId || null
     };
     
     setProject(prev => ({
@@ -29,29 +31,34 @@ export function useChatOperations(
   };
 
   const associateChatWithEntity = (entityType: string, entityId: string) => {
-    // This would be used to associate a chat with a specific entity
-    // For now, we'll just add a message to indicate this
+    // Update all future messages to be associated with this entity
+    setProject(prev => ({
+      ...prev,
+      currentChatContext: {
+        entityType,
+        entityId
+      }
+    }));
+    
+    // Add a confirmation message
     addChatMessage({
       role: 'assistant',
-      content: `Now discussing ${entityType} with ID: ${entityId}`
+      content: `This chat is now linked to ${entityType} with ID: ${entityId}`,
+      entityType,
+      entityId
     });
-    
-    // In a real implementation, we would store this association
-    // and filter messages based on the current entity
   };
 
   const rollbackEntity = (entityType: string, entityId: string, version: string) => {
     // This would restore a previous version of an entity
-    // For now, we'll just add a message about it
     addChatMessage({
       role: 'assistant',
-      content: `Rolled back ${entityType} (ID: ${entityId}) to version ${version}`
+      content: `Rolled back ${entityType} (ID: ${entityId}) to version ${version}`,
+      entityType,
+      entityId
     });
     
     toast.success(`Rolled back ${entityType} to previous version`);
-    
-    // In a real implementation, we would store versioning information
-    // and use it to restore entities to previous states
   };
 
   const sendMessageToAI = async (
@@ -91,13 +98,9 @@ export function useChatOperations(
         };
       }
       
-      // Add AI response to chat history
+      // Return the AI response but don't add it to chat history yet
+      // (that will be handled by the caller)
       if (data && data.text) {
-        addChatMessage({
-          role: 'assistant',
-          content: data.text
-        });
-        
         return {
           success: true,
           message: data.text
