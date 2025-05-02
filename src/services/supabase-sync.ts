@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Book, Character, Scene, Place, Page, Event, Note, ChatMessage } from "@/types/novel";
 import { toast } from "sonner";
@@ -213,7 +214,19 @@ export async function fetchEntityChatHistory(
     
     // Type assertion to handle the JSON conversion
     if (data?.chat_history && Array.isArray(data.chat_history)) {
-      return data.chat_history as ChatMessage[];
+      // Use type casting with proper type checking
+      const chatHistory = data.chat_history as any[];
+      
+      // Ensure all required properties exist on each message
+      const validChatMessages = chatHistory.filter(msg => 
+        msg && 
+        typeof msg.id === 'string' && 
+        typeof msg.role === 'string' && 
+        typeof msg.content === 'string' && 
+        typeof msg.timestamp === 'number'
+      ) as ChatMessage[];
+      
+      return validChatMessages;
     }
     
     return null;
