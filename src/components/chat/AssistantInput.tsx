@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,12 +52,12 @@ export function AssistantInput({
     if (mentionSuggestions.length > 0) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedMentionIndex(prev => 
-          prev < mentionSuggestions.length - 1 ? prev + 1 : prev
-        );
+        // Fix: pass a number directly instead of a function
+        setSelectedMentionIndex(Math.min(selectedMentionIndex + 1, mentionSuggestions.length - 1));
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedMentionIndex(prev => prev > 0 ? prev - 1 : 0);
+        // Fix: pass a number directly instead of a function
+        setSelectedMentionIndex(Math.max(0, selectedMentionIndex - 1));
       } else if (e.key === "Escape") {
         e.preventDefault();
         // Clear suggestions
