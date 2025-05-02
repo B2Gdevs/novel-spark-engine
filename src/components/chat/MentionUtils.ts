@@ -1,4 +1,31 @@
+
 import { Book } from "@/types/novel";
+
+// Simple fuzzy match function for entity names
+function fuzzyMatch(name: string, query: string): boolean {
+  const nameLower = name.toLowerCase();
+  const queryLower = query.toLowerCase();
+  
+  // Direct match
+  if (nameLower.includes(queryLower)) {
+    return true;
+  }
+  
+  // Allow for typos by matching first letter + most characters
+  if (nameLower[0] === queryLower[0]) {
+    let matchedChars = 0;
+    for (let i = 0; i < queryLower.length; i++) {
+      if (nameLower.includes(queryLower[i])) {
+        matchedChars++;
+      }
+    }
+    
+    // If more than 70% of characters match
+    return matchedChars / queryLower.length > 0.7;
+  }
+  
+  return false;
+}
 
 /**
  * Process message text to extract and handle @ mentions
@@ -52,7 +79,7 @@ export function processMentionsInMessage(
       // Cross-book reference
       const books = getAllBooks();
       const matchingBook = books.find(b => 
-        b.title.toLowerCase() === bookTitle.toLowerCase()
+        fuzzyMatch(b.title.toLowerCase(), bookTitle.toLowerCase())
       );
       
       if (matchingBook) {

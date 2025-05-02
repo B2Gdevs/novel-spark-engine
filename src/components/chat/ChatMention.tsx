@@ -54,6 +54,7 @@ export function ChatMention({ mention, onRemove, showRemove = true, currentBookI
           type="button"
           onClick={() => onRemove(mention)}
           className="hover:text-white rounded-full"
+          aria-label={`Remove ${mention.name} mention`}
         >
           <X size={12} />
         </button>

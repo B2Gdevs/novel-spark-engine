@@ -35,8 +35,10 @@ export function MentionPopover({ onSelectMention, currentBookId }: MentionPopove
     bookId?: string;
     bookTitle?: string;
   }>>([]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   
   // Focus on the input when popover opens
   useEffect(() => {
@@ -44,6 +46,7 @@ export function MentionPopover({ onSelectMention, currentBookId }: MentionPopove
       setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
+      setSelectedIndex(0);
     }
   }, [isOpen]);
   
@@ -52,6 +55,7 @@ export function MentionPopover({ onSelectMention, currentBookId }: MentionPopove
     if (query.trim().length > 0) {
       const searchResults = searchEntities(query);
       setResults(searchResults);
+      setSelectedIndex(0); // Reset selection when results change
     } else {
       setResults([]);
     }
@@ -80,11 +84,29 @@ export function MentionPopover({ onSelectMention, currentBookId }: MentionPopove
   };
   
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex(prev => 
+        prev < results.length - 1 ? prev + 1 : prev
+      );
+      
+      // Scroll selected item into view
+      const selectedItem = listRef.current?.children[selectedIndex + 1];
+      selectedItem?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex(prev => prev > 0 ? prev - 1 : 0);
+      
+      // Scroll selected item into view
+      const selectedItem = listRef.current?.children[selectedIndex - 1];
+      selectedItem?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    } else if (e.key === "Enter") {
+      e.preventDefault();
       if (results.length > 0) {
-        handleMentionSelect(results[0]);
-        e.preventDefault();
+        handleMentionSelect(results[selectedIndex]);
       }
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
     }
   };
   
@@ -95,6 +117,7 @@ export function MentionPopover({ onSelectMention, currentBookId }: MentionPopove
           variant="ghost" 
           size="sm" 
           className="h-8 w-8 rounded-full p-0 hover:bg-zinc-800"
+          aria-label="Add mention"
         >
           <AtSign size={16} className="text-zinc-400" />
         </Button>
@@ -122,13 +145,13 @@ export function MentionPopover({ onSelectMention, currentBookId }: MentionPopove
           
           <div className="mt-2">
             {results.length > 0 ? (
-              <div className="max-h-60 overflow-y-auto">
+              <div ref={listRef} className="max-h-60 overflow-y-auto">
                 {results.map((result, index) => (
                   <div
                     key={`${result.type}-${result.id}`}
                     className={cn(
                       "flex items-center p-2 hover:bg-zinc-800 rounded cursor-pointer",
-                      index === 0 ? "bg-zinc-800/50" : ""
+                      index === selectedIndex ? "bg-zinc-800" : ""
                     )}
                     onClick={() => handleMentionSelect(result)}
                   >
