@@ -4,6 +4,7 @@ import { useNovel } from "@/contexts/NovelContext";
 import { toast } from "sonner";
 import { processMentionsInMessage } from "@/components/chat/MentionUtils";
 import { Book } from "@/types/novel";
+import { generateSystemPrompt } from '@/utils/systemPrompts';
 
 export function useChatSubmission({ 
   linkedEntityType, 
@@ -25,7 +26,6 @@ export function useChatSubmission({
   const [loading, setLoading] = useState(false);
   
   const findEntitiesByPartialName = (partialName: string) => {
-    // Call this from props or context
     // This is a simplified version
     if (!currentBook) return [];
     
@@ -126,113 +126,14 @@ export function useChatSubmission({
           : undefined
       });
       
-      // Create system prompt based on current book context and any linked entity
-      let systemPrompt = `
-        You are an AI assistant specialized in helping writers develop their novels.
-        You're helpful, creative, and supportive. You focus on craft, world building, character development, and plot coherence.
-        
-        The user is currently working on a book titled "${currentBook.title}" with:
-        - ${currentBook.characters.length} characters
-        - ${currentBook.scenes.length} scenes
-        - ${currentBook.events.length} events
-        - ${currentBook.places?.length || 0} places
-        - ${currentBook.pages.length} pages
-        - ${currentBook.notes.length} notes
-        - ${currentBook.summary || 'No summary yet'}
-        
-        When creating or updating characters, scenes, pages or places, format them as follows:
-        
-        For characters:
-        **Character: [Name]**
-        - **Name:** Full name
-        - **Traits:** Trait1, Trait2, Trait3
-        - **Description:** Physical appearance and notable features
-        - **Role:** Character's role in the story
-        
-        For scenes:
-        **Scene: [Title]**
-        - **Title:** Scene title
-        - **Description:** Brief description of what happens
-        - **Location:** Where the scene takes place
-        
-        For pages:
-        **Page: [Title]**
-        - **Title:** Page title
-        - **Content:** Brief content summary
-        
-        For places:
-        **Place: [Name]**
-        - **Name:** Place name
-        - **Description:** Brief description
-        - **Geography:** Notable geographic features
-
-        Use Markdown formatting in your responses.
-      `;
-      
-      // If we're linked to a specific entity, add more context
-      if (linkedEntityType && linkedEntityId) {
-        const entityData = getEntityInfo(linkedEntityType, linkedEntityId);
-        if (entityData) {
-          systemPrompt += `\n\nThis conversation is specifically about the ${linkedEntityType} "${entityData.name || entityData.title}".`;
-          
-          // Add specific details based on entity type
-          switch (linkedEntityType) {
-            case 'character':
-              systemPrompt += `\nCurrent traits: ${entityData.traits?.join(', ') || 'None'}.
-              Current description: ${entityData.description || 'None'}.
-              Current role: ${entityData.role || 'None'}.`;
-              break;
-            case 'scene':
-              systemPrompt += `\nCurrent description: ${entityData.description || 'None'}.
-              Current location: ${entityData.location || 'None'}.`;
-              break;
-            case 'page':
-              systemPrompt += `\nCurrent content: ${
-                entityData.content ? 
-                (entityData.content.length > 200 ? entityData.content.substring(0, 200) + '...' : entityData.content) 
-                : 'None'
-              }.`;
-              break;
-            case 'place':
-              systemPrompt += `\nCurrent description: ${entityData.description || 'None'}.
-              Current geography: ${entityData.geography || 'None'}.`;
-              break;
-          }
-        }
-      }
-      
-      // Add context for any mentioned entities in the message
-      if (processedMessage.mentionedEntities.length > 0) {
-        systemPrompt += "\n\nThe user's message mentions these entities:";
-        
-        processedMessage.mentionedEntities.forEach(entity => {
-          const entityData = getEntityInfo(entity.type, entity.id, entity.bookId);
-          if (entityData) {
-            systemPrompt += `\n- ${entity.type} "${entityData.name || entityData.title}": `;
-            
-            switch(entity.type) {
-              case 'character':
-                systemPrompt += `${entityData.description || 'No description'}, Role: ${entityData.role || 'Unknown'}`;
-                break;
-              case 'scene':
-                systemPrompt += `${entityData.description || 'No description'}, Location: ${entityData.location || 'Unknown'}`;
-                break;
-              case 'page':
-                systemPrompt += entityData.content?.substring(0, 100) || 'No content';
-                break;
-              case 'place':
-                systemPrompt += `${entityData.description || 'No description'}, Geography: ${entityData.geography || 'Unknown'}`;
-                break;
-            }
-            
-            if (entity.bookId && entity.bookId !== currentBook.id) {
-              systemPrompt += ` (from book: ${entity.bookTitle})`;
-            }
-          }
-        });
-        
-        systemPrompt += "\n\nUse this entity information to provide context to your response.";
-      }
+      // Generate system prompt using our utility function
+      const systemPrompt = generateSystemPrompt(
+        currentBook,
+        linkedEntityType,
+        linkedEntityId,
+        processedMessage.mentionedEntities,
+        getEntityInfo
+      );
       
       // Send message to AI and wait for response
       const result = await sendMessageToAI(message, project.chatHistory, systemPrompt);
