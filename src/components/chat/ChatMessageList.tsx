@@ -29,6 +29,19 @@ export function ChatMessageList({
   }>>([]);
   
   const handleCreateEntity = (entityType: string, entityData: any, messageId: string) => {
+    // Check if we already have a pending entity of this type with similar data
+    const existingEntityIndex = pendingEntities.findIndex(entity => 
+      entity.messageId === messageId && 
+      entity.type === entityType && 
+      (entity.type === 'character' ? entity.data.name === entityData.name : 
+       entity.type === 'scene' ? entity.data.title === entityData.title :
+       entity.type === 'page' ? entity.data.title === entityData.title :
+       entity.data.name === entityData.name)
+    );
+    
+    // If this entity already exists in our pending list, return early
+    if (existingEntityIndex !== -1) return;
+    
     setPendingEntities(prev => [...prev, {
       type: entityType as 'character' | 'scene' | 'page' | 'place',
       data: entityData,
@@ -38,6 +51,16 @@ export function ChatMessageList({
   };
 
   const handleUpdateEntity = (entityType: string, entityId: string, entityData: any, messageId: string) => {
+    // Check if we already have this update pending
+    const existingEntityIndex = pendingEntities.findIndex(entity => 
+      entity.messageId === messageId && 
+      entity.type === entityType && 
+      entity.id === entityId
+    );
+    
+    // If this entity update already exists in our pending list, return early
+    if (existingEntityIndex !== -1) return;
+    
     setPendingEntities(prev => [...prev, {
       type: entityType as 'character' | 'scene' | 'page' | 'place',
       data: entityData,

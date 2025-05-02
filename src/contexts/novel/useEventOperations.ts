@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from "uuid";
 import { Event, NovelProject } from "@/types/novel";
 
@@ -9,6 +10,7 @@ export function useEventOperations(project: NovelProject, setProject: React.Disp
     const newEvent = { 
       ...event, 
       id: newId,
+      date: event.date || "Unknown",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -87,10 +89,34 @@ export function useEventOperations(project: NovelProject, setProject: React.Disp
     return currentBook?.events.find((e) => e.id === id);
   };
 
+  const getAllEventsSorted = (): Event[] => {
+    if (!project.currentBookId) return [];
+    const currentBook = project.books.find(book => book.id === project.currentBookId);
+    if (!currentBook) return [];
+    
+    // Sort by date if available
+    return [...currentBook.events].sort((a, b) => {
+      // Try to parse dates if they exist, otherwise use alphabetical sorting
+      if (a.date && b.date) {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        
+        // If both are valid dates, compare them
+        if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+          return dateA.getTime() - dateB.getTime();
+        }
+      }
+      
+      // Fallback to name comparison
+      return a.name.localeCompare(b.name);
+    });
+  };
+
   return {
     addEvent,
     updateEvent,
     deleteEvent,
-    getEvent
+    getEvent,
+    getAllEventsSorted
   };
 }

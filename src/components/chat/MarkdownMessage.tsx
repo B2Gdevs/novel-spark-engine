@@ -2,6 +2,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Book } from '@/types/novel';
+import { Button } from '../ui/button';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
 
 interface MarkdownMessageProps {
   content: string;
@@ -18,6 +20,48 @@ export function MarkdownMessage({
 }: MarkdownMessageProps) {
   // Use ref to prevent infinite loop
   const processedRef = useRef(false);
+  const [showFullPrompt, setShowFullPrompt] = useState(false);
+  const [expandedContent, setExpandedContent] = useState<string | null>(null);
+  
+  // Process content for mentions
+  useEffect(() => {
+    if (!content) return;
+    
+    const mentionRegex = /@(character|scene|place|page)\/([^\s]+)/g;
+    let match;
+    let hasMatches = false;
+    let processedContent = content;
+    
+    // Find all mentions in the message
+    while ((match = mentionRegex.exec(content)) !== null) {
+      hasMatches = true;
+      const entityType = match[1];
+      const entityName = match[2];
+      
+      // Get entity details from currentBook
+      if (currentBook) {
+        let entityDetails = null;
+        switch (entityType) {
+          case 'character':
+            entityDetails = currentBook.characters.find(c => c.name === entityName);
+            break;
+          case 'scene':
+            entityDetails = currentBook.scenes.find(s => s.title === entityName);
+            break;
+          case 'page':
+            entityDetails = currentBook.pages.find(p => p.title === entityName);
+            break;
+          case 'place':
+            entityDetails = currentBook.places?.find(p => p.name === entityName);
+            break;
+        }
+        
+        if (entityDetails) {
+          setExpandedContent(processedContent);
+        }
+      }
+    }
+  }, [content, currentBook]);
   
   useEffect(() => {
     // Only process once per content update
@@ -42,7 +86,8 @@ export function MarkdownMessage({
           fields: [
             { name: 'title', regex: /\*\*Title:\*\*\s*([^\n]+)/i },
             { name: 'description', regex: /\*\*Description:\*\*\s*([^\n]+)/i },
-            { name: 'location', regex: /\*\*Location:\*\*\s*([^\n]+)/i }
+            { name: 'location', regex: /\*\*Location:\*\*\s*([^\n]+)/i },
+            { name: 'date', regex: /\*\*Date:\*\*\s*([^\n]+)/i }
           ]
         },
         {
@@ -99,6 +144,25 @@ export function MarkdownMessage({
             { name: 'description', regex: /\*\*Description:\*\*\s*([^\n]+)/i },
             { name: 'geography', regex: /\*\*Geography:\*\*\s*([^\n]+)/i }
           ]
+        },
+        {
+          type: 'event',
+          headerRegex: /\*\*Event:?\s*([^*]+)\*\*/i,
+          fields: [
+            { name: 'name', regex: /\*\*Name:\*\*\s*([^\n]+)/i },
+            { name: 'description', regex: /\*\*Description:\*\*\s*([^\n]+)/i },
+            { name: 'date', regex: /\*\*Date:\*\*\s*([^\n]+)/i },
+            { name: 'characters', regex: /\*\*Characters:\*\*\s*([^\n]+)/i, isArray: true }
+          ],
+          contentKey: 'consequences',
+          contentExtractor: (text: string) => {
+            const consequencesMatch = text.match(/\*\*Consequences:\*\*\s*([\s\S]+?)(?=\n\n|$)/i);
+            if (consequencesMatch && consequencesMatch[1]) {
+              // Split by bullet points or numbers
+              return consequencesMatch[1].split(/\n\s*[-*]\s*/).filter(item => item.trim()).map(item => item.trim());
+            }
+            return [];
+          }
         }
       ];
 
@@ -114,13 +178,17 @@ export function MarkdownMessage({
           for (const field of pattern.fields) {
             const match = content.match(field.regex);
             if (match) {
-              if (field.isArray) {
+              // Only use isArray if it's defined on this field
+              const isArray = 'isArray' in field && field.isArray === true;
+              if (isArray) {
                 entityData[field.name] = match[1].split(',').map(item => item.trim());
               } else {
                 entityData[field.name] = match[1].trim();
               }
             } else {
-              entityData[field.name] = field.isArray ? [] : '';
+              // Only use isArray if it's defined on this field
+              const isArray = 'isArray' in field && field.isArray === true;
+              entityData[field.name] = isArray ? [] : '';
             }
           }
           
@@ -133,6 +201,10 @@ export function MarkdownMessage({
           if (pattern.type === 'scene' && entityData.description) {
             entityData.content = entityData.content || entityData.description;
             entityData.characters = entityData.characters || [];
+            // Ensure date is set if not already
+            if (!entityData.date) {
+              entityData.date = 'Unknown';
+            }
           }
           
           // Add default order value for pages
@@ -165,6 +237,11 @@ export function MarkdownMessage({
                 p => p.name.toLowerCase() === entityData.name.toLowerCase()
               );
               break;
+            case 'event':
+              existingEntity = currentBook.events?.find(
+                e => e.name.toLowerCase() === entityData.name.toLowerCase()
+              );
+              break;
           }
           
           // Create or update entity
@@ -191,9 +268,40 @@ export function MarkdownMessage({
     processedRef.current = false;
   }, [content]);
 
+  const togglePrompt = () => {
+    setShowFullPrompt(!showFullPrompt);
+  };
+
   return (
     <div className="prose prose-zinc dark:prose-invert prose-sm w-full max-w-full prose-custom">
-      <ReactMarkdown>{content}</ReactMarkdown>
+      {expandedContent && (
+        <div className="mb-2 flex justify-end">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex gap-1 text-xs" 
+            onClick={togglePrompt}
+          >
+            {showFullPrompt ? (
+              <>
+                <EyeOffIcon size={14} /> Hide full prompt
+              </>
+            ) : (
+              <>
+                <EyeIcon size={14} /> Show full prompt
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+      
+      {showFullPrompt && expandedContent ? (
+        <div className="bg-zinc-800 p-3 rounded-md mb-4 text-xs whitespace-pre-wrap">
+          {expandedContent}
+        </div>
+      ) : (
+        <ReactMarkdown>{content}</ReactMarkdown>
+      )}
     </div>
   );
 }

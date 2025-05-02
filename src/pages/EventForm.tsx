@@ -11,6 +11,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 export function EventForm() {
   const { addEvent, updateEvent, getEvent, currentBook } = useNovel();
@@ -22,10 +27,12 @@ export function EventForm() {
     description: "",
     characters: [],
     consequences: [],
+    date: format(new Date(), "PPP"), // Use current date as default
   });
   
   const [selectedCharacter, setSelectedCharacter] = useState("");
   const [newConsequence, setNewConsequence] = useState("");
+  const [date, setDate] = useState<Date | undefined>(new Date());
 
   useEffect(() => {
     if (id && id !== "new") {
@@ -36,7 +43,18 @@ export function EventForm() {
           description: existingEvent.description,
           characters: existingEvent.characters || [],
           consequences: existingEvent.consequences || [],
+          date: existingEvent.date || format(new Date(), "PPP"),
         });
+        
+        // Try to parse the date if it exists
+        try {
+          const parsedDate = new Date(existingEvent.date);
+          if (!isNaN(parsedDate.getTime())) {
+            setDate(parsedDate);
+          }
+        } catch (e) {
+          console.error("Failed to parse date:", e);
+        }
       }
     }
   }, [id, getEvent]);
@@ -54,11 +72,16 @@ export function EventForm() {
       return;
     }
 
+    const finalEvent = {
+      ...event,
+      date: date ? format(date, "PPP") : format(new Date(), "PPP"),
+    };
+
     if (id && id !== "new") {
-      updateEvent(id, event);
+      updateEvent(id, finalEvent);
       toast.success("Event updated successfully");
     } else {
-      addEvent(event);
+      addEvent(finalEvent);
       toast.success("Event created successfully");
     }
     
@@ -104,8 +127,18 @@ export function EventForm() {
     });
   };
 
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    setDate(selectedDate);
+    if (selectedDate) {
+      setEvent({
+        ...event,
+        date: format(selectedDate, "PPP"),
+      });
+    }
+  };
+
   return (
-    <div>
+    <div className="container mx-auto px-4 py-6 max-w-4xl">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-blue-600">
           {id && id !== "new" ? "Edit Event" : "Create Event"}
@@ -117,11 +150,11 @@ export function EventForm() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="shadow-md">
+        <CardHeader className="bg-blue-50 dark:bg-blue-900/20">
           <CardTitle className="text-xl">Event Details</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="name">Event Name</Label>
@@ -133,6 +166,32 @@ export function EventForm() {
                 }
                 placeholder="E.g. The Great Battle, The Wedding, The Betrayal"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="date">Date in Story</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, "PPP") : "Select a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={handleDateSelect}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">
