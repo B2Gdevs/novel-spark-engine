@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { ChatMessage } from './ChatMessage';
 import { ChatMessage as ChatMessageType, Book } from "@/types/novel";
-import { EntityProcessor } from './EntityProcessor';
 import { EntityConfirmationCard } from './EntityConfirmationCard';
 
 interface ChatMessageListProps {
@@ -48,7 +47,6 @@ export function ChatMessageList({
     const entity = pendingEntities[index];
     if (!entity) return;
     
-    // Call the entity processor component to handle the actual creation/update
     const updatedPendingEntities = [...pendingEntities];
     updatedPendingEntities.splice(index, 1);
     setPendingEntities(updatedPendingEntities);

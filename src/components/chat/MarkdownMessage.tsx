@@ -23,11 +23,14 @@ export function MarkdownMessage({
   onUpdateEntity,
   currentBook
 }: MarkdownMessageProps) {
-  const [detectedEntity, setDetectedEntity] = useState<EntityData | null>(null);
-
+  // Use ref to prevent infinite loop
+  const [processed, setProcessed] = useState(false);
+  
   useEffect(() => {
-    // Parse the markdown content to detect entities
-    if (content && content.includes('**') && currentBook) {
+    // Only process once per message
+    if (processed || !content || !currentBook) return;
+    
+    const detectEntity = () => {
       // Character pattern detection
       if (content.includes('**Character:') || content.includes('**Character :')) {
         const characterMatch = content.match(/\*\*Character:?\s*([^*]+)\*\*/i);
@@ -52,12 +55,13 @@ export function MarkdownMessage({
               role: roleMatch ? roleMatch[1].trim() : ''
             };
             
-            setDetectedEntity({
-              type: 'character',
-              data: characterData,
-              exists: !!existingCharacter,
-              id: existingCharacter?.id
-            });
+            if (existingCharacter) {
+              onUpdateEntity('character', existingCharacter.id, characterData);
+            } else {
+              onCreateEntity('character', characterData);
+            }
+            
+            return true;
           }
         }
       }
@@ -86,12 +90,13 @@ export function MarkdownMessage({
               characters: []
             };
             
-            setDetectedEntity({
-              type: 'scene',
-              data: sceneData,
-              exists: !!existingScene,
-              id: existingScene?.id
-            });
+            if (existingScene) {
+              onUpdateEntity('scene', existingScene.id, sceneData);
+            } else {
+              onCreateEntity('scene', sceneData);
+            }
+            
+            return true;
           }
         }
       }
@@ -139,12 +144,13 @@ export function MarkdownMessage({
               order: existingPage?.order || currentBook.pages.length
             };
             
-            setDetectedEntity({
-              type: 'page',
-              data: pageData,
-              exists: !!existingPage,
-              id: existingPage?.id
-            });
+            if (existingPage) {
+              onUpdateEntity('page', existingPage.id, pageData);
+            } else {
+              onCreateEntity('page', pageData);
+            }
+            
+            return true;
           }
         }
       }
@@ -171,29 +177,24 @@ export function MarkdownMessage({
               geography: geographyMatch ? geographyMatch[1].trim() : ''
             };
             
-            setDetectedEntity({
-              type: 'place',
-              data: placeData,
-              exists: !!existingPlace,
-              id: existingPlace?.id
-            });
+            if (existingPlace) {
+              onUpdateEntity('place', existingPlace.id, placeData);
+            } else {
+              onCreateEntity('place', placeData);
+            }
+            
+            return true;
           }
         }
       }
-    }
-  }, [content, currentBook, onCreateEntity, onUpdateEntity]);
-
-  // Process entity creation/update
-  useEffect(() => {
-    if (detectedEntity) {
-      if (detectedEntity.exists && detectedEntity.id) {
-        onUpdateEntity(detectedEntity.type, detectedEntity.id, detectedEntity.data);
-      } else {
-        onCreateEntity(detectedEntity.type, detectedEntity.data);
-      }
-      setDetectedEntity(null);
-    }
-  }, [detectedEntity, onCreateEntity, onUpdateEntity]);
+      
+      return false;
+    };
+    
+    // Process entities and mark as done to prevent infinite loops
+    const entityDetected = detectEntity();
+    setProcessed(true);
+  }, [content, currentBook, onCreateEntity, onUpdateEntity, processed]);
 
   return (
     <div className="prose prose-zinc dark:prose-invert prose-sm w-full max-w-full prose-custom">

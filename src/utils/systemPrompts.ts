@@ -16,7 +16,7 @@ export function generateBaseSystemPrompt(currentBook: Book): string {
     - ${currentBook.places?.length || 0} places
     - ${currentBook.pages.length} pages
     - ${currentBook.notes.length} notes
-    - ${currentBook.summary ? currentBook.summary : 'No summary yet'}
+    - Summary: ${currentBook.summary || 'No summary yet'}
     
     When creating or updating characters, scenes, pages or places, format them as follows:
     
