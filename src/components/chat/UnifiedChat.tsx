@@ -9,6 +9,8 @@ import { EmptyChat } from './EmptyChat';
 import { useChatSubmission } from '@/hooks/useChatSubmission';
 import { useMentionDetection } from '@/hooks/useMentionDetection';
 import { useEntityContext } from '@/hooks/useEntityContext';
+import { EntityProcessor } from './EntityProcessor';
+import { toast } from "sonner";
 
 interface UnifiedChatProps {
   mode: 'page' | 'dialog';
@@ -16,7 +18,20 @@ interface UnifiedChatProps {
 }
 
 export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
-  const { project, currentBook, clearChatHistory } = useNovel();
+  const { 
+    project, 
+    currentBook, 
+    clearChatHistory, 
+    addCharacter, 
+    updateCharacter,
+    addScene,
+    updateScene,
+    addPage,
+    updatePage,
+    addPlace,
+    updatePlace,
+    addChatMessage 
+  } = useNovel();
   const [message, setMessage] = useState("");
   
   // Custom hooks to split functionality
@@ -32,13 +47,67 @@ export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
     findEntitiesByPartialName
   );
   
+  // Entity processing state
+  const [processingEntity, setProcessingEntity] = useState<{
+    type: 'character' | 'scene' | 'page' | 'place';
+    data: any;
+    exists: boolean;
+    id?: string;
+  } | null>(null);
+  
   // Handlers
   const handleCreateEntity = (entityType: string, entityData: any) => {
-    // Will be implemented in a separate component
+    let newId: string | undefined;
+    
+    switch (entityType) {
+      case 'character':
+        newId = addCharacter(entityData);
+        toast.success(`Character "${entityData.name}" created successfully`);
+        break;
+      case 'scene':
+        newId = addScene(entityData);
+        toast.success(`Scene "${entityData.title}" created successfully`);
+        break;
+      case 'page':
+        newId = addPage(entityData);
+        toast.success(`Page "${entityData.title}" created successfully`);
+        break;
+      case 'place':
+        newId = addPlace(entityData);
+        toast.success(`Place "${entityData.name}" created successfully`);
+        break;
+    }
+    
+    // Add confirmation message to chat
+    if (newId) {
+      addChatMessage({
+        role: 'system',
+        content: `${entityType} created successfully`,
+        entityType: entityType,
+        entityId: newId
+      });
+    }
   };
 
   const handleUpdateEntity = (entityType: string, entityId: string, entityData: any) => {
-    // Will be implemented in a separate component
+    switch (entityType) {
+      case 'character':
+        updateCharacter(entityId, entityData);
+        toast.success("Character updated successfully");
+        break;
+      case 'scene':
+        updateScene(entityId, entityData);
+        toast.success("Scene updated successfully");
+        break;
+      case 'page':
+        updatePage(entityId, entityData);
+        toast.success("Page updated successfully");
+        break;
+      case 'place':
+        updatePlace(entityId, entityData);
+        toast.success("Place updated successfully");
+        break;
+    }
   };
 
   const handleClearChat = () => {
@@ -73,6 +142,16 @@ export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
 
   return (
     <div className="flex flex-col h-full bg-background">
+      {processingEntity && (
+        <EntityProcessor 
+          type={processingEntity.type}
+          data={processingEntity.data}
+          exists={processingEntity.exists}
+          id={processingEntity.id}
+          onEntityProcessed={() => setProcessingEntity(null)}
+        />
+      )}
+      
       <ChatHeader 
         currentBook={currentBook}
         linkedEntityType={linkedEntityType}

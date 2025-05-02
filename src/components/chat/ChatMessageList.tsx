@@ -1,60 +1,105 @@
 
-import React, { useRef, useEffect } from 'react';
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChatMessage as ChatMessageType, Book } from "@/types/novel";
+import React, { useState } from 'react';
 import { ChatMessage } from './ChatMessage';
+import { ChatMessage as ChatMessageType, Book } from "@/types/novel";
+import { EntityProcessor } from './EntityProcessor';
+import { EntityConfirmationCard } from './EntityConfirmationCard';
 
 interface ChatMessageListProps {
   messages: ChatMessageType[];
   currentBook: Book | null;
   onCreateEntity: (entityType: string, entityData: any) => void;
   onUpdateEntity: (entityType: string, entityId: string, entityData: any) => void;
-  loading: boolean;
+  loading?: boolean;
 }
 
 export function ChatMessageList({ 
   messages, 
-  currentBook, 
-  onCreateEntity, 
+  currentBook,
+  onCreateEntity,
   onUpdateEntity,
-  loading
+  loading = false
 }: ChatMessageListProps) {
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const [pendingEntities, setPendingEntities] = useState<Array<{
+    type: 'character' | 'scene' | 'page' | 'place';
+    data: any;
+    exists: boolean;
+    id?: string;
+  }>>([]);
   
-  // Scroll to bottom of chat when messages change
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-  
+  const handleCreateEntity = (entityType: string, entityData: any) => {
+    setPendingEntities(prev => [...prev, {
+      type: entityType as 'character' | 'scene' | 'page' | 'place',
+      data: entityData,
+      exists: false
+    }]);
+  };
+
+  const handleUpdateEntity = (entityType: string, entityId: string, entityData: any) => {
+    setPendingEntities(prev => [...prev, {
+      type: entityType as 'character' | 'scene' | 'page' | 'place',
+      data: entityData,
+      exists: true,
+      id: entityId
+    }]);
+  };
+
+  const handleConfirmEntity = (index: number) => {
+    const entity = pendingEntities[index];
+    if (!entity) return;
+    
+    // Call the entity processor component to handle the actual creation/update
+    const updatedPendingEntities = [...pendingEntities];
+    updatedPendingEntities.splice(index, 1);
+    setPendingEntities(updatedPendingEntities);
+    
+    if (entity.exists && entity.id) {
+      onUpdateEntity(entity.type, entity.id, entity.data);
+    } else {
+      onCreateEntity(entity.type, entity.data);
+    }
+  };
+
+  const handleCancelEntity = (index: number) => {
+    const updatedPendingEntities = [...pendingEntities];
+    updatedPendingEntities.splice(index, 1);
+    setPendingEntities(updatedPendingEntities);
+  };
+
   return (
-    <ScrollArea className="flex-1 p-4">
-      <div className="max-w-3xl mx-auto space-y-6">
-        {messages.length === 0 ? (
-          <div className="text-center py-8 text-zinc-400">
-            <p className="text-lg font-medium mb-2">{`How can I help with "${currentBook?.title || 'your story'}"?`}</p>
-            <p className="text-sm">Ask me to create characters, scenes, or help with your story.</p>
+    <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      {messages.map((message, index) => (
+        <ChatMessage 
+          key={message.id}
+          message={message}
+          currentBook={currentBook}
+          onCreateEntity={handleCreateEntity}
+          onUpdateEntity={handleUpdateEntity}
+          index={index}
+        />
+      ))}
+      
+      {/* Entity confirmation cards */}
+      {pendingEntities.map((entity, index) => (
+        <EntityConfirmationCard
+          key={`${entity.type}-${index}`}
+          entityType={entity.type}
+          entityData={entity.data}
+          onConfirm={() => handleConfirmEntity(index)}
+          onCancel={() => handleCancelEntity(index)}
+        />
+      ))}
+
+      {/* Loading indicator */}
+      {loading && (
+        <div className="flex justify-start">
+          <div className="bg-zinc-700 rounded-2xl px-4 py-3 flex items-center space-x-2">
+            <div className="animate-pulse h-2 w-2 bg-zinc-300 rounded-full"></div>
+            <div className="animate-pulse h-2 w-2 bg-zinc-300 rounded-full animation-delay-200"></div>
+            <div className="animate-pulse h-2 w-2 bg-zinc-300 rounded-full animation-delay-400"></div>
           </div>
-        ) : (
-          messages.map((msg, index) => (
-            <ChatMessage
-              key={msg.id}
-              message={msg}
-              currentBook={currentBook}
-              onCreateEntity={onCreateEntity}
-              onUpdateEntity={onUpdateEntity}
-              index={index}
-            />
-          ))
-        )}
-        <div ref={chatEndRef} />
-        {loading && (
-          <div className="flex items-center gap-2 text-zinc-400 animate-pulse">
-            <div className="w-2 h-2 rounded-full bg-current" />
-            <div className="w-2 h-2 rounded-full bg-current animation-delay-200" />
-            <div className="w-2 h-2 rounded-full bg-current animation-delay-400" />
-          </div>
-        )}
-      </div>
-    </ScrollArea>
+        </div>
+      )}
+    </div>
   );
 }

@@ -18,7 +18,7 @@ export function ScenesPage() {
   const filteredScenes = scenes.filter(
     (scene) =>
       scene.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      scene.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      scene.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (scene.location && scene.location.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -30,7 +30,7 @@ export function ScenesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 md:px-8 py-6 space-y-6 max-w-7xl">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-orange-500">Scenes</h1>
