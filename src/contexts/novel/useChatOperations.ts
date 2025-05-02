@@ -3,8 +3,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { ChatMessage, NovelProject } from '@/types/novel';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { saveEntityChatHistory, fetchEntityChatHistory } from '@/services/supabase-sync';
 
 export function useChatOperations(
+  project: NovelProject,
   setProject: React.Dispatch<React.SetStateAction<NovelProject>>
 ) {
   const addChatMessage = (message: Omit<ChatMessage, "id" | "timestamp">) => {
@@ -20,6 +22,22 @@ export function useChatOperations(
       ...prev,
       chatHistory: [...prev.chatHistory, newMessage]
     }));
+    
+    // If this chat is linked to an entity, save it to database
+    if (newMessage.entityType && newMessage.entityId && project.currentBookId) {
+      // Get all messages for this entity
+      const entityMessages = [...project.chatHistory, newMessage].filter(
+        msg => msg.entityType === newMessage.entityType && msg.entityId === newMessage.entityId
+      );
+      
+      // Save to Supabase in background
+      saveEntityChatHistory(
+        newMessage.entityType,
+        newMessage.entityId,
+        project.currentBookId,
+        entityMessages
+      ).catch(error => console.error("Failed to sync entity chat history:", error));
+    }
   };
   
   const clearChatHistory = () => {
@@ -30,7 +48,7 @@ export function useChatOperations(
     toast.success("Chat history cleared");
   };
 
-  const associateChatWithEntity = (entityType: string, entityId: string) => {
+  const associateChatWithEntity = async (entityType: string, entityId: string) => {
     // Update all future messages to be associated with this entity
     setProject(prev => ({
       ...prev,
@@ -40,13 +58,55 @@ export function useChatOperations(
       }
     }));
     
-    // Add a confirmation message
-    addChatMessage({
-      role: 'assistant',
-      content: `This chat is now linked to ${entityType} with ID: ${entityId}`,
-      entityType,
-      entityId
-    });
+    // Try to load previous chat history for this entity
+    if (project.currentBookId) {
+      try {
+        const chatHistory = await fetchEntityChatHistory(entityType, entityId);
+        if (chatHistory && chatHistory.length > 0) {
+          // Add a system message indicating we've loaded previous chat
+          const systemMessage: ChatMessage = {
+            id: uuidv4(),
+            role: 'system',
+            content: `Loaded previous chat history for this ${entityType}`,
+            timestamp: Date.now(),
+            entityType,
+            entityId
+          };
+          
+          setProject(prev => ({
+            ...prev,
+            chatHistory: [...chatHistory, systemMessage]
+          }));
+          
+          toast.success(`Loaded previous chat history for this ${entityType}`);
+        } else {
+          // Add a confirmation message
+          addChatMessage({
+            role: 'system',
+            content: `This chat is now linked to ${entityType} with ID: ${entityId}`,
+            entityType,
+            entityId
+          });
+        }
+      } catch (error) {
+        console.error("Error loading entity chat history:", error);
+        // Add a confirmation message anyway
+        addChatMessage({
+          role: 'system',
+          content: `This chat is now linked to ${entityType} with ID: ${entityId}`,
+          entityType,
+          entityId
+        });
+      }
+    } else {
+      // Add a confirmation message
+      addChatMessage({
+        role: 'assistant',
+        content: `This chat is now linked to ${entityType} with ID: ${entityId}`,
+        entityType,
+        entityId
+      });
+    }
   };
 
   const rollbackEntity = (entityType: string, entityId: string, version: string) => {
@@ -110,7 +170,7 @@ export function useChatOperations(
           error: "Received empty response"
         };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in sendMessageToAI:', error);
       toast.error("Failed to communicate with AI assistant");
       return {

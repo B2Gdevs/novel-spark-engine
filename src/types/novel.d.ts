@@ -4,13 +4,13 @@ export interface Book {
   title: string;
   description: string;
   genre?: string;
-  summary?: string;  // Added book summary field
+  summary?: string;
   characters: Character[];
   scenes: Scene[];
   events: Event[];
   notes: Note[];
   pages: Page[];
-  places?: Place[];  // Make places optional for backward compatibility
+  places: Place[];
   createdAt: string;
   updatedAt: string;
 }

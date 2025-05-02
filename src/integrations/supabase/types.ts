@@ -17,6 +17,7 @@ export type Database = {
           genre: string | null
           id: string
           is_deleted: boolean | null
+          summary: string | null
           title: string
           updated_at: string | null
         }
@@ -27,6 +28,7 @@ export type Database = {
           genre?: string | null
           id?: string
           is_deleted?: boolean | null
+          summary?: string | null
           title: string
           updated_at?: string | null
         }
@@ -37,6 +39,7 @@ export type Database = {
           genre?: string | null
           id?: string
           is_deleted?: boolean | null
+          summary?: string | null
           title?: string
           updated_at?: string | null
         }
@@ -85,6 +88,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "characters_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entity_chats: {
+        Row: {
+          book_id: string | null
+          chat_history: Json | null
+          created_at: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          book_id?: string | null
+          chat_history?: Json | null
+          created_at?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          book_id?: string | null
+          chat_history?: Json | null
+          created_at?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_chats_book_id_fkey"
             columns: ["book_id"]
             isOneToOne: false
             referencedRelation: "books"
@@ -202,6 +243,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "pages_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      places: {
+        Row: {
+          book_id: string | null
+          created_at: string | null
+          cultural_notes: string | null
+          description: string | null
+          geography: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          book_id?: string | null
+          created_at?: string | null
+          cultural_notes?: string | null
+          description?: string | null
+          geography?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          book_id?: string | null
+          created_at?: string | null
+          cultural_notes?: string | null
+          description?: string | null
+          geography?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "places_book_id_fkey"
             columns: ["book_id"]
             isOneToOne: false
             referencedRelation: "books"

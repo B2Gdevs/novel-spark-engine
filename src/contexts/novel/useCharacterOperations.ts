@@ -1,5 +1,7 @@
+
 import { v4 as uuidv4 } from "uuid";
 import { Character, NovelProject } from "@/types/novel";
+import { saveCharacterToSupabase } from "@/services/supabase-sync";
 
 export function useCharacterOperations(project: NovelProject, setProject: React.Dispatch<React.SetStateAction<NovelProject>>) {
   const addCharacter = (character: Omit<Character, "id">) => {
@@ -13,6 +15,7 @@ export function useCharacterOperations(project: NovelProject, setProject: React.
       updatedAt: new Date().toISOString()
     };
 
+    // Save to project state
     setProject((prev) => {
       const updatedBooks = prev.books.map(book => {
         if (book.id === prev.currentBookId) {
@@ -30,24 +33,39 @@ export function useCharacterOperations(project: NovelProject, setProject: React.
       };
     });
     
+    // Save to Supabase in background
+    if (project.currentBookId) {
+      saveCharacterToSupabase(newCharacter, project.currentBookId)
+        .catch(error => console.error("Failed to sync character to database:", error));
+    }
+    
     return newId; // Return the new ID
   };
 
   const updateCharacter = (id: string, character: Partial<Character>) => {
     if (!project.currentBookId) return;
     
+    let updatedCharacter: Character | null = null;
+    
     setProject((prev) => {
       const updatedBooks = prev.books.map(book => {
         if (book.id === prev.currentBookId) {
-          return {
-            ...book,
-            characters: book.characters.map((c) => 
-              c.id === id ? { 
+          const updatedCharacters = book.characters.map((c) => {
+            if (c.id === id) {
+              const updated = { 
                 ...c, 
                 ...character,
                 updatedAt: new Date().toISOString() 
-              } : c
-            )
+              };
+              updatedCharacter = updated;
+              return updated;
+            }
+            return c;
+          });
+          
+          return {
+            ...book,
+            characters: updatedCharacters
           };
         }
         return book;
@@ -58,6 +76,12 @@ export function useCharacterOperations(project: NovelProject, setProject: React.
         books: updatedBooks
       };
     });
+    
+    // Save to Supabase in background
+    if (updatedCharacter && project.currentBookId) {
+      saveCharacterToSupabase(updatedCharacter, project.currentBookId)
+        .catch(error => console.error("Failed to sync character update to database:", error));
+    }
   };
 
   const deleteCharacter = (id: string) => {
