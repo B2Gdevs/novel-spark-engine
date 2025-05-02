@@ -1,14 +1,7 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Book } from '@/types/novel';
-
-interface EntityData {
-  type: 'character' | 'scene' | 'page' | 'place';
-  data: any;
-  exists: boolean;
-  id?: string;
-}
 
 interface MarkdownMessageProps {
   content: string;
@@ -24,177 +17,179 @@ export function MarkdownMessage({
   currentBook
 }: MarkdownMessageProps) {
   // Use ref to prevent infinite loop
-  const [processed, setProcessed] = useState(false);
+  const processedRef = useRef(false);
   
   useEffect(() => {
-    // Only process once per message
-    if (processed || !content || !currentBook) return;
+    // Only process once per content update
+    if (processedRef.current || !content || !currentBook) return;
     
     const detectEntity = () => {
-      // Character pattern detection
-      if (content.includes('**Character:') || content.includes('**Character :')) {
-        const characterMatch = content.match(/\*\*Character:?\s*([^*]+)\*\*/i);
-        if (characterMatch) {
-          const nameMatch = content.match(/\*\*Name:\*\*\s*([^\n]+)/i);
-          const traitsMatch = content.match(/\*\*Traits:\*\*\s*([^\n]+)/i);
-          const descriptionMatch = content.match(/\*\*Description:\*\*\s*([^\n]+)/i);
-          const roleMatch = content.match(/\*\*Role:\*\*\s*([^\n]+)/i);
-          
-          if (nameMatch) {
-            const name = nameMatch[1].trim();
+      // Extract entity patterns from content
+      const entityPatterns = [
+        {
+          type: 'character',
+          headerRegex: /\*\*Character:?\s*([^*]+)\*\*/i,
+          fields: [
+            { name: 'name', regex: /\*\*Name:\*\*\s*([^\n]+)/i },
+            { name: 'traits', regex: /\*\*Traits:\*\*\s*([^\n]+)/i, isArray: true },
+            { name: 'description', regex: /\*\*Description:\*\*\s*([^\n]+)/i },
+            { name: 'role', regex: /\*\*Role:\*\*\s*([^\n]+)/i }
+          ]
+        },
+        {
+          type: 'scene',
+          headerRegex: /\*\*Scene:?\s*([^*]+)\*\*/i,
+          fields: [
+            { name: 'title', regex: /\*\*Title:\*\*\s*([^\n]+)/i },
+            { name: 'description', regex: /\*\*Description:\*\*\s*([^\n]+)/i },
+            { name: 'location', regex: /\*\*Location:\*\*\s*([^\n]+)/i }
+          ]
+        },
+        {
+          type: 'page',
+          headerRegex: /\*\*Page:?\s*([^*]+)\*\*/i,
+          fields: [
+            { name: 'title', regex: /\*\*Title:\*\*\s*([^\n]+)/i }
+          ],
+          contentKey: 'content',
+          // For page, we need special handling to extract content
+          contentExtractor: (text: string) => {
+            // Get title from the markdown
+            const titleMatch = text.match(/\*\*Title:\*\*\s*([^\n]+)/i);
+            const title = titleMatch ? titleMatch[1].trim() : '';
             
-            // Check if this character already exists
-            const existingCharacter = currentBook.characters.find(
-              c => c.name.toLowerCase() === name.toLowerCase()
-            );
-            
-            const characterData = {
-              name,
-              traits: traitsMatch ? traitsMatch[1].split(',').map(t => t.trim()) : [],
-              description: descriptionMatch ? descriptionMatch[1].trim() : '',
-              role: roleMatch ? roleMatch[1].trim() : ''
-            };
-            
-            if (existingCharacter) {
-              onUpdateEntity('character', existingCharacter.id, characterData);
+            // First, find the "Content:" marker if it exists
+            const contentMarkerMatch = text.match(/\*\*Content:\*\*\s*/i);
+            if (contentMarkerMatch) {
+              // Extract everything after the content marker
+              const contentStart = text.indexOf(contentMarkerMatch[0]) + contentMarkerMatch[0].length;
+              return text.substring(contentStart).trim();
             } else {
-              onCreateEntity('character', characterData);
-            }
-            
-            return true;
-          }
-        }
-      }
-      
-      // Scene pattern detection
-      if (content.includes('**Scene:') || content.includes('**Scene :')) {
-        const sceneMatch = content.match(/\*\*Scene:?\s*([^*]+)\*\*/i);
-        if (sceneMatch) {
-          const titleMatch = content.match(/\*\*Title:\*\*\s*([^\n]+)/i);
-          const descriptionMatch = content.match(/\*\*Description:\*\*\s*([^\n]+)/i);
-          const locationMatch = content.match(/\*\*Location:\*\*\s*([^\n]+)/i);
-          
-          if (titleMatch) {
-            const title = titleMatch[1].trim();
-            
-            // Check if this scene already exists
-            const existingScene = currentBook.scenes.find(
-              s => s.title.toLowerCase() === title.toLowerCase()
-            );
-            
-            const sceneData = {
-              title,
-              description: descriptionMatch ? descriptionMatch[1].trim() : '',
-              location: locationMatch ? locationMatch[1].trim() : '',
-              content: descriptionMatch ? descriptionMatch[1].trim() : '',
-              characters: []
-            };
-            
-            if (existingScene) {
-              onUpdateEntity('scene', existingScene.id, sceneData);
-            } else {
-              onCreateEntity('scene', sceneData);
-            }
-            
-            return true;
-          }
-        }
-      }
-      
-      // Page pattern detection
-      if (content.includes('**Page:') || content.includes('**Page :')) {
-        const pageMatch = content.match(/\*\*Page:?\s*([^*]+)\*\*/i);
-        if (pageMatch) {
-          const titleMatch = content.match(/\*\*Title:\*\*\s*([^\n]+)/i);
-          const contentMatch = content.match(/\*\*Content:\*\*\s*([^\n]+)/i);
-          
-          if (titleMatch) {
-            const title = titleMatch[1].trim();
-            
-            // Check if this page already exists
-            const existingPage = currentBook.pages.find(
-              p => p.title.toLowerCase() === title.toLowerCase()
-            );
-            
-            // Extract the content from the markdown, excluding the metadata section
-            let pageContent = '';
-            if (contentMatch) {
-              pageContent = contentMatch[1].trim();
-            } else {
-              // Get the content from the markdown, excluding the metadata section
-              const lines = content.split('\n');
-              let metadataEndIndex = -1;
+              // If no Content marker, extract everything after the metadata section
+              const lines = text.split('\n');
+              let metadataEndLine = 0;
               
-              // Find where metadata section ends
+              // Find the title line
               for (let i = 0; i < lines.length; i++) {
-                if (lines[i].trim() === '' && i > 2) {
-                  metadataEndIndex = i;
+                if (lines[i].includes("**Title:**")) {
+                  metadataEndLine = i;
                   break;
                 }
               }
               
-              if (metadataEndIndex > -1) {
-                pageContent = lines.slice(metadataEndIndex + 1).join('\n').trim();
+              // Look for a blank line after title to find the end of metadata
+              let contentStartLine = metadataEndLine + 1;
+              while (contentStartLine < lines.length && lines[contentStartLine].trim() !== '') {
+                contentStartLine++;
               }
+              
+              // Skip the blank line
+              contentStartLine++;
+              
+              // Join everything from there to the end as the content
+              return lines.slice(contentStartLine).join('\n').trim();
             }
-            
-            const pageData = {
-              title,
-              content: pageContent || '',
-              order: existingPage?.order || currentBook.pages.length
-            };
-            
-            if (existingPage) {
-              onUpdateEntity('page', existingPage.id, pageData);
-            } else {
-              onCreateEntity('page', pageData);
-            }
-            
-            return true;
           }
+        },
+        {
+          type: 'place',
+          headerRegex: /\*\*Place:?\s*([^*]+)\*\*/i,
+          fields: [
+            { name: 'name', regex: /\*\*Name:\*\*\s*([^\n]+)/i },
+            { name: 'description', regex: /\*\*Description:\*\*\s*([^\n]+)/i },
+            { name: 'geography', regex: /\*\*Geography:\*\*\s*([^\n]+)/i }
+          ]
         }
-      }
-      
-      // Place pattern detection
-      if (content.includes('**Place:') || content.includes('**Place :')) {
-        const placeMatch = content.match(/\*\*Place:?\s*([^*]+)\*\*/i);
-        if (placeMatch) {
-          const nameMatch = content.match(/\*\*Name:\*\*\s*([^\n]+)/i);
-          const descriptionMatch = content.match(/\*\*Description:\*\*\s*([^\n]+)/i);
-          const geographyMatch = content.match(/\*\*Geography:\*\*\s*([^\n]+)/i);
+      ];
+
+      // Try to match each entity pattern
+      for (const pattern of entityPatterns) {
+        const headerMatch = content.match(pattern.headerRegex);
+        
+        if (headerMatch) {
+          // Extract field values using regex
+          const entityData: Record<string, any> = {};
           
-          if (nameMatch) {
-            const name = nameMatch[1].trim();
-            
-            // Check if this place already exists
-            const existingPlace = currentBook.places?.find(
-              p => p.name.toLowerCase() === name.toLowerCase()
-            );
-            
-            const placeData = {
-              name,
-              description: descriptionMatch ? descriptionMatch[1].trim() : '',
-              geography: geographyMatch ? geographyMatch[1].trim() : ''
-            };
-            
-            if (existingPlace) {
-              onUpdateEntity('place', existingPlace.id, placeData);
+          // Process standard fields
+          for (const field of pattern.fields) {
+            const match = content.match(field.regex);
+            if (match) {
+              if (field.isArray) {
+                entityData[field.name] = match[1].split(',').map(item => item.trim());
+              } else {
+                entityData[field.name] = match[1].trim();
+              }
             } else {
-              onCreateEntity('place', placeData);
+              entityData[field.name] = field.isArray ? [] : '';
             }
-            
-            return true;
           }
+          
+          // Special handling for content field (used for pages)
+          if (pattern.contentKey && pattern.contentExtractor) {
+            entityData[pattern.contentKey] = pattern.contentExtractor(content);
+          }
+          
+          // For scenes, ensure we have a content field derived from description
+          if (pattern.type === 'scene' && entityData.description) {
+            entityData.content = entityData.content || entityData.description;
+            entityData.characters = entityData.characters || [];
+          }
+          
+          // Add default order value for pages
+          if (pattern.type === 'page') {
+            entityData.order = currentBook.pages.length;
+          }
+          
+          // Check if entity already exists
+          let existingEntity;
+          let nameKey = pattern.type === 'scene' || pattern.type === 'page' ? 'title' : 'name';
+          
+          switch (pattern.type) {
+            case 'character':
+              existingEntity = currentBook.characters.find(
+                c => c.name.toLowerCase() === entityData.name.toLowerCase()
+              );
+              break;
+            case 'scene':
+              existingEntity = currentBook.scenes.find(
+                s => s.title.toLowerCase() === entityData.title.toLowerCase()
+              );
+              break;
+            case 'page':
+              existingEntity = currentBook.pages.find(
+                p => p.title.toLowerCase() === entityData.title.toLowerCase()
+              );
+              break;
+            case 'place':
+              existingEntity = currentBook.places?.find(
+                p => p.name.toLowerCase() === entityData.name.toLowerCase()
+              );
+              break;
+          }
+          
+          // Create or update entity
+          if (existingEntity) {
+            onUpdateEntity(pattern.type, existingEntity.id, entityData);
+          } else {
+            onCreateEntity(pattern.type, entityData);
+          }
+          
+          return true; // Entity detected and processed
         }
       }
       
-      return false;
+      return false; // No entity detected
     };
     
-    // Process entities and mark as done to prevent infinite loops
-    const entityDetected = detectEntity();
-    setProcessed(true);
-  }, [content, currentBook, onCreateEntity, onUpdateEntity, processed]);
+    // Process entities and mark as done
+    detectEntity();
+    processedRef.current = true;
+  }, [content, currentBook, onCreateEntity, onUpdateEntity]);
+
+  // Reset the processed flag when content changes
+  useEffect(() => {
+    processedRef.current = false;
+  }, [content]);
 
   return (
     <div className="prose prose-zinc dark:prose-invert prose-sm w-full max-w-full prose-custom">

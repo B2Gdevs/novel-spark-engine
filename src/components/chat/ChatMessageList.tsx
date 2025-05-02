@@ -19,27 +19,31 @@ export function ChatMessageList({
   onUpdateEntity,
   loading = false
 }: ChatMessageListProps) {
+  // Store pending entities with the messageId they belong to
   const [pendingEntities, setPendingEntities] = useState<Array<{
     type: 'character' | 'scene' | 'page' | 'place';
     data: any;
     exists: boolean;
     id?: string;
+    messageId: string; // Link to the message that created this entity
   }>>([]);
   
-  const handleCreateEntity = (entityType: string, entityData: any) => {
+  const handleCreateEntity = (entityType: string, entityData: any, messageId: string) => {
     setPendingEntities(prev => [...prev, {
       type: entityType as 'character' | 'scene' | 'page' | 'place',
       data: entityData,
-      exists: false
+      exists: false,
+      messageId
     }]);
   };
 
-  const handleUpdateEntity = (entityType: string, entityId: string, entityData: any) => {
+  const handleUpdateEntity = (entityType: string, entityId: string, entityData: any, messageId: string) => {
     setPendingEntities(prev => [...prev, {
       type: entityType as 'character' | 'scene' | 'page' | 'place',
       data: entityData,
       exists: true,
-      id: entityId
+      id: entityId,
+      messageId
     }]);
   };
 
@@ -64,28 +68,34 @@ export function ChatMessageList({
     setPendingEntities(updatedPendingEntities);
   };
 
+  // Gets pending entities for a specific message
+  const getMessagePendingEntities = (messageId: string) => {
+    return pendingEntities.filter(entity => entity.messageId === messageId);
+  };
+
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-6">
       {messages.map((message, index) => (
-        <ChatMessage 
-          key={message.id}
-          message={message}
-          currentBook={currentBook}
-          onCreateEntity={handleCreateEntity}
-          onUpdateEntity={handleUpdateEntity}
-          index={index}
-        />
-      ))}
-      
-      {/* Entity confirmation cards */}
-      {pendingEntities.map((entity, index) => (
-        <EntityConfirmationCard
-          key={`${entity.type}-${index}`}
-          entityType={entity.type}
-          entityData={entity.data}
-          onConfirm={() => handleConfirmEntity(index)}
-          onCancel={() => handleCancelEntity(index)}
-        />
+        <React.Fragment key={message.id}>
+          <ChatMessage 
+            message={message}
+            currentBook={currentBook}
+            onCreateEntity={(entityType, entityData) => handleCreateEntity(entityType, entityData, message.id)}
+            onUpdateEntity={(entityType, entityId, entityData) => handleUpdateEntity(entityType, entityId, entityData, message.id)}
+            index={index}
+          />
+          
+          {/* Show entity confirmation cards right after their respective messages */}
+          {getMessagePendingEntities(message.id).map((entity, entityIndex) => (
+            <EntityConfirmationCard
+              key={`${entity.type}-${entityIndex}`}
+              entityType={entity.type}
+              entityData={entity.data}
+              onConfirm={() => handleConfirmEntity(pendingEntities.indexOf(entity))}
+              onCancel={() => handleCancelEntity(pendingEntities.indexOf(entity))}
+            />
+          ))}
+        </React.Fragment>
       ))}
 
       {/* Loading indicator */}

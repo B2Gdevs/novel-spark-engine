@@ -1,4 +1,3 @@
-
 import { Book, ChatMessage } from '@/types/novel';
 
 /**
@@ -16,7 +15,7 @@ export function generateBaseSystemPrompt(currentBook: Book): string {
     - ${currentBook.places?.length || 0} places
     - ${currentBook.pages.length} pages
     - ${currentBook.notes.length} notes
-    - Summary: ${currentBook.summary || 'No summary yet'}
+    - Summary: ${currentBook.description || 'No summary yet'}
     
     When creating or updating characters, scenes, pages or places, format them as follows:
     
@@ -36,7 +35,7 @@ export function generateBaseSystemPrompt(currentBook: Book): string {
     For pages:
     **Page: [Title]**
     - **Title:** Page title
-    - **Content:** Brief content summary
+    - **Content:** Full page content
     
     For places:
     **Place: [Name]**
