@@ -1,4 +1,3 @@
-
 import { ReactNode, useEffect } from "react";
 import { NovelContextType } from "../types";
 import { useBookOperations } from "../useBookOperations";
@@ -32,7 +31,7 @@ export function NovelProviderCore({ children }: { children: ReactNode }) {
     sendMessageToAI,
     associateChatWithEntity,
     rollbackEntity
-  } = useChatOperations(setProject);
+  } = useChatOperations(project, setProject); // Pass both project and setProject here
   const { saveProject, loadProject } = useStorage(project, setProject);
   const { generateBookSummary } = useSummaryOperations(project, setProject, sendMessageToAI);
 

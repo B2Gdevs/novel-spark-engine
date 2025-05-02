@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Book, Character, Scene, Place, Page, Event, Note, ChatMessage } from "@/types/novel";
 import { toast } from "sonner";
@@ -212,7 +211,12 @@ export async function fetchEntityChatHistory(
       throw error;
     }
     
-    return data?.chat_history as ChatMessage[] || null;
+    // Type assertion to handle the JSON conversion
+    if (data?.chat_history && Array.isArray(data.chat_history)) {
+      return data.chat_history as ChatMessage[];
+    }
+    
+    return null;
   } catch (error) {
     console.error('Exception fetching entity chat history:', error);
     toast.error("Failed to load chat history from database");
