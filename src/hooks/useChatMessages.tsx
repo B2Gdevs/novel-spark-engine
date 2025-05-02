@@ -1,9 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { useNovel } from "@/contexts/NovelContext";
 import { toast } from "sonner";
 import { processMentionsInMessage } from '@/components/chat/MentionUtils';
 import { ChatMessage } from '@/types/novel';
-import { useEntitySearch } from '@/contexts/novel/provider/EntitySearchProvider';
 
 export function useChatMessages() {
   const { 
@@ -21,11 +21,9 @@ export function useChatMessages() {
     addPlace,
     updatePlace,
     getEntityInfo,
+    searchEntities,
     getAllBooks
   } = useNovel();
-  
-  // Get the searchEntities function from the EntitySearchProvider
-  const { searchEntities } = useEntitySearch();
   
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
