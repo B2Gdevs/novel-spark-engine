@@ -2,11 +2,14 @@ import { useState, useEffect, useRef } from "react";
 import { useNovel } from "@/contexts/NovelContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { SendIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
 import { AssistantHeader } from "@/components/chat/AssistantHeader";
 import { EmptyAssistantState } from "@/components/chat/EmptyAssistantState";
 import { AssistantMessageItem } from "@/components/chat/AssistantMessageItem";
 import { EntityConfirmationCard } from "@/components/chat/EntityConfirmationCard";
-import { AssistantInput } from "@/components/chat/AssistantInput";
 
 export function AssistantPage() {
   const { 
@@ -21,9 +24,6 @@ export function AssistantPage() {
     findEntitiesByPartialName,
     getEntityInfo
   } = useNovel();
-  
-  const navigate = useNavigate();
-  const chatEndRef = useRef<HTMLDivElement>(null);
   
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,7 +40,15 @@ export function AssistantPage() {
     name: string;
     description?: string;
   }>>([]);
-  const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
+  const [mentionedEntities, setMentionedEntities] = useState<Array<{
+    type: 'character' | 'scene' | 'place' | 'page';
+    id: string;
+    name: string;
+    fullText: string;
+  }>>([]);
+  
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   // Redirect if no book is selected
   useEffect(() => {
@@ -71,14 +79,13 @@ export function AssistantPage() {
         const searchTerm = afterAt.substring(slashIndex + 1);
         
         // Only search if we have a valid entity type and search term
-        if (['character', 'scene', 'place', 'page'].includes(entityType) && searchTerm.length >= 1) {
+        if (['character', 'scene', 'place', 'page'].includes(entityType) && searchTerm.length >= 2) {
           const suggestions = findEntitiesByPartialName(
             searchTerm, 
             [entityType as 'character' | 'scene' | 'place' | 'page']
           );
           setMentionSuggestions(suggestions);
           setMentionSearch(searchTerm);
-          setSelectedMentionIndex(0);
         } else {
           setMentionSuggestions([]);
           setMentionSearch("");
@@ -86,14 +93,13 @@ export function AssistantPage() {
       } else {
         // If no slash yet, show all entity types that match the search
         const searchTerm = afterAt.trim();
-        if (searchTerm.length >= 1) {
+        if (searchTerm.length >= 2) {
           const suggestions = findEntitiesByPartialName(
             searchTerm, 
             ['character', 'scene', 'place', 'page']
           );
           setMentionSuggestions(suggestions);
           setMentionSearch(searchTerm);
-          setSelectedMentionIndex(0);
         } else {
           setMentionSuggestions([]);
           setMentionSearch("");
@@ -177,11 +183,18 @@ export function AssistantPage() {
       const afterSearch = message.substring(atIndex + mentionSearch.length + 1);
       
       const newMessage = `${beforeAt}@${suggestion.type}/${suggestion.name} ${afterSearch}`;
+      
+      // Add to mentioned entities
+      setMentionedEntities([...mentionedEntities, {
+        ...suggestion,
+        fullText: `@${suggestion.type}/${suggestion.name}`
+      }]);
+      
       setMessage(newMessage);
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!message.trim() || loading || !currentBook) return;
     
     // Process the message for @ mentions before sending
@@ -189,6 +202,7 @@ export function AssistantPage() {
     
     // Clear input and set loading
     setMessage("");
+    setMentionedEntities([]);
     setLoading(true);
     
     try {
@@ -217,7 +231,6 @@ export function AssistantPage() {
         - ${currentBook.places?.length || 0} places
         - ${currentBook.pages.length} pages
         - ${currentBook.notes.length} notes
-        - ${currentBook.summary || 'No summary yet'}
         
         When the user wants to create a new character, scene, place, or page, extract the relevant information
         and present it in a structured format. Then suggest creating the entity.
@@ -276,109 +289,107 @@ export function AssistantPage() {
         systemInstructions += "\n\nUse this entity information to provide context to your response.";
       }
       
-      sendMessageToAI(processedMessage.messageContent, project.chatHistory, systemInstructions)
-        .then(result => {
-          if (!result.success) return;
+      const result = await sendMessageToAI(processedMessage.messageContent, project.chatHistory, systemInstructions);
+      
+      if (!result.success) return;
+      
+      // Process AI response for entity creation
+      const response = result.message || "";
+      
+      // Add AI response to the chat
+      addChatMessage({
+        role: 'assistant',
+        content: response
+      });
+      
+      // Check if the response contains character creation intent
+      if (response.includes("**Character:")) {
+        const nameMatch = response.match(/\*\*Name:\*\*\s*([^\n]+)/i);
+        const traitsMatch = response.match(/\*\*Traits:\*\*\s*([^\n]+)/i);
+        const roleMatch = response.match(/\*\*Role:\*\*\s*([^\n]+)/i);
+        const descriptionMatch = response.match(/\*\*Description:\*\*\s*([^\n.]{3,})/i);
+        
+        if (nameMatch) {
+          const characterData = {
+            name: nameMatch[1].trim(),
+            traits: traitsMatch ? traitsMatch[1].trim().split(/\s*,\s*/) : [],
+            role: roleMatch ? roleMatch[1].trim() : "",
+            description: descriptionMatch ? descriptionMatch[1].trim() : "",
+          };
           
-          // Process AI response for entity creation
-          const response = result.message || "";
-          
-          // Add AI response to the chat
-          addChatMessage({
-            role: 'assistant',
-            content: response
+          // Set pending entity for confirmation
+          setPendingEntity({
+            type: 'character',
+            data: characterData
           });
+        }
+      }
+      
+      // Check if the response contains scene creation intent
+      else if (response.includes("**Scene:")) {
+        const titleMatch = response.match(/\*\*Title:\*\*\s*([^\n]+)/i);
+        const descriptionMatch = response.match(/\*\*Description:\*\*\s*([^\n]+)/i);
+        const locationMatch = response.match(/\*\*Location:\*\*\s*([^\n]+)/i);
+        
+        if (titleMatch) {
+          const sceneData = {
+            title: titleMatch[1].trim(),
+            description: descriptionMatch ? descriptionMatch[1].trim() : "",
+            location: locationMatch ? locationMatch[1].trim() : "",
+            characters: [],
+            content: ""
+          };
           
-          // Extract entity creation info if present
-          if (response.includes("**Character:")) {
-            const nameMatch = response.match(/\*\*Name:\*\*\s*([^\n]+)/i);
-            const traitsMatch = response.match(/\*\*Traits:\*\*\s*([^\n]+)/i);
-            const roleMatch = response.match(/\*\*Role:\*\*\s*([^\n]+)/i);
-            const descriptionMatch = response.match(/\*\*Description:\*\*\s*([^\n.]{3,})/i);
-            
-            if (nameMatch) {
-              const characterData = {
-                name: nameMatch[1].trim(),
-                traits: traitsMatch ? traitsMatch[1].trim().split(/\s*,\s*/) : [],
-                role: roleMatch ? roleMatch[1].trim() : "",
-                description: descriptionMatch ? descriptionMatch[1].trim() : "",
-              };
-              
-              // Set pending entity for confirmation
-              setPendingEntity({
-                type: 'character',
-                data: characterData
-              });
-            }
-          }
+          setPendingEntity({
+            type: 'scene',
+            data: sceneData
+          });
+        }
+      }
+      
+      // Check if the response contains page creation intent
+      else if (response.includes("**Page:")) {
+        const titleMatch = response.match(/\*\*Title:\*\*\s*([^\n]+)/i);
+        const contentMatch = response.match(/\*\*Content:\*\*\s*([^\n]+)/i);
+        
+        if (titleMatch) {
+          const pageData = {
+            title: titleMatch[1].trim(),
+            content: contentMatch ? contentMatch[1].trim() : "",
+            order: currentBook.pages.length
+          };
           
-          // Check if the response contains scene creation intent
-          else if (response.includes("**Scene:")) {
-            const titleMatch = response.match(/\*\*Title:\*\*\s*([^\n]+)/i);
-            const descriptionMatch = response.match(/\*\*Description:\*\*\s*([^\n]+)/i);
-            const locationMatch = response.match(/\*\*Location:\*\*\s*([^\n]+)/i);
-            
-            if (titleMatch) {
-              const sceneData = {
-                title: titleMatch[1].trim(),
-                description: descriptionMatch ? descriptionMatch[1].trim() : "",
-                location: locationMatch ? locationMatch[1].trim() : "",
-                characters: [],
-                content: ""
-              };
-              
-              setPendingEntity({
-                type: 'scene',
-                data: sceneData
-              });
-            }
-          }
+          setPendingEntity({
+            type: 'page',
+            data: pageData
+          });
+        }
+      }
+      
+      // Check if the response contains place creation intent
+      else if (response.includes("**Place:")) {
+        const nameMatch = response.match(/\*\*Name:\*\*\s*([^\n]+)/i);
+        const descriptionMatch = response.match(/\*\*Description:\*\*\s*([^\n]+)/i);
+        const geographyMatch = response.match(/\*\*Geography:\*\*\s*([^\n]+)/i);
+        
+        if (nameMatch) {
+          const placeData = {
+            name: nameMatch[1].trim(),
+            description: descriptionMatch ? descriptionMatch[1].trim() : "",
+            geography: geographyMatch ? geographyMatch[1].trim() : ""
+          };
           
-          // Check if the response contains page creation intent
-          else if (response.includes("**Page:")) {
-            const titleMatch = response.match(/\*\*Title:\*\*\s*([^\n]+)/i);
-            const contentMatch = response.match(/\*\*Content:\*\*\s*([^\n]+)/i);
-            
-            if (titleMatch) {
-              const pageData = {
-                title: titleMatch[1].trim(),
-                content: contentMatch ? contentMatch[1].trim() : "",
-                order: currentBook.pages.length
-              };
-              
-              setPendingEntity({
-                type: 'page',
-                data: pageData
-              });
-            }
-          }
-          
-          // Check if the response contains place creation intent
-          else if (response.includes("**Place:")) {
-            const nameMatch = response.match(/\*\*Name:\*\*\s*([^\n]+)/i);
-            const descriptionMatch = response.match(/\*\*Description:\*\*\s*([^\n]+)/i);
-            const geographyMatch = response.match(/\*\*Geography:\*\*\s*([^\n]+)/i);
-            
-            if (nameMatch) {
-              const placeData = {
-                name: nameMatch[1].trim(),
-                description: descriptionMatch ? descriptionMatch[1].trim() : "",
-                geography: geographyMatch ? geographyMatch[1].trim() : ""
-              };
-              
-              setPendingEntity({
-                type: 'place',
-                data: placeData
-              });
-            }
-          }
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+          setPendingEntity({
+            type: 'place',
+            data: placeData
+          });
+        }
+      }
+      
     } catch (error) {
       toast.error("Failed to process request");
       console.error(error);
+    } finally {
       setLoading(false);
     }
   };
@@ -435,6 +446,13 @@ export function AssistantPage() {
     });
     setPendingEntity(null);
   };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
   
   const handlePromptClick = (prompt: string) => {
     setMessage(prompt);
@@ -447,6 +465,12 @@ export function AssistantPage() {
         <p className="text-lg text-zinc-400">
           Please select a book first to use the AI assistant.
         </p>
+        <Button 
+          onClick={() => navigate("/")}
+          className="mt-4 bg-purple-700 hover:bg-purple-800"
+        >
+          Go to Home
+        </Button>
       </div>
     );
   }
@@ -494,17 +518,64 @@ export function AssistantPage() {
       </div>
 
       {/* Input Area */}
-      <AssistantInput 
-        message={message}
-        setMessage={setMessage}
-        onSubmit={handleSendMessage}
-        loading={loading}
-        mentionSuggestions={mentionSuggestions}
-        mentionSearch={mentionSearch}
-        selectedMentionIndex={selectedMentionIndex}
-        setSelectedMentionIndex={setSelectedMentionIndex}
-        onMentionSelect={handleMentionSelect}
-      />
+      <div className="border-t border-zinc-800 p-4">
+        <div className="max-w-3xl mx-auto relative">
+          <Textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder="Message AI assistant... (use @ to mention entities)"
+            className="min-h-[60px] max-h-[200px] resize-none pr-12 rounded-xl bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500 focus:ring-1 focus:ring-purple-700"
+            disabled={loading}
+          />
+          <Button
+            size="icon"
+            onClick={handleSendMessage}
+            disabled={loading || !message.trim()}
+            className={cn(
+              "absolute right-3 bottom-3 h-8 w-8 rounded-full",
+              message.trim() 
+                ? "bg-purple-800 hover:bg-purple-700" 
+                : "bg-zinc-700 text-zinc-500 cursor-not-allowed"
+            )}
+          >
+            <SendIcon size={16} className={message.trim() ? "text-white" : "text-zinc-500"} />
+          </Button>
+          
+          {mentionSuggestions.length > 0 && (
+            <div className="absolute bottom-full left-0 mb-1 w-full max-w-md bg-zinc-900 border border-zinc-700 rounded-md shadow-lg z-10">
+              <div className="p-1">
+                <p className="px-2 py-1 text-xs text-zinc-500">Mentions</p>
+                <div className="max-h-48 overflow-y-auto">
+                  {mentionSuggestions.map((suggestion) => (
+                    <div
+                      key={`${suggestion.type}-${suggestion.id}`}
+                      className="px-2 py-1.5 hover:bg-zinc-800 cursor-pointer rounded text-sm flex items-center"
+                      onClick={() => handleMentionSelect(suggestion)}
+                    >
+                      <span className={cn(
+                        "w-2 h-2 rounded-full mr-2",
+                        suggestion.type === 'character' ? "bg-purple-500" :
+                        suggestion.type === 'scene' ? "bg-blue-500" :
+                        suggestion.type === 'place' ? "bg-green-500" :
+                        "bg-amber-500"
+                      )}/>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-white">@{suggestion.type}/{suggestion.name}</span>
+                        {suggestion.description && (
+                          <span className="text-xs text-zinc-400 truncate max-w-80">
+                            {suggestion.description}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

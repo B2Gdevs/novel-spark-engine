@@ -6,7 +6,7 @@ import { Send, AtSign, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { MentionPopover } from './MentionPopover';
-import { ChatMention } from './ChatMention';
+import { Badge } from "@/components/ui/badge";
 
 interface MentionSuggestion {
   type: 'character' | 'scene' | 'place' | 'page';
@@ -51,52 +51,10 @@ export function ChatInput({
   useEffect(() => {
     if (mentionSearch && mentionSearch.length >= 1) {
       setShowMentions(true);
-      setSelectedMentionIndex(0);
     } else {
       setShowMentions(false);
     }
   }, [mentionSearch]);
-
-  // Detect active mentions in the text
-  useEffect(() => {
-    if (!message) {
-      setActiveMentions([]);
-      return;
-    }
-    
-    // Extract mentions from the message
-    const mentionRegex = /@(([^/]+)\/)?([a-z]+)\/([^@\s]+)/g;
-    const newMentions: MentionSuggestion[] = [];
-    let match;
-    
-    while ((match = mentionRegex.exec(message)) !== null) {
-      const bookTitle = match[2];
-      const entityType = match[3] as 'character' | 'scene' | 'place' | 'page';
-      const entityName = match[4];
-      
-      // Search for this entity
-      const searchResults = bookTitle 
-        ? mentionSuggestions.filter(s => 
-            s.type === entityType && 
-            s.name.toLowerCase().includes(entityName.toLowerCase()) &&
-            s.bookTitle?.toLowerCase() === bookTitle.toLowerCase()
-          )
-        : mentionSuggestions.filter(s => 
-            s.type === entityType && 
-            s.name.toLowerCase().includes(entityName.toLowerCase())
-          );
-      
-      if (searchResults.length > 0) {
-        // Add to active mentions if not already there
-        const foundEntity = searchResults[0];
-        if (!newMentions.find(m => m.id === foundEntity.id && m.type === foundEntity.type)) {
-          newMentions.push(foundEntity);
-        }
-      }
-    }
-    
-    setActiveMentions(newMentions);
-  }, [message, mentionSuggestions]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     // Handle new line with shift+enter
@@ -112,8 +70,13 @@ export function ChatInput({
       return;
     }
     
+    // Handle @ key for showing entity selector
+    if (e.key === "@") {
+      // No need to prevent default as we want the @ to appear
+    }
+    
     // Handle arrow keys for mention selection
-    if (showMentions && mentionSuggestions.length > 0) {
+    if (showMentions) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setSelectedMentionIndex(prev => 
@@ -125,7 +88,7 @@ export function ChatInput({
       } else if (e.key === "Escape") {
         e.preventDefault();
         setShowMentions(false);
-      } else if (e.key === "Enter" || e.key === "Tab") {
+      } else if (e.key === "Enter") {
         e.preventDefault();
         if (mentionSuggestions.length > 0) {
           const selectedMention = mentionSuggestions[selectedMentionIndex];
@@ -143,6 +106,11 @@ export function ChatInput({
   const handleMentionSelect = (suggestion: MentionSuggestion) => {
     onMentionSelect(suggestion);
     setShowMentions(false);
+    
+    // Add to active mentions if not already there
+    if (!activeMentions.find(m => m.id === suggestion.id && m.type === suggestion.type)) {
+      setActiveMentions([...activeMentions, suggestion]);
+    }
     
     // Focus back on textarea after selection
     setTimeout(() => {
@@ -166,6 +134,11 @@ export function ChatInput({
       
       setMessage(textBefore + mentionText + textAfter);
       
+      // Add to active mentions
+      if (!activeMentions.find(m => m.id === suggestion.id && m.type === suggestion.type)) {
+        setActiveMentions([...activeMentions, suggestion]);
+      }
+      
       // Focus and set cursor position after the inserted text
       setTimeout(() => {
         textarea.focus();
@@ -177,6 +150,11 @@ export function ChatInput({
   };
 
   const removeMention = (mentionToRemove: MentionSuggestion) => {
+    // Remove from active mentions
+    setActiveMentions(activeMentions.filter(m => 
+      !(m.id === mentionToRemove.id && m.type === mentionToRemove.type)
+    ));
+    
     // Remove from message text
     const formattedMention1 = `@${mentionToRemove.type}/${mentionToRemove.name}`;
     const formattedMention2 = mentionToRemove.bookId && mentionToRemove.bookId !== currentBookId
@@ -190,6 +168,15 @@ export function ChatInput({
     });
     
     setMessage(newMessage);
+  };
+
+  // Highlight @mentions in the textarea
+  const highlightMentions = () => {
+    if (!activeMentions.length) return message;
+    
+    // No direct way to highlight text in a textarea, but we can
+    // show the message is using mentions by adding visual indicators
+    return message;
   };
 
   return (
@@ -207,13 +194,26 @@ export function ChatInput({
           
           {activeMentions.length > 0 && (
             <div className="flex flex-wrap items-center gap-1">
-              {activeMentions.slice(0, 3).map((mention) => (
-                <ChatMention 
+              {activeMentions.map((mention) => (
+                <Badge 
                   key={`${mention.type}-${mention.id}`}
-                  mention={mention}
-                  onRemove={removeMention}
-                  currentBookId={currentBookId}
-                />
+                  className={cn(
+                    "px-2 py-0.5 flex items-center space-x-1 gap-1",
+                    mention.type === 'character' ? "bg-purple-900/50 text-purple-200 hover:bg-purple-800" :
+                    mention.type === 'scene' ? "bg-blue-900/50 text-blue-200 hover:bg-blue-800" :
+                    mention.type === 'place' ? "bg-green-900/50 text-green-200 hover:bg-green-800" :
+                    "bg-amber-900/50 text-amber-200 hover:bg-amber-800"
+                  )}
+                >
+                  <span>{mention.name}</span>
+                  <button 
+                    type="button"
+                    onClick={() => removeMention(mention)}
+                    className="hover:text-white rounded-full"
+                  >
+                    <X size={12} />
+                  </button>
+                </Badge>
               ))}
               {activeMentions.length > 3 && (
                 <Tooltip>
@@ -237,7 +237,7 @@ export function ChatInput({
         
         <Textarea
           ref={textareaRef}
-          value={message}
+          value={highlightMentions()}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyPress}
           placeholder="Message AI assistant... (use @ to mention entities)"
@@ -265,13 +265,13 @@ export function ChatInput({
                   <div
                     key={`${suggestion.type}-${suggestion.id}`}
                     className={cn(
-                      "px-2 py-1.5 hover:bg-zinc-800 cursor-pointer rounded text-sm flex items-center gap-2",
+                      "px-2 py-1.5 hover:bg-zinc-800 cursor-pointer rounded text-sm flex items-center",
                       index === selectedMentionIndex ? "bg-zinc-800" : ""
                     )}
                     onClick={() => handleMentionSelect(suggestion)}
                   >
                     <span className={cn(
-                      "w-2 h-2 rounded-full",
+                      "w-2 h-2 rounded-full mr-2",
                       suggestion.type === 'character' ? "bg-purple-500" :
                       suggestion.type === 'scene' ? "bg-blue-500" :
                       suggestion.type === 'place' ? "bg-green-500" :
