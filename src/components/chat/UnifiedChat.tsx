@@ -282,8 +282,8 @@ export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
                 break;
             }
             
-            if (entityData.bookId && entityData.bookId !== currentBook.id) {
-              systemPrompt += ` (from book: ${entityData.bookTitle})`;
+            if (entity.bookId && entity.bookId !== currentBook.id) {
+              systemPrompt += ` (from book: ${entity.bookTitle})`;
             }
           }
         });
@@ -334,6 +334,8 @@ export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
     type: 'character' | 'scene' | 'place' | 'page';
     id: string;
     name: string;
+    bookId?: string;
+    bookTitle?: string;
   }) => {
     // Find the last @ in the message
     const atIndex = message.lastIndexOf('@');
@@ -374,7 +376,7 @@ export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
         linkedEntityType={linkedEntityType}
         linkedEntityId={linkedEntityId}
         onClearChat={handleClearChat}
-        onClose={mode === 'dialog' ? onClose : undefined}
+        onClose={onClose}
       />
       
       <ChatMessageList

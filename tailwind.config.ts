@@ -54,6 +54,13 @@ const config = {
           DEFAULT: "hsl(240 10% 4%)",
           foreground: "hsl(0 0% 95%)",
         },
+        novel: {
+          purple: "rgb(139, 92, 246)",
+          lavender: "rgb(196, 181, 253)",
+          orange: "rgb(249, 115, 22)",
+          light: "rgb(248, 250, 252)",
+          dark: "rgb(30, 41, 59)",
+        },
       },
       borderRadius: {
         lg: "0.5rem",

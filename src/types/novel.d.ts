@@ -1,4 +1,3 @@
-
 export interface Book {
   id: string;
   title: string;
@@ -11,8 +10,14 @@ export interface Book {
   notes: Note[];
   pages: Page[];
   places: Place[];
-  createdAt: string;
-  updatedAt: string;
+  references?: {
+    characters?: string[]; // IDs of characters from other books
+    scenes?: string[]; // IDs of scenes from other books
+    events?: string[]; // IDs of events from other books
+  };
+  createdAt?: string;
+  updatedAt?: string;
+  deletedAt?: string; // Add this property for soft-deleted books
 }
 
 export interface ChatMessage {
