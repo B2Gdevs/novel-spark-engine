@@ -1,3 +1,4 @@
+
 import { useNovel } from "@/contexts/NovelContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -58,28 +59,23 @@ export function HomePage() {
   const handleAddNewBook = async () => {
     setIsLoading(true);
     try {
-      const createBook = () => {
-        const timestamp = new Date().toISOString();
-        
-        const newBook: Omit<Book, "id"> = {
-          title: "New Book",
-          description: "Start writing your new story...",
-          genre: "Fiction",
-          characters: [],
-          scenes: [],
-          events: [],
-          notes: [],
-          pages: [],
-          places: [],
-          createdAt: timestamp,
-          updatedAt: timestamp
-        };
-        
-        await addBook(newBook);
+      const timestamp = new Date().toISOString();
+      
+      const newBook = {
+        title: "New Book",
+        description: "Start writing your new story...",
+        genre: "Fiction",
+        characters: [],
+        scenes: [],
+        events: [],
+        notes: [],
+        pages: [],
+        places: [],
+        createdAt: timestamp,
+        updatedAt: timestamp
       };
       
-      createBook();
-      
+      await addBook(newBook);
       setShowWelcome(false);
     } catch (error) {
       console.error("Error creating new book:", error);
