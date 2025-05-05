@@ -14,7 +14,7 @@ interface MentionSuggestion {
 export function useMentionDetection(
   message: string,
   currentBook: Book | null,
-  findEntities: (query: string) => MentionSuggestion[]
+  findEntities: (query: string, entityTypes: Array<'character' | 'scene' | 'place' | 'page'>, includeAllBooks?: boolean) => MentionSuggestion[]
 ) {
   const [mentionSearch, setMentionSearch] = useState("");
   const [mentionSuggestions, setMentionSuggestions] = useState<MentionSuggestion[]>([]);
@@ -29,8 +29,8 @@ export function useMentionDetection(
       
       // Check if we've already typed enough to search
       if (afterAt.length >= 1) {
-        // We'll need to implement this function or pass it as a prop
-        const results = findEntities(afterAt);
+        // Search all entity types
+        const results = findEntities(afterAt, ['character', 'scene', 'page', 'place']);
         setMentionSuggestions(results);
         setMentionSearch(afterAt);
       } else {

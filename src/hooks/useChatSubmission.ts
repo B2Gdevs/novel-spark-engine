@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { ChatMessage, Book } from '@/types/novel';
 import { useNovel } from '@/contexts/NovelContext';
-import { parseEntitiesFromMessage } from '@/components/chat/MentionUtils';
+import { processMentionsInMessage } from '@/components/chat/MentionUtils';
 import { toast } from 'sonner';
 
 interface ChatSubmissionProps {
@@ -35,17 +35,17 @@ export function useChatSubmission({
     setLoading(true);
     
     try {
-      // Detect mentioned entities in the user message
-      const { mentionedEntities, processedMessage } = parseEntitiesFromMessage(
-        message, 
-        currentBook.id, 
-        currentBook.title
+      // Detect mentioned entities in the user message using the processMentionsInMessage function
+      const { messageContent, mentionedEntities } = processMentionsInMessage(
+        message,
+        (query) => findEntitiesByPartialName(query, ['character', 'scene', 'page', 'place']),
+        currentBook
       );
       
       // Add user message to chat history
       addChatMessage({
         role: 'user',
-        content: processedMessage,
+        content: messageContent,
         mentionedEntities
       });
       
@@ -68,7 +68,7 @@ export function useChatSubmission({
       
       // Send message to AI assistant
       const aiResponse = await sendMessageToAI(
-        processedMessage, 
+        messageContent, 
         [...(linkedEntityType && linkedEntityId ? [] : []), ...mentionedEntities], 
         systemPrompt
       );
@@ -81,7 +81,7 @@ export function useChatSubmission({
         });
         
         // Create checkpoint after successful AI response (for recovery if needed)
-        createChatCheckpoint(`Checkpoint after message: ${processedMessage.substring(0, 30)}...`);
+        createChatCheckpoint(`Checkpoint after message: ${messageContent.substring(0, 30)}...`);
       } else {
         // Add error message if AI failed to respond
         addChatMessage({

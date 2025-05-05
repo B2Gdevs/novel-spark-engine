@@ -1,3 +1,4 @@
+
 import { Book } from "@/types/novel";
 
 /**
@@ -99,5 +100,44 @@ export function processMentionsInMessage(
   return {
     messageContent: processedText,
     mentionedEntities: mentions
+  };
+}
+
+/**
+ * Parse entities from a message and format them for the AI
+ */
+export function parseEntitiesFromMessage(
+  message: string,
+  bookId: string,
+  bookTitle: string
+) {
+  // Extract mentions like @character/Kaelin or @scene/The Battle
+  const mentionRegex = /@(character|scene|place|page)\/([^@\s]+)/g;
+  let matches;
+  const mentionedEntities: Array<{
+    type: string;
+    id: string;
+    name: string;
+  }> = [];
+  
+  // Process the message text
+  const processedMessage = message.replace(mentionRegex, (match, type, name) => {
+    // In a real implementation, we would look up the entity ID
+    // Here we'll just use the name as a placeholder ID
+    const fakeId = `${type}-${name}-${Date.now()}`;
+    
+    mentionedEntities.push({
+      type,
+      id: fakeId,
+      name
+    });
+    
+    // Replace with just the name in the processed message
+    return name;
+  });
+  
+  return {
+    mentionedEntities,
+    processedMessage
   };
 }

@@ -1,8 +1,9 @@
 
-import { useCopilotAction, useCopilotContext } from '@copilotkit/react-core';
+import { useCopilotAction } from '@copilotkit/react-core';
 import { useNovel } from '@/contexts/NovelContext';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
+import { Character, Scene, Page, Place } from '@/types/novel';
 
 export function CopilotActions() {
   const { 
@@ -43,15 +44,18 @@ export function CopilotActions() {
           return { success: false, error: 'No book selected' };
         }
         
+        // Ensure characterData is properly typed
+        const typedCharacterData = characterData as Omit<Character, "id">;
+        
         // Add character and get the ID
-        const newId = addCharacter(characterData);
+        const newId = addCharacter(typedCharacterData);
         
         if (newId) {
-          toast.success(`Character "${characterData.name}" created successfully`);
+          toast.success(`Character "${typedCharacterData.name}" created successfully`);
           return { 
             success: true, 
-            message: `Character ${characterData.name} created successfully with ID: ${newId}`,
-            character: { id: newId, ...characterData }
+            message: `Character ${typedCharacterData.name} created successfully with ID: ${newId}`,
+            character: { id: newId, ...typedCharacterData }
           };
         } else {
           return { success: false, error: 'Failed to create character' };
@@ -88,15 +92,18 @@ export function CopilotActions() {
           return { success: false, error: 'No book selected' };
         }
         
+        // Ensure sceneData is properly typed
+        const typedSceneData = sceneData as Omit<Scene, "id">;
+        
         // Add scene and get the ID
-        const newId = addScene(sceneData);
+        const newId = addScene(typedSceneData);
         
         if (newId) {
-          toast.success(`Scene "${sceneData.title}" created successfully`);
+          toast.success(`Scene "${typedSceneData.title}" created successfully`);
           return { 
             success: true, 
-            message: `Scene ${sceneData.title} created successfully with ID: ${newId}`,
-            scene: { id: newId, ...sceneData }
+            message: `Scene ${typedSceneData.title} created successfully with ID: ${newId}`,
+            scene: { id: newId, ...typedSceneData }
           };
         } else {
           return { success: false, error: 'Failed to create scene' };
@@ -132,15 +139,18 @@ export function CopilotActions() {
           return { success: false, error: 'No book selected' };
         }
         
+        // Ensure placeData is properly typed
+        const typedPlaceData = placeData as Omit<Place, "id">;
+        
         // Add place and get the ID
-        const newId = addPlace(placeData);
+        const newId = addPlace(typedPlaceData);
         
         if (newId) {
-          toast.success(`Place "${placeData.name}" created successfully`);
+          toast.success(`Place "${typedPlaceData.name}" created successfully`);
           return { 
             success: true, 
-            message: `Place ${placeData.name} created successfully with ID: ${newId}`,
-            place: { id: newId, ...placeData }
+            message: `Place ${typedPlaceData.name} created successfully with ID: ${newId}`,
+            place: { id: newId, ...typedPlaceData }
           };
         } else {
           return { success: false, error: 'Failed to create place' };
@@ -174,15 +184,18 @@ export function CopilotActions() {
           return { success: false, error: 'No book selected' };
         }
         
+        // Ensure pageData is properly typed
+        const typedPageData = pageData as Omit<Page, "id">;
+        
         // Add page and get the ID
-        const newId = addPage(pageData);
+        const newId = addPage(typedPageData);
         
         if (newId) {
-          toast.success(`Page "${pageData.title}" created successfully`);
+          toast.success(`Page "${typedPageData.title}" created successfully`);
           return { 
             success: true, 
-            message: `Page ${pageData.title} created successfully with ID: ${newId}`,
-            page: { id: newId, ...pageData }
+            message: `Page ${typedPageData.title} created successfully with ID: ${newId}`,
+            page: { id: newId, ...typedPageData }
           };
         } else {
           return { success: false, error: 'Failed to create page' };
