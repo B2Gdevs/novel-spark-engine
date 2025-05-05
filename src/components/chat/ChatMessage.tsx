@@ -1,10 +1,9 @@
+
 import React, { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import ReactMarkdown from 'react-markdown';
 import { Book } from "@/types/novel";
 
 interface ChatMessageProps {
@@ -125,8 +124,6 @@ function MarkdownMessage({
               return (
                 <ReactMarkdown
                   key={`markdown-${index}`}
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw]}
                   components={{
                     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
                     a: ({ node, ...props }) => (
@@ -155,7 +152,7 @@ export function ChatMessage({
   onCreateEntity,
   onUpdateEntity,
   index,
-}) {
+}: ChatMessageProps) {
   const [showFullPrompt, setShowFullPrompt] = useState(false);
   const [hasDetectedEntity, setHasDetectedEntity] = useState(false);
   

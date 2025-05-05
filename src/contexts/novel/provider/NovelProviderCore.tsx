@@ -16,7 +16,7 @@ import { useSummaryOperations } from "../useSummaryOperations";
 import { useVersionOperations } from "../useVersionOperations";
 
 export function NovelProviderCore({ children }: { children: ReactNode }) {
-  const { project, setProject } = useProjectState();
+  const { project, setProject, isLoading } = useProjectState();
 
   // Get version operations first so we can pass them to other hooks
   const { 
@@ -30,12 +30,12 @@ export function NovelProviderCore({ children }: { children: ReactNode }) {
 
   // Get all operations with version support
   const { currentBook, addBook, deleteBook, switchBook, getLastModifiedItem, getAllBooks } = useBookOperations(project, setProject);
-  const { addCharacter, updateCharacter, deleteCharacter, getCharacter } = useCharacterOperations(project, setProject, addEntityVersion);
-  const { addScene, updateScene, deleteScene, getScene } = useSceneOperations(project, setProject, addEntityVersion);
-  const { addEvent, updateEvent, deleteEvent, getEvent } = useEventOperations(project, setProject, addEntityVersion);
-  const { addPage, updatePage, deletePage, getPage } = usePageOperations(project, setProject, addEntityVersion);
-  const { addPlace, updatePlace, deletePlace, getPlace } = usePlaceOperations(project, setProject, addEntityVersion);
-  const { addNote, updateNote, deleteNote, getNote } = useNoteOperations(project, setProject, addEntityVersion);
+  const { addCharacter, updateCharacter, deleteCharacter, getCharacter } = useCharacterOperations(project, setProject);
+  const { addScene, updateScene, deleteScene, getScene } = useSceneOperations(project, setProject);
+  const { addEvent, updateEvent, deleteEvent, getEvent } = useEventOperations(project, setProject);
+  const { addPage, updatePage, deletePage, getPage } = usePageOperations(project, setProject);
+  const { addPlace, updatePlace, deletePlace, getPlace } = usePlaceOperations(project, setProject);
+  const { addNote, updateNote, deleteNote, getNote } = useNoteOperations(project, setProject);
   const { 
     addChatMessage, 
     clearChatHistory, 
@@ -273,24 +273,18 @@ export function NovelProviderCore({ children }: { children: ReactNode }) {
     return null;
   };
 
-  const contextValue: NovelContextType = {
+  const providerValue: NovelContextType = {
     project,
     currentBook,
-    addBook,
-    deleteBook,
-    switchBook,
+    isLoading,
     addCharacter,
     updateCharacter,
-    deleteCharacter,
-    getCharacter,
+    addScene,
+    updateScene,
     addPage,
     updatePage,
     deletePage,
     getPage,
-    addScene,
-    updateScene,
-    deleteScene,
-    getScene,
     addEvent,
     updateEvent,
     deleteEvent,
@@ -327,7 +321,7 @@ export function NovelProviderCore({ children }: { children: ReactNode }) {
   };
 
   return (
-    <NovelContext.Provider value={contextValue}>
+    <NovelContext.Provider value={providerValue}>
       <EntitySearchProvider 
         currentBook={currentBook}
         findEntitiesByPartialName={findEntitiesByPartialName}

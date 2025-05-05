@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,7 +28,20 @@ export function SceneForm() {
   const [selectedCharacter, setSelectedCharacter] = useState("");
 
   useEffect(() => {
-    if (id && id !== "new") {
+    if (id === 'new') {
+      const timestamp = new Date().toISOString();
+      setScene({
+        title: '',
+        description: '',
+        content: '',
+        location: '',
+        characters: [],
+        notes: '',
+        tone: '',
+        createdAt: timestamp,
+        updatedAt: timestamp
+      });
+    } else if (id && id !== "new") {
       const existingScene = getScene(id);
       if (existingScene) {
         setScene({
@@ -42,7 +54,7 @@ export function SceneForm() {
         });
       }
     }
-  }, [id, getScene]);
+  }, [id, currentBook, getScene]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

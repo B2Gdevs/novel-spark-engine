@@ -1,292 +1,212 @@
-
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNovel } from "@/contexts/NovelContext";
 import { Event } from "@/types/novel";
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "sonner";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { CalendarIcon } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export function EventForm() {
-  const { addEvent, updateEvent, getEvent, currentBook } = useNovel();
-  const navigate = useNavigate();
   const { id } = useParams();
-  
-  const [event, setEvent] = useState<Omit<Event, "id">>({
-    name: "",
-    description: "",
+  const navigate = useNavigate();
+  const { currentBook, addEvent, updateEvent, getEvent, getAllCharacters } = useNovel();
+  const [event, setEvent] = useState<Event>({
+    id: '',
+    name: '',
+    description: '',
     characters: [],
     consequences: [],
-    date: format(new Date(), "PPP"),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    date: '',
+    createdAt: '',
+    updatedAt: ''
   });
-  
-  const [selectedCharacter, setSelectedCharacter] = useState("");
-  const [newConsequence, setNewConsequence] = useState("");
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [availableCharacters, setAvailableCharacters] = useState<{ id: string; name: string; }[]>([]);
 
   useEffect(() => {
-    if (id && id !== "new") {
-      const existingEvent = getEvent(id);
-      if (existingEvent) {
-        setEvent({
-          name: existingEvent.name,
-          description: existingEvent.description || "",
-          characters: existingEvent.characters || [],
-          consequences: existingEvent.consequences || [],
-          date: existingEvent.date || format(new Date(), "PPP"),
-          createdAt: existingEvent.createdAt,
-          updatedAt: new Date().toISOString()
-        });
-        
-        // Try to parse the date if it exists
-        try {
-          const parsedDate = new Date(existingEvent.date || "");
-          if (!isNaN(parsedDate.getTime())) {
-            setDate(parsedDate);
-          }
-        } catch (e) {
-          console.error("Failed to parse date:", e);
+    if (currentBook) {
+      setAvailableCharacters(currentBook.characters.map(char => ({ id: char.id, name: char.name })));
+    }
+  }, [currentBook]);
+
+  useEffect(() => {
+    if (id === 'new') {
+      const timestamp = new Date().toISOString();
+      setEvent({
+        name: '',
+        description: '',
+        characters: [],
+        consequences: [],
+        date: '',
+        createdAt: timestamp,
+        updatedAt: timestamp
+      });
+    } else {
+      if (currentBook && id) {
+        const existingEvent = getEvent(id);
+        if (existingEvent) {
+          setEvent(existingEvent);
+        } else {
+          // Handle the case where the event is not found
+          console.error(`Event with id ${id} not found`);
+          // Optionally, navigate back or show an error message
+          navigate('/events');
         }
       }
     }
-  }, [id, getEvent]);
+  }, [id, currentBook, getEvent, navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!event.name.trim()) {
-      toast.error("Event name is required");
-      return;
-    }
-
-    if (!event.description.trim()) {
-      toast.error("Event description is required");
-      return;
-    }
-
-    const finalEvent = {
-      ...event,
-      date: date ? format(date, "PPP") : format(new Date(), "PPP"),
-    };
-
-    if (id && id !== "new") {
-      updateEvent(id, finalEvent);
-      toast.success("Event updated successfully");
-    } else {
-      addEvent(finalEvent);
-      toast.success("Event created successfully");
-    }
-    
-    navigate("/events");
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEvent(prevEvent => ({
+      ...prevEvent,
+      [name]: value
+    }));
   };
 
-  const handleAddCharacter = (characterId: string) => {
-    if (!characterId || event.characters.includes(characterId)) {
-      return;
-    }
-    
-    setEvent({
-      ...event,
-      characters: [...event.characters, characterId],
-    });
-    setSelectedCharacter("");
-  };
-
-  const handleRemoveCharacter = (characterId: string) => {
-    setEvent({
-      ...event,
-      characters: event.characters.filter(id => id !== characterId),
+  const handleCharacterChange = (characterId: string, checked: boolean) => {
+    setEvent(prevEvent => {
+      let updatedCharacters = [...prevEvent.characters];
+      if (checked) {
+        updatedCharacters.push(characterId);
+      } else {
+        updatedCharacters = updatedCharacters.filter(id => id !== characterId);
+      }
+      return { ...prevEvent, characters: updatedCharacters };
     });
   };
 
-  const handleAddConsequence = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && newConsequence.trim()) {
-      e.preventDefault();
-      setEvent({
-        ...event,
-        consequences: [...event.consequences, newConsequence.trim()],
-      });
-      setNewConsequence("");
-    }
+  const handleConsequencesChange = (index: number, value: string) => {
+    const updatedConsequences = [...event.consequences];
+    updatedConsequences[index] = value;
+    setEvent(prevEvent => ({ ...prevEvent, consequences: updatedConsequences }));
   };
 
-  const handleRemoveConsequence = (index: number) => {
+  const addConsequence = () => {
+    setEvent(prevEvent => ({
+      ...prevEvent,
+      consequences: [...prevEvent.consequences, '']
+    }));
+  };
+
+  const removeConsequence = (index: number) => {
     const updatedConsequences = [...event.consequences];
     updatedConsequences.splice(index, 1);
-    setEvent({
-      ...event,
-      consequences: updatedConsequences,
-    });
+    setEvent(prevEvent => ({ ...prevEvent, consequences: updatedConsequences }));
   };
 
-  const handleDateSelect = (selectedDate: Date | undefined) => {
-    setDate(selectedDate);
-    if (selectedDate) {
-      setEvent({
+  const saveEvent = () => {
+    if (id === 'new') {
+      const timestamp = new Date().toISOString();
+      const newEvent: Omit<Event, 'id'> = {
+        name: event.name,
+        description: event.description,
+        characters: event.characters,
+        consequences: event.consequences,
+        date: event.date,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
+      addEvent(newEvent);
+    } else {
+      const timestamp = new Date().toISOString();
+      const updatedEvent: Event = {
         ...event,
-        date: format(selectedDate, "PPP"),
-      });
+        updatedAt: timestamp
+      };
+      updateEvent(updatedEvent);
     }
+    navigate('/events');
   };
+
+  if (!currentBook) {
+    return <div>Please select a book first.</div>;
+  }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-4xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-blue-600">
-          {id && id !== "new" ? "Edit Event" : "Create Event"}
-        </h1>
-        <p className="text-muted-foreground">
-          {id && id !== "new"
-            ? "Update an existing event in your story"
-            : "Add a new pivotal event to your story"}
-        </p>
-      </div>
-
-      <Card className="shadow-md">
-        <CardHeader className="bg-blue-50 dark:bg-blue-900/20">
-          <CardTitle className="text-xl">Event Details</CardTitle>
+    <div className="container mx-auto py-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>{id === 'new' ? 'Create Event' : 'Edit Event'}</CardTitle>
+          <CardDescription>
+            {id === 'new' ? 'Add a new event to your novel.' : 'Edit the details of an existing event.'}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Event Name</Label>
-              <Input
-                id="name"
-                value={event.name}
-                onChange={(e) =>
-                  setEvent({ ...event, name: e.target.value })
-                }
-                placeholder="E.g. The Great Battle, The Wedding, The Betrayal"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="date">Date in Story</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "PPP") : "Select a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={handleDateSelect}
-                    initialFocus
+        <CardContent className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              type="text"
+              id="name"
+              name="name"
+              value={event.name}
+              onChange={handleInputChange}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="date">Date</Label>
+            <Input
+              type="text"
+              id="date"
+              name="date"
+              value={event.date}
+              onChange={handleInputChange}
+              placeholder="e.g., August 12, 1995"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              name="description"
+              value={event.description}
+              onChange={handleInputChange}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label>Characters</Label>
+            <div className="flex flex-wrap gap-2">
+              {availableCharacters.map(character => (
+                <div key={character.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`character-${character.id}`}
+                    checked={event.characters.includes(character.id)}
+                    onCheckedChange={(checked) => handleCharacterChange(character.id, !!checked)}
                   />
-                </PopoverContent>
-              </Popover>
+                  <Label htmlFor={`character-${character.id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    {character.name}
+                  </Label>
+                </div>
+              ))}
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={event.description}
-                onChange={(e) =>
-                  setEvent({ ...event, description: e.target.value })
-                }
-                placeholder="Describe what happens during this event..."
-                rows={4}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="characters">Characters Involved</Label>
-              <Select
-                value={selectedCharacter}
-                onValueChange={handleAddCharacter}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Add a character to this event" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Characters</SelectLabel>
-                    {currentBook?.characters.map((character) => (
-                      <SelectItem
-                        key={character.id}
-                        value={character.id}
-                        disabled={event.characters.includes(character.id)}
-                      >
-                        {character.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {event.characters.map((characterId) => {
-                  const character = currentBook?.characters.find(c => c.id === characterId);
-                  return character ? (
-                    <Badge
-                      key={characterId}
-                      className="bg-novel-lavender/10 text-novel-purple border-novel-lavender hover:bg-novel-lavender/20"
-                      onClick={() => handleRemoveCharacter(characterId)}
-                    >
-                      {character.name} ✕
-                    </Badge>
-                  ) : null;
-                })}
+          </div>
+          <div className="grid gap-2">
+            <Label>Consequences</Label>
+            {event.consequences.map((consequence, index) => (
+              <div key={index} className="flex space-x-2">
+                <Input
+                  type="text"
+                  value={consequence}
+                  onChange={(e) => handleConsequencesChange(index, e.target.value)}
+                />
+                <Button type="button" variant="outline" size="sm" onClick={() => removeConsequence(index)}>
+                  Remove
+                </Button>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="consequences">Consequences (Press Enter to add)</Label>
-              <Input
-                id="consequences"
-                value={newConsequence}
-                onChange={(e) => setNewConsequence(e.target.value)}
-                onKeyDown={handleAddConsequence}
-                placeholder="What changes as a result of this event?"
-              />
-              <div className="flex flex-wrap gap-2 mt-2">
-                {event.consequences.map((consequence, index) => (
-                  <Badge
-                    key={index}
-                    variant="outline"
-                    className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
-                    onClick={() => handleRemoveConsequence(index)}
-                  >
-                    {consequence} ✕
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate("/events")}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                {id && id !== "new" ? "Update Event" : "Create Event"}
-              </Button>
-            </div>
-          </form>
+            ))}
+            <Button type="button" variant="secondary" size="sm" onClick={addConsequence}>
+              Add Consequence
+            </Button>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="ghost" onClick={() => navigate('/events')}>
+              Cancel
+            </Button>
+            <Button onClick={saveEvent}>Save</Button>
+          </div>
         </CardContent>
       </Card>
     </div>

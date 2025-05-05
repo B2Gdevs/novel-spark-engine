@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { EntityVersion, NovelProject } from '@/types/novel';
 import { toast } from 'sonner';
@@ -19,10 +18,10 @@ export function useVersionOperations(
   };
 
   // Add a new version when an entity is created or updated
-  const addEntityVersion = (
+  const addEntityVersion = async (
     entityType: 'character' | 'scene' | 'page' | 'place' | 'event',
     entityId: string,
-    entityData: any,
+    versionData: any,
     messageId?: string,
     description?: string
   ) => {
@@ -32,10 +31,10 @@ export function useVersionOperations(
       id: uuidv4(),
       entityId,
       entityType,
-      versionData: entityData,
+      versionData: versionData,
       createdAt: new Date().toISOString(),
       messageId,
-      description: description || `${entityType} ${entityData.name || entityData.title} updated`
+      description: description || `${entityType} ${versionData.name || versionData.title} updated`
     };
     
     setProject(prev => ({
@@ -241,12 +240,67 @@ export function useVersionOperations(
     }
   };
 
+  // Create a new entity version using RPC function
+  const createEntityVersion = async (
+    entityType: 'character' | 'scene' | 'page' | 'place' | 'event',
+    entityId: string,
+    versionData: any,
+    messageId?: string,
+    description?: string
+  ) => {
+    // Use RPC function instead of direct table access
+    const { data, error } = await supabase.rpc('create_entity_version', {
+      p_entity_id: entityId,
+      p_entity_type: entityType,
+      p_version_data: versionData,
+      p_message_id: messageId || null,
+      p_description: description || null
+    });
+
+    if (error) {
+      console.error('Error creating entity version:', error);
+      return null;
+    }
+
+    return data;
+  };
+
+  // Get all versions for a specific entity using RPC function
+  const getEntityVersionsForEntity = async (
+    entityType: 'character' | 'scene' | 'page' | 'place' | 'event',
+    entityId: string
+  ) => {
+    // Use RPC function instead of direct table access
+    const { data, error } = await supabase.rpc('get_entity_versions', {
+      p_entity_id: entityId,
+      p_entity_type: entityType
+    });
+
+    if (error) {
+      console.error('Error fetching entity versions:', error);
+      return [];
+    }
+
+    // Transform the data to match the EntityVersion interface
+    return data.map((version: any) => ({
+      id: version.id,
+      entityId: version.entity_id,
+      entityType: version.entity_type,
+      versionData: version.version_data,
+      createdAt: version.created_at,
+      messageId: version.message_id,
+      description: version.description
+    }));
+  };
+
   return {
     addEntityVersion,
     getEntityVersions,
     restoreEntityVersion,
     createChatCheckpoint,
     restoreChatCheckpoint,
-    loadVersionsFromSupabase
+    loadVersionsFromSupabase,
+    createEntityVersion,
+    getEntityVersionsForEntity
   };
 }

@@ -42,6 +42,7 @@ export interface Scene {
   characters: string[];
   notes?: string;
   tone?: string;
+  events?: string[];
   createdAt: string;
   updatedAt: string;
 }

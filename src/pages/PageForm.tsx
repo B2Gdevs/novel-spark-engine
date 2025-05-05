@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useNovel } from "@/contexts/NovelContext";
@@ -42,15 +41,19 @@ export function PageForm() {
     }
   }, [id, currentBook, getPage, navigate, isNewPage]);
   
-  const handleSave = () => {
-    if (isNewPage) {
-      addPage({
+  const savePage = () => {
+    const timestamp = new Date().toISOString();
+    
+    if (id === 'new') {
+      const newPage: Omit<Page, 'id'> = {
         title: page.title,
-        content: page.content,
-        order: currentBook?.pages.length ? Math.max(...currentBook.pages.map(p => p.order || 0)) + 1 : 1
-      });
-      toast.success("Page created successfully");
-      navigate("/pages");
+        content: page.content || '',
+        order: page.order || currentBook.pages.length,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
+      addPage(newPage);
+      navigate('/pages');
     } else if (id) {
       updatePage(id, {
         title: page.title,
@@ -102,7 +105,7 @@ export function PageForm() {
           <Button 
             className="bg-purple-600 hover:bg-purple-700"
             size="sm"
-            onClick={handleSave}
+            onClick={savePage}
           >
             <Save className="h-4 w-4 mr-1" /> Save
           </Button>
