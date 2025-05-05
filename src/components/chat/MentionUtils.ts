@@ -1,4 +1,3 @@
-
 import { Book } from "@/types/novel";
 
 /**
@@ -113,7 +112,6 @@ export function parseEntitiesFromMessage(
 ) {
   // Extract mentions like @character/Kaelin or @scene/The Battle
   const mentionRegex = /@(character|scene|place|page)\/([^@\s]+)/g;
-  let matches;
   const mentionedEntities: Array<{
     type: string;
     id: string;
@@ -122,8 +120,7 @@ export function parseEntitiesFromMessage(
   
   // Process the message text
   const processedMessage = message.replace(mentionRegex, (match, type, name) => {
-    // In a real implementation, we would look up the entity ID
-    // Here we'll just use the name as a placeholder ID
+    // Generate a unique ID for each entity mention
     const fakeId = `${type}-${name}-${Date.now()}`;
     
     mentionedEntities.push({

@@ -46,7 +46,11 @@ export function useChatSubmission({
       addChatMessage({
         role: 'user',
         content: messageContent,
-        mentionedEntities
+        mentionedEntities: mentionedEntities.map(entity => ({
+          id: entity.id,
+          type: entity.type,
+          name: entity.name
+        }))
       });
       
       // If linked to an entity, include that context
@@ -66,10 +70,17 @@ export function useChatSubmission({
       If the user mentions an entity with @, make sure to reference it in your response properly. 
       After creating entities, confirm their creation and store them in the database automatically.`;
       
+      // Create an array of mentioned entities in the format expected by sendMessageToAI
+      const mentionedEntitiesForAI = mentionedEntities.map(entity => ({
+        type: entity.type,
+        id: entity.id,
+        name: entity.name
+      }));
+      
       // Send message to AI assistant
       const aiResponse = await sendMessageToAI(
         messageContent, 
-        [...(linkedEntityType && linkedEntityId ? [] : []), ...mentionedEntities], 
+        [...(linkedEntityType && linkedEntityId ? [] : []), ...mentionedEntitiesForAI], 
         systemPrompt
       );
             
