@@ -1,6 +1,6 @@
 
 import React, { PropsWithChildren } from 'react';
-import { CopilotKit, CopilotKitProps } from '@copilotkit/react-core';
+import { CopilotKit } from '@copilotkit/react-core';
 import { useNovel } from '@/contexts/NovelContext';
 
 interface CopilotProviderProps extends PropsWithChildren {}
@@ -25,31 +25,11 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
     }
   ] : [];
   
-  // Config for the Copilot Kit
-  const config: CopilotKitProps = {
-    customChatClient: {
-      sendMessage: async (message, context) => {
-        try {
-          // We'll convert the message to a chat API call
-          // For now, just echo back the message
-          return {
-            role: 'assistant',
-            content: `This is a placeholder response. In a real implementation, this would process: ${message}`,
-          };
-        } catch (error) {
-          console.error('Error in Copilot Kit:', error);
-          return {
-            role: 'assistant',
-            content: 'Sorry, I encountered an error processing your request.',
-          };
-        }
-      }
-    },
-    context: contextItems
-  };
-
   return (
-    <CopilotKit {...config}>
+    <CopilotKit 
+      publicApiKey="sk-0000" // Using a placeholder key, replace with a real one or use environment variable
+      context={contextItems}
+    >
       {children}
     </CopilotKit>
   );

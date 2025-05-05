@@ -53,7 +53,7 @@ export function Toolbar() {
             onClick={handleLastItemClick}
             className="text-sm text-gray-600 hover:text-gray-900 border-gray-200"
           >
-            Latest: {lastModifiedItem.title} ({lastModifiedItem.type.slice(0, -1)})
+            Latest: {lastModifiedItem.name || lastModifiedItem.title} ({lastModifiedItem.type.slice(0, -1)})
           </Button>
         )}
       </div>
