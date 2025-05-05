@@ -1,3 +1,4 @@
+
 import { ReactNode, useEffect } from "react";
 import { NovelContextType } from "../types";
 import { useBookOperations } from "../useBookOperations";
@@ -53,7 +54,7 @@ export function NovelProviderCore({ children }: { children: ReactNode }) {
         console.error("Failed to load entity versions:", err)
       );
     }
-  }, [project.currentBookId, loadVersionsFromSupabase]);
+  }, [project.currentBookId]);
 
   // Log the current state for debugging
   useEffect(() => {

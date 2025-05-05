@@ -216,7 +216,8 @@ export function useVersionOperations(
         return [];
       }
       
-      if (!data) {
+      if (!data || !Array.isArray(data)) {
+        console.log('No versions data or invalid format returned', data);
         return [];
       }
       
