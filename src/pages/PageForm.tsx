@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useNovel } from "@/contexts/NovelContext";
@@ -6,13 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { Page } from "@/types/novel";
 
 export function PageForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentBook, getPage, updatePage, deletePage, addPage } = useNovel();
   
-  const [page, setPage] = useState({
+  const [page, setPage] = useState<Partial<Page>>({
     title: "",
     content: "",
     order: 0
@@ -46,9 +48,9 @@ export function PageForm() {
     
     if (id === 'new') {
       const newPage: Omit<Page, 'id'> = {
-        title: page.title,
+        title: page.title || '',
         content: page.content || '',
-        order: page.order || currentBook.pages.length,
+        order: page.order || currentBook!.pages.length,
         createdAt: timestamp,
         updatedAt: timestamp
       };
@@ -118,7 +120,7 @@ export function PageForm() {
             Title
           </label>
           <Input 
-            value={page.title}
+            value={page.title || ''}
             onChange={(e) => setPage({ ...page, title: e.target.value })}
             className="bg-zinc-800 border-zinc-700 text-white"
           />
@@ -129,7 +131,7 @@ export function PageForm() {
             Content
           </label>
           <Textarea 
-            value={page.content}
+            value={page.content || ''}
             onChange={(e) => setPage({ ...page, content: e.target.value })}
             className="min-h-[60vh] bg-zinc-800 border-zinc-700 text-white"
           />

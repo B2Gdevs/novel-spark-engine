@@ -16,7 +16,7 @@ import { useSummaryOperations } from "../useSummaryOperations";
 import { useVersionOperations } from "../useVersionOperations";
 
 export function NovelProviderCore({ children }: { children: ReactNode }) {
-  const { project, setProject, isLoading } = useProjectState();
+  const { project, setProject } = useProjectState();
 
   // Get version operations first so we can pass them to other hooks
   const { 
@@ -53,7 +53,7 @@ export function NovelProviderCore({ children }: { children: ReactNode }) {
         console.error("Failed to load entity versions:", err)
       );
     }
-  }, [project.currentBookId, loadVersionsFromSupabase]);
+  }, [project.currentBookId]);
 
   // Log the current state for debugging
   useEffect(() => {
@@ -276,19 +276,25 @@ export function NovelProviderCore({ children }: { children: ReactNode }) {
   const providerValue: NovelContextType = {
     project,
     currentBook,
-    isLoading,
+    addBook,
+    deleteBook,
+    switchBook,
     addCharacter,
     updateCharacter,
+    deleteCharacter,
+    getCharacter,
     addScene,
     updateScene,
-    addPage,
-    updatePage,
-    deletePage,
-    getPage,
+    deleteScene,
+    getScene,
     addEvent,
     updateEvent,
     deleteEvent,
     getEvent,
+    addPage,
+    updatePage,
+    deletePage,
+    getPage,
     addPlace,
     updatePlace,
     deletePlace,

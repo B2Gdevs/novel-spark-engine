@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ export function SceneForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   
-  const [scene, setScene] = useState<Omit<Scene, "id">>({
+  const [scene, setScene] = useState<Partial<Scene>>({
     title: "",
     content: "",
     characters: [],
@@ -51,6 +52,8 @@ export function SceneForm() {
           location: existingScene.location || "",
           events: existingScene.events || [],
           tone: existingScene.tone || "",
+          description: existingScene.description,
+          notes: existingScene.notes
         });
       }
     }
@@ -59,21 +62,34 @@ export function SceneForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!scene.title.trim()) {
+    if (!scene.title?.trim()) {
       toast.error("Scene title is required");
       return;
     }
 
-    if (!scene.content.trim()) {
+    if (!scene.content?.trim()) {
       toast.error("Scene content is required");
       return;
     }
+
+    const timestamp = new Date().toISOString();
 
     if (id && id !== "new") {
       updateScene(id, scene);
       toast.success("Scene updated successfully");
     } else {
-      addScene(scene);
+      const newScene: Omit<Scene, "id"> = {
+        title: scene.title || "",
+        content: scene.content || "",
+        description: scene.description,
+        location: scene.location,
+        characters: scene.characters || [],
+        notes: scene.notes,
+        tone: scene.tone,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
+      addScene(newScene);
       toast.success("Scene created successfully");
     }
     
@@ -81,13 +97,13 @@ export function SceneForm() {
   };
 
   const handleAddCharacter = (characterId: string) => {
-    if (!characterId || scene.characters.includes(characterId)) {
+    if (!characterId || scene.characters?.includes(characterId)) {
       return;
     }
     
     setScene({
       ...scene,
-      characters: [...scene.characters, characterId],
+      characters: [...(scene.characters || []), characterId],
     });
     setSelectedCharacter("");
   };
@@ -95,7 +111,7 @@ export function SceneForm() {
   const handleRemoveCharacter = (characterId: string) => {
     setScene({
       ...scene,
-      characters: scene.characters.filter(id => id !== characterId),
+      characters: scene.characters?.filter(id => id !== characterId) || [],
     });
   };
 
@@ -123,7 +139,7 @@ export function SceneForm() {
                 <Label htmlFor="title">Title</Label>
                 <Input
                   id="title"
-                  value={scene.title}
+                  value={scene.title || ""}
                   onChange={(e) =>
                     setScene({ ...scene, title: e.target.value })
                   }
@@ -135,7 +151,7 @@ export function SceneForm() {
                 <Label htmlFor="location">Location</Label>
                 <Input
                   id="location"
-                  value={scene.location}
+                  value={scene.location || ""}
                   onChange={(e) =>
                     setScene({ ...scene, location: e.target.value })
                   }
@@ -160,7 +176,7 @@ export function SceneForm() {
                       <SelectItem
                         key={character.id}
                         value={character.id}
-                        disabled={scene.characters.includes(character.id)}
+                        disabled={scene.characters?.includes(character.id)}
                       >
                         {character.name}
                       </SelectItem>
@@ -169,7 +185,7 @@ export function SceneForm() {
                 </SelectContent>
               </Select>
               <div className="flex flex-wrap gap-2 mt-2">
-                {scene.characters.map((characterId) => {
+                {scene.characters?.map((characterId) => {
                   const character = currentBook?.characters.find(c => c.id === characterId);
                   return character ? (
                     <Badge
@@ -215,7 +231,7 @@ export function SceneForm() {
               <Label htmlFor="content">Content</Label>
               <Textarea
                 id="content"
-                value={scene.content}
+                value={scene.content || ""}
                 onChange={(e) =>
                   setScene({ ...scene, content: e.target.value })
                 }

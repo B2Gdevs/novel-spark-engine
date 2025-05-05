@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from 'uuid';
 import { EntityVersion, NovelProject } from '@/types/novel';
 import { toast } from 'sonner';
@@ -18,13 +19,13 @@ export function useVersionOperations(
   };
 
   // Add a new version when an entity is created or updated
-  const addEntityVersion = async (
+  const addEntityVersion = (
     entityType: 'character' | 'scene' | 'page' | 'place' | 'event',
     entityId: string,
     versionData: any,
     messageId?: string,
     description?: string
-  ) => {
+  ): string | undefined => {
     ensureVersionsArray();
     
     const newVersion: EntityVersion = {
@@ -42,11 +43,47 @@ export function useVersionOperations(
       entityVersions: [...(prev.entityVersions || []), newVersion]
     }));
 
-    // Save to Supabase in background if we're connected
-    saveVersionToSupabase(newVersion, project.currentBookId)
-      .catch(error => console.error(`Failed to sync ${entityType} version to database:`, error));
+    // Save to Supabase in background
+    try {
+      // Using executeQuery approach with our custom table
+      saveEntityVersionToDb(newVersion, project.currentBookId)
+        .catch(error => console.error(`Failed to sync ${entityType} version to database:`, error));
+    } catch (error) {
+      console.error('Exception in addEntityVersion:', error);
+    }
     
     return newVersion.id;
+  };
+
+  // Helper function to save version to database
+  const saveEntityVersionToDb = async (version: EntityVersion, bookId: string | null) => {
+    if (!bookId) return null;
+    
+    try {
+      // Using executeQuery for custom table
+      const { error } = await supabase
+        .from('entity_versions')
+        .insert({
+          id: version.id,
+          entity_id: version.entityId,
+          entity_type: version.entityType,
+          version_data: version.versionData,
+          book_id: bookId,
+          message_id: version.messageId,
+          description: version.description,
+          created_at: version.createdAt
+        });
+        
+      if (error) {
+        console.error('Error saving entity version:', error);
+        throw error;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Exception saving entity version:', error);
+      return null;
+    }
   };
 
   // Get all versions for a specific entity
@@ -170,41 +207,10 @@ export function useVersionOperations(
     return true;
   };
 
-  // Save version to Supabase
-  const saveVersionToSupabase = async (version: EntityVersion, bookId: string | null) => {
-    if (!bookId) return null;
-    
-    try {
-      // Using executeQuery approach to handle custom table not yet in TypeScript definitions
-      const { data, error } = await supabase
-        .from('entity_versions')
-        .upsert({
-          id: version.id,
-          entity_id: version.entityId,
-          entity_type: version.entityType,
-          version_data: version.versionData,
-          book_id: bookId,
-          message_id: version.messageId,
-          description: version.description,
-          created_at: version.createdAt
-        });
-        
-      if (error) {
-        console.error('Error saving entity version:', error);
-        throw error;
-      }
-      
-      return data;
-    } catch (error) {
-      console.error('Exception saving entity version:', error);
-      return null;
-    }
-  };
-
   // Load versions from Supabase
-  const loadVersionsFromSupabase = async (bookId: string) => {
+  const loadVersionsFromSupabase = async (bookId: string): Promise<EntityVersion[]> => {
     try {
-      // Using executeQuery approach to handle custom table not yet in TypeScript definitions
+      // Using executeQuery for custom table
       const { data, error } = await supabase
         .from('entity_versions')
         .select('*')
@@ -213,6 +219,10 @@ export function useVersionOperations(
         
       if (error) {
         console.error('Error loading entity versions:', error);
+        return [];
+      }
+      
+      if (!data) {
         return [];
       }
       
@@ -240,67 +250,12 @@ export function useVersionOperations(
     }
   };
 
-  // Create a new entity version using RPC function
-  const createEntityVersion = async (
-    entityType: 'character' | 'scene' | 'page' | 'place' | 'event',
-    entityId: string,
-    versionData: any,
-    messageId?: string,
-    description?: string
-  ) => {
-    // Use RPC function instead of direct table access
-    const { data, error } = await supabase.rpc('create_entity_version', {
-      p_entity_id: entityId,
-      p_entity_type: entityType,
-      p_version_data: versionData,
-      p_message_id: messageId || null,
-      p_description: description || null
-    });
-
-    if (error) {
-      console.error('Error creating entity version:', error);
-      return null;
-    }
-
-    return data;
-  };
-
-  // Get all versions for a specific entity using RPC function
-  const getEntityVersionsForEntity = async (
-    entityType: 'character' | 'scene' | 'page' | 'place' | 'event',
-    entityId: string
-  ) => {
-    // Use RPC function instead of direct table access
-    const { data, error } = await supabase.rpc('get_entity_versions', {
-      p_entity_id: entityId,
-      p_entity_type: entityType
-    });
-
-    if (error) {
-      console.error('Error fetching entity versions:', error);
-      return [];
-    }
-
-    // Transform the data to match the EntityVersion interface
-    return data.map((version: any) => ({
-      id: version.id,
-      entityId: version.entity_id,
-      entityType: version.entity_type,
-      versionData: version.version_data,
-      createdAt: version.created_at,
-      messageId: version.message_id,
-      description: version.description
-    }));
-  };
-
   return {
     addEntityVersion,
     getEntityVersions,
     restoreEntityVersion,
     createChatCheckpoint,
     restoreChatCheckpoint,
-    loadVersionsFromSupabase,
-    createEntityVersion,
-    getEntityVersionsForEntity
+    loadVersionsFromSupabase
   };
 }

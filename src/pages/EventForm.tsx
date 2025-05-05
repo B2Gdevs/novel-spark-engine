@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -7,14 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNovel } from "@/contexts/NovelContext";
 import { Event } from "@/types/novel";
-import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export function EventForm() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { currentBook, addEvent, updateEvent, getEvent, getAllCharacters } = useNovel();
-  const [event, setEvent] = useState<Event>({
+  const { currentBook, addEvent, updateEvent, getEvent } = useNovel();
+  const [event, setEvent] = useState<Partial<Event> & { id?: string }>({
     id: '',
     name: '',
     description: '',
@@ -69,7 +69,8 @@ export function EventForm() {
 
   const handleCharacterChange = (characterId: string, checked: boolean) => {
     setEvent(prevEvent => {
-      let updatedCharacters = [...prevEvent.characters];
+      const characters = prevEvent.characters || [];
+      let updatedCharacters = [...characters];
       if (checked) {
         updatedCharacters.push(characterId);
       } else {
@@ -80,7 +81,8 @@ export function EventForm() {
   };
 
   const handleConsequencesChange = (index: number, value: string) => {
-    const updatedConsequences = [...event.consequences];
+    const consequences = event.consequences || [];
+    const updatedConsequences = [...consequences];
     updatedConsequences[index] = value;
     setEvent(prevEvent => ({ ...prevEvent, consequences: updatedConsequences }));
   };
@@ -88,12 +90,13 @@ export function EventForm() {
   const addConsequence = () => {
     setEvent(prevEvent => ({
       ...prevEvent,
-      consequences: [...prevEvent.consequences, '']
+      consequences: [...(prevEvent.consequences || []), '']
     }));
   };
 
   const removeConsequence = (index: number) => {
-    const updatedConsequences = [...event.consequences];
+    const consequences = event.consequences || [];
+    const updatedConsequences = [...consequences];
     updatedConsequences.splice(index, 1);
     setEvent(prevEvent => ({ ...prevEvent, consequences: updatedConsequences }));
   };
@@ -102,22 +105,17 @@ export function EventForm() {
     if (id === 'new') {
       const timestamp = new Date().toISOString();
       const newEvent: Omit<Event, 'id'> = {
-        name: event.name,
+        name: event.name || '',
         description: event.description,
-        characters: event.characters,
-        consequences: event.consequences,
+        characters: event.characters || [],
+        consequences: event.consequences || [],
         date: event.date,
         createdAt: timestamp,
         updatedAt: timestamp
       };
       addEvent(newEvent);
-    } else {
-      const timestamp = new Date().toISOString();
-      const updatedEvent: Event = {
-        ...event,
-        updatedAt: timestamp
-      };
-      updateEvent(updatedEvent);
+    } else if (id) {
+      updateEvent(id, event);
     }
     navigate('/events');
   };
@@ -142,7 +140,7 @@ export function EventForm() {
               type="text"
               id="name"
               name="name"
-              value={event.name}
+              value={event.name || ''}
               onChange={handleInputChange}
             />
           </div>
@@ -152,7 +150,7 @@ export function EventForm() {
               type="text"
               id="date"
               name="date"
-              value={event.date}
+              value={event.date || ''}
               onChange={handleInputChange}
               placeholder="e.g., August 12, 1995"
             />
@@ -162,7 +160,7 @@ export function EventForm() {
             <Textarea
               id="description"
               name="description"
-              value={event.description}
+              value={event.description || ''}
               onChange={handleInputChange}
             />
           </div>
@@ -173,7 +171,7 @@ export function EventForm() {
                 <div key={character.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={`character-${character.id}`}
-                    checked={event.characters.includes(character.id)}
+                    checked={event.characters?.includes(character.id) || false}
                     onCheckedChange={(checked) => handleCharacterChange(character.id, !!checked)}
                   />
                   <Label htmlFor={`character-${character.id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
@@ -185,7 +183,7 @@ export function EventForm() {
           </div>
           <div className="grid gap-2">
             <Label>Consequences</Label>
-            {event.consequences.map((consequence, index) => (
+            {(event.consequences || []).map((consequence, index) => (
               <div key={index} className="flex space-x-2">
                 <Input
                   type="text"

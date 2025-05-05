@@ -4,8 +4,9 @@ import { Book, Character, Scene, Event, Note, ChatMessage, NovelProject, Page, P
 export interface NovelContextType {
   project: NovelProject;
   currentBook: Book | null;
-  addBook: (book: Omit<Book, "id">) => void;
-  deleteBook: (id: string) => void;
+  isLoading?: boolean; // Make this optional to avoid breaking changes
+  addBook: (book: Omit<Book, "id">) => Promise<void>;
+  deleteBook: (id: string) => Promise<void>;
   switchBook: (id: string) => void;
   addCharacter: (character: Omit<Character, "id">, messageId?: string) => string | undefined; // Return new ID
   updateCharacter: (id: string, character: Partial<Character>, messageId?: string) => void;
