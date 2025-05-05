@@ -23,12 +23,6 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
   return (
     <CopilotKit 
       runtimeUrl="/api/copilotkit"
-      documents={bookInfo ? [
-        {
-          name: `Current book: ${currentBook?.title}`,
-          content: JSON.stringify(bookInfo)
-        }
-      ] : []}
     >
       {children}
     </CopilotKit>

@@ -70,17 +70,17 @@ export function useChatSubmission({
       If the user mentions an entity with @, make sure to reference it in your response properly. 
       After creating entities, confirm their creation and store them in the database automatically.`;
       
-      // Create an array of mentioned entities in the format expected by sendMessageToAI
-      const mentionedEntitiesForAI = mentionedEntities.map(entity => ({
-        type: entity.type,
-        id: entity.id,
-        name: entity.name
-      }));
+      // Format the mentioned entities for the sendMessageToAI function
+      const chatHistory: ChatMessage[] = [];
       
       // Send message to AI assistant
       const aiResponse = await sendMessageToAI(
         messageContent, 
-        mentionedEntitiesForAI, 
+        mentionedEntities.map(entity => ({
+          type: entity.type,
+          id: entity.id,
+          name: entity.name
+        })), 
         systemPrompt
       );
             

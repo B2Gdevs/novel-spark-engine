@@ -1,9 +1,8 @@
 
 import { useCopilotAction } from '@copilotkit/react-core';
 import { useNovel } from '@/contexts/NovelContext';
-import { useEffect } from 'react';
-import { toast } from 'sonner';
 import { Character, Scene, Page, Place } from '@/types/novel';
+import { toast } from 'sonner';
 
 export function CopilotActions() {
   const { 

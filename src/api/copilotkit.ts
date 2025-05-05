@@ -10,8 +10,10 @@ const runtime = new CopilotRuntime();
 export async function POST(req: Request) {
   try {
     const requestBody = await req.json();
-    // Use the correct method name for CopilotRuntime
-    const response = await runtime.handleChatMessage(requestBody, serviceAdapter);
+    
+    // Process the incoming request using CopilotRuntime's processMessage method
+    const response = await runtime.processMessage(requestBody, serviceAdapter);
+    
     return new Response(JSON.stringify(response), {
       headers: {
         'Content-Type': 'application/json'
