@@ -3,8 +3,18 @@ import { v4 as uuidv4 } from "uuid";
 import { Character, NovelProject } from "@/types/novel";
 import { saveCharacterToSupabase } from "@/services/supabase-sync";
 
-export function useCharacterOperations(project: NovelProject, setProject: React.Dispatch<React.SetStateAction<NovelProject>>) {
-  const addCharacter = (character: Omit<Character, "id">) => {
+export function useCharacterOperations(
+  project: NovelProject, 
+  setProject: React.Dispatch<React.SetStateAction<NovelProject>>,
+  addEntityVersion?: (
+    entityType: 'character' | 'scene' | 'page' | 'place' | 'event',
+    entityId: string,
+    entityData: any,
+    messageId?: string,
+    description?: string
+  ) => string | undefined
+) {
+  const addCharacter = (character: Omit<Character, "id">, messageId?: string) => {
     if (!project.currentBookId) return undefined;
     
     const newId = uuidv4();
@@ -33,6 +43,17 @@ export function useCharacterOperations(project: NovelProject, setProject: React.
       };
     });
     
+    // Create initial version if the versioning system is available
+    if (addEntityVersion) {
+      addEntityVersion(
+        'character', 
+        newId, 
+        newCharacter, 
+        messageId,
+        `Created character ${character.name}`
+      );
+    }
+    
     // Save to Supabase in background
     if (project.currentBookId) {
       saveCharacterToSupabase(newCharacter, project.currentBookId)
@@ -42,7 +63,7 @@ export function useCharacterOperations(project: NovelProject, setProject: React.
     return newId; // Return the new ID
   };
 
-  const updateCharacter = (id: string, character: Partial<Character>) => {
+  const updateCharacter = (id: string, character: Partial<Character>, messageId?: string) => {
     if (!project.currentBookId) return;
     
     let updatedCharacter: Character | null = null;
@@ -76,6 +97,17 @@ export function useCharacterOperations(project: NovelProject, setProject: React.
         books: updatedBooks
       };
     });
+    
+    // Create version for the update if versioning system is available
+    if (addEntityVersion && updatedCharacter) {
+      addEntityVersion(
+        'character', 
+        id, 
+        updatedCharacter, 
+        messageId,
+        `Updated character ${updatedCharacter.name}`
+      );
+    }
     
     // Save to Supabase in background
     if (updatedCharacter && project.currentBookId) {

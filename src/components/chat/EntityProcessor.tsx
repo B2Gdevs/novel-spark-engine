@@ -8,6 +8,7 @@ interface EntityProcessorProps {
   data: any;
   exists: boolean;
   id?: string;
+  messageId?: string; // Add message ID for versioning
   onEntityProcessed: () => void;
 }
 
@@ -16,6 +17,7 @@ export function EntityProcessor({
   data, 
   exists, 
   id,
+  messageId,
   onEntityProcessed 
 }: EntityProcessorProps) {
   const { 
@@ -28,7 +30,8 @@ export function EntityProcessor({
     updatePage,
     addPlace,
     updatePlace,
-    addChatMessage
+    addChatMessage,
+    addEntityVersion
   } = useNovel();
 
   const handleCreateEntity = () => {
@@ -38,19 +41,19 @@ export function EntityProcessor({
       
       switch (type) {
         case 'character':
-          newId = addCharacter(data);
+          newId = addCharacter(data, messageId);
           successMessage = `Character "${data.name}" created successfully`;
           break;
         case 'scene':
-          newId = addScene(data);
+          newId = addScene(data, messageId);
           successMessage = `Scene "${data.title}" created successfully`;
           break;
         case 'page':
-          newId = addPage(data);
+          newId = addPage(data, messageId);
           successMessage = `Page "${data.title}" created successfully`;
           break;
         case 'place':
-          newId = addPlace(data);
+          newId = addPlace(data, messageId);
           successMessage = `Place "${data.name}" created successfully`;
           break;
       }
@@ -61,7 +64,8 @@ export function EntityProcessor({
           role: 'system',
           content: successMessage,
           entityType: type,
-          entityId: newId
+          entityId: newId,
+          entityAction: 'create'
         });
         
         // Save to Supabase in background if we have a current book
@@ -107,7 +111,7 @@ export function EntityProcessor({
       
       switch (type) {
         case 'character':
-          updateCharacter(id, data);
+          updateCharacter(id, data, messageId);
           successMessage = `Character updated successfully`;
           
           // Save to Supabase in background
@@ -117,7 +121,7 @@ export function EntityProcessor({
           }
           break;
         case 'scene':
-          updateScene(id, data);
+          updateScene(id, data, messageId);
           successMessage = `Scene updated successfully`;
           
           // Save to Supabase in background
@@ -127,7 +131,7 @@ export function EntityProcessor({
           }
           break;
         case 'page':
-          updatePage(id, data);
+          updatePage(id, data, messageId);
           successMessage = `Page updated successfully`;
           
           // Save to Supabase in background
@@ -137,7 +141,7 @@ export function EntityProcessor({
           }
           break;
         case 'place':
-          updatePlace(id, data);
+          updatePlace(id, data, messageId);
           successMessage = `Place updated successfully`;
           
           // Save to Supabase in background
@@ -153,7 +157,8 @@ export function EntityProcessor({
         role: 'system',
         content: successMessage,
         entityType: type,
-        entityId: id
+        entityId: id,
+        entityAction: 'update'
       });
       
       toast.success(successMessage);

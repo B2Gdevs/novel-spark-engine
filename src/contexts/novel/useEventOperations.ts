@@ -2,8 +2,18 @@
 import { v4 as uuidv4 } from "uuid";
 import { Event, NovelProject } from "@/types/novel";
 
-export function useEventOperations(project: NovelProject, setProject: React.Dispatch<React.SetStateAction<NovelProject>>) {
-  const addEvent = (event: Omit<Event, "id">): string | undefined => {
+export function useEventOperations(
+  project: NovelProject, 
+  setProject: React.Dispatch<React.SetStateAction<NovelProject>>,
+  addEntityVersion?: (
+    entityType: 'character' | 'scene' | 'page' | 'place' | 'event',
+    entityId: string,
+    entityData: any,
+    messageId?: string,
+    description?: string
+  ) => string | undefined
+) {
+  const addEvent = (event: Omit<Event, "id">, messageId?: string): string | undefined => {
     if (!project.currentBookId) return undefined;
     
     const newId = uuidv4();
@@ -32,24 +42,37 @@ export function useEventOperations(project: NovelProject, setProject: React.Disp
       };
     });
     
+    // Create initial version
+    if (addEntityVersion) {
+      addEntityVersion('event', newId, newEvent, messageId, `Created event ${event.name}`);
+    }
+    
     return newId; // Return the new ID
   };
 
-  const updateEvent = (id: string, event: Partial<Event>) => {
+  const updateEvent = (id: string, event: Partial<Event>, messageId?: string) => {
     if (!project.currentBookId) return;
+    
+    let updatedEvent: Event | undefined;
     
     setProject((prev) => {
       const updatedBooks = prev.books.map(book => {
         if (book.id === prev.currentBookId) {
-          return {
-            ...book,
-            events: book.events.map((e) => 
-              e.id === id ? {
+          const events = book.events.map((e) => {
+            if (e.id === id) {
+              updatedEvent = {
                 ...e,
                 ...event,
                 updatedAt: new Date().toISOString()
-              } : e
-            )
+              };
+              return updatedEvent;
+            }
+            return e;
+          });
+          
+          return {
+            ...book,
+            events
           };
         }
         return book;
@@ -60,6 +83,17 @@ export function useEventOperations(project: NovelProject, setProject: React.Disp
         books: updatedBooks
       };
     });
+    
+    // Create version for the update
+    if (addEntityVersion && updatedEvent) {
+      addEntityVersion(
+        'event', 
+        id, 
+        updatedEvent, 
+        messageId, 
+        `Updated event ${updatedEvent.name}`
+      );
+    }
   };
 
   const deleteEvent = (id: string) => {

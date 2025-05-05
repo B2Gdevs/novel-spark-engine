@@ -1,127 +1,109 @@
+export interface Book {
+  id: string;
+  title: string;
+  author?: string;
+  genre?: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+  pages: Page[];
+  scenes: Scene[];
+  events: Event[];
+  characters: Character[];
+  places?: Place[];
+  notes: Note[];
+  summary?: string;
+}
 
 export interface Character {
   id: string;
   name: string;
-  traits: string[];
-  description: string;
-  role: string;
+  description?: string;
+  traits?: string[];
+  role?: string;
   age?: number;
   backstory?: string;
   imageUrl?: string;
-  secrets?: string[];
-  relationships?: Relationship[];
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface Relationship {
-  characterId: string;
-  type: string;
-  description: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Scene {
   id: string;
   title: string;
-  content: string;
+  content?: string;
   description?: string;
-  characters: string[]; // Character IDs
   location?: string;
-  events?: string[]; // Event IDs
+  characters: string[];
   notes?: string;
-  tone?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface Page {
-  id: string;
-  title: string;
-  content: string;
-  order: number;
-  chapterId?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Event {
   id: string;
   name: string;
-  description: string;
-  characters: string[]; // Character IDs involved
-  consequences: string[];
+  description?: string;
   date?: string;
+  characters: string[];
+  consequences: string[];
   impact?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Page {
+  id: string;
+  title: string;
+  content?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Place {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   geography?: string;
   culturalNotes?: string;
-  relatedEvents?: string[];
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Note {
   id: string;
-  title: string;
   content: string;
-  tags: string[];
-  relatedEntities?: {
-    characters?: string[];
-    scenes?: string[];
-    events?: string[];
-    notes?: string[];
-  };
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: "user" | "assistant" | "system";
   content: string;
   timestamp: number;
   entityType?: string | null;
   entityId?: string | null;
-  parsedEntity?: {
-    type: 'character' | 'scene' | 'place' | 'page';
-    data: any;
-    exists: boolean;
-  } | null;
   mentionedEntities?: Array<{
-    type: 'character' | 'scene' | 'place' | 'page';
+    type: string;
     id: string;
     name: string;
   }>;
 }
 
-export interface Book {
+// Add versioning types
+export interface EntityVersion {
   id: string;
-  title: string;
-  description: string;
-  genre?: string;
-  characters: Character[];
-  scenes: Scene[];
-  events: Event[];
-  notes: Note[];
-  pages: Page[];
-  places: Place[];
-  references?: {
-    characters?: string[]; // IDs of characters from other books
-    scenes?: string[]; // IDs of scenes from other books
-    events?: string[]; // IDs of events from other books
-  };
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string; // Add this property for soft-deleted books
+  entityId: string;
+  entityType: 'character' | 'scene' | 'page' | 'place' | 'event';
+  versionData: any;
+  createdAt: string;
+  messageId?: string; // Link to the chat message that created this version
+  description?: string; // Short description of what changed in this version
 }
 
+// Add version history to the NovelProject type
 export interface NovelProject {
   books: Book[];
   currentBookId: string | null;
@@ -129,5 +111,30 @@ export interface NovelProject {
   currentChatContext?: {
     entityType: string;
     entityId: string;
-  } | null;
+  };
+  entityVersions?: EntityVersion[]; // Add version history
+  chatCheckpoints?: {
+    id: string;
+    description: string;
+    timestamp: number;
+    messageIndex: number; // The index in chatHistory at which this checkpoint was created
+  }[];
+}
+
+// Extend ChatMessage type to track entity creation/updates
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  timestamp: number;
+  entityType?: string | null;
+  entityId?: string | null;
+  mentionedEntities?: Array<{
+    type: string;
+    id: string;
+    name: string;
+  }>;
+  entityAction?: 'create' | 'update' | 'restore'; // Track what action was performed
+  entityVersionId?: string; // Reference to the version created
+  isCheckpoint?: boolean; // Whether this message is a checkpoint
 }

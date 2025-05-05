@@ -13,34 +13,55 @@ import NovelContext from "../NovelContext";
 import { useProjectState } from "../useProjectState";
 import { EntitySearchProvider } from "./EntitySearchProvider";
 import { useSummaryOperations } from "../useSummaryOperations";
+import { useVersionOperations } from "../useVersionOperations";
 
 export function NovelProviderCore({ children }: { children: ReactNode }) {
   const { project, setProject } = useProjectState();
 
-  // Get all operations
+  // Get version operations first so we can pass them to other hooks
+  const { 
+    addEntityVersion, 
+    getEntityVersions, 
+    restoreEntityVersion, 
+    createChatCheckpoint,
+    restoreChatCheckpoint,
+    loadVersionsFromSupabase
+  } = useVersionOperations(project, setProject);
+
+  // Get all operations with version support
   const { currentBook, addBook, deleteBook, switchBook, getLastModifiedItem, getAllBooks } = useBookOperations(project, setProject);
-  const { addCharacter, updateCharacter, deleteCharacter, getCharacter } = useCharacterOperations(project, setProject);
-  const { addScene, updateScene, deleteScene, getScene } = useSceneOperations(project, setProject);
-  const { addEvent, updateEvent, deleteEvent, getEvent } = useEventOperations(project, setProject);
-  const { addPage, updatePage, deletePage, getPage } = usePageOperations(project, setProject);
-  const { addPlace, updatePlace, deletePlace, getPlace } = usePlaceOperations(project, setProject);
-  const { addNote, updateNote, deleteNote, getNote } = useNoteOperations(project, setProject);
+  const { addCharacter, updateCharacter, deleteCharacter, getCharacter } = useCharacterOperations(project, setProject, addEntityVersion);
+  const { addScene, updateScene, deleteScene, getScene } = useSceneOperations(project, setProject, addEntityVersion);
+  const { addEvent, updateEvent, deleteEvent, getEvent } = useEventOperations(project, setProject, addEntityVersion);
+  const { addPage, updatePage, deletePage, getPage } = usePageOperations(project, setProject, addEntityVersion);
+  const { addPlace, updatePlace, deletePlace, getPlace } = usePlaceOperations(project, setProject, addEntityVersion);
+  const { addNote, updateNote, deleteNote, getNote } = useNoteOperations(project, setProject, addEntityVersion);
   const { 
     addChatMessage, 
     clearChatHistory, 
     sendMessageToAI,
     associateChatWithEntity,
     rollbackEntity
-  } = useChatOperations(project, setProject); // Pass both project and setProject here
+  } = useChatOperations(project, setProject); 
   const { saveProject, loadProject } = useStorage(project, setProject);
   const { generateBookSummary } = useSummaryOperations(project, setProject, sendMessageToAI);
+
+  // Load versions when current book changes
+  useEffect(() => {
+    if (project.currentBookId) {
+      loadVersionsFromSupabase(project.currentBookId).catch(err => 
+        console.error("Failed to load entity versions:", err)
+      );
+    }
+  }, [project.currentBookId, loadVersionsFromSupabase]);
 
   // Log the current state for debugging
   useEffect(() => {
     console.log("NovelProvider state:", { 
       currentBookId: project.currentBookId,
       currentBook: currentBook,
-      booksCount: project.books.length 
+      booksCount: project.books.length,
+      versionCount: project.entityVersions?.length || 0
     });
   }, [project, currentBook]);
 
@@ -294,7 +315,15 @@ export function NovelProviderCore({ children }: { children: ReactNode }) {
     findEntitiesByPartialName,
     getEntityInfo,
     getAllBooks,
-    generateBookSummary
+    generateBookSummary,
+    
+    // Version management
+    addEntityVersion,
+    getEntityVersions,
+    restoreEntityVersion,
+    createChatCheckpoint,
+    restoreChatCheckpoint,
+    loadVersionsFromSupabase
   };
 
   return (

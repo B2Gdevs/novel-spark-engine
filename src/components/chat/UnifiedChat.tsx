@@ -53,27 +53,33 @@ export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
     data: any;
     exists: boolean;
     id?: string;
+    messageId?: string; // Add message ID
   } | null>(null);
   
   // Handlers
   const handleCreateEntity = (entityType: string, entityData: any) => {
+    // Generate a unique message ID for this creation
+    const messageId = project.chatHistory.length > 0 
+      ? project.chatHistory[project.chatHistory.length - 1].id 
+      : undefined;
+    
     let newId: string | undefined;
     
     switch (entityType) {
       case 'character':
-        newId = addCharacter(entityData);
+        newId = addCharacter(entityData, messageId);
         toast.success(`Character "${entityData.name}" created successfully`);
         break;
       case 'scene':
-        newId = addScene(entityData);
+        newId = addScene(entityData, messageId);
         toast.success(`Scene "${entityData.title}" created successfully`);
         break;
       case 'page':
-        newId = addPage(entityData);
+        newId = addPage(entityData, messageId);
         toast.success(`Page "${entityData.title}" created successfully`);
         break;
       case 'place':
-        newId = addPlace(entityData);
+        newId = addPlace(entityData, messageId);
         toast.success(`Place "${entityData.name}" created successfully`);
         break;
     }
@@ -84,27 +90,33 @@ export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
         role: 'system',
         content: `${entityType} created successfully`,
         entityType: entityType,
-        entityId: newId
+        entityId: newId,
+        entityAction: 'create'
       });
     }
   };
 
   const handleUpdateEntity = (entityType: string, entityId: string, entityData: any) => {
+    // Get the message ID from the last message
+    const messageId = project.chatHistory.length > 0 
+      ? project.chatHistory[project.chatHistory.length - 1].id 
+      : undefined;
+      
     switch (entityType) {
       case 'character':
-        updateCharacter(entityId, entityData);
+        updateCharacter(entityId, entityData, messageId);
         toast.success("Character updated successfully");
         break;
       case 'scene':
-        updateScene(entityId, entityData);
+        updateScene(entityId, entityData, messageId);
         toast.success("Scene updated successfully");
         break;
       case 'page':
-        updatePage(entityId, entityData);
+        updatePage(entityId, entityData, messageId);
         toast.success("Page updated successfully");
         break;
       case 'place':
-        updatePlace(entityId, entityData);
+        updatePlace(entityId, entityData, messageId);
         toast.success("Place updated successfully");
         break;
     }
@@ -148,6 +160,7 @@ export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
           data={processingEntity.data}
           exists={processingEntity.exists}
           id={processingEntity.id}
+          messageId={processingEntity.messageId}
           onEntityProcessed={() => setProcessingEntity(null)}
         />
       )}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useNovel } from "@/contexts/NovelContext";
 import { CalendarIcon } from "lucide-react";
+import { VersionHistory } from "./entity/VersionHistory";
 
 interface EventCardProps {
   event: Event;
@@ -56,9 +57,16 @@ export function EventCard({ event, onDelete }: EventCardProps) {
         )}
       </CardContent>
       <CardFooter className="flex justify-between bg-gray-50 dark:bg-zinc-800/50">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to={`/events/${event.id}`}>Edit</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to={`/events/${event.id}`}>Edit</Link>
+          </Button>
+          <VersionHistory 
+            entityType="event"
+            entityId={event.id}
+            currentName={event.name}
+          />
+        </div>
         <Button 
           variant="ghost" 
           size="sm" 
