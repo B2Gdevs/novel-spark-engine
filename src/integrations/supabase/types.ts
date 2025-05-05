@@ -133,6 +133,47 @@ export type Database = {
           },
         ]
       }
+      entity_versions: {
+        Row: {
+          book_id: string | null
+          created_at: string
+          description: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          message_id: string | null
+          version_data: Json
+        }
+        Insert: {
+          book_id?: string | null
+          created_at?: string
+          description?: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          message_id?: string | null
+          version_data: Json
+        }
+        Update: {
+          book_id?: string | null
+          created_at?: string
+          description?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          message_id?: string | null
+          version_data?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_versions_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           book_id: string | null
@@ -346,6 +387,30 @@ export type Database = {
       cleanup_deleted_books: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      get_entity_versions_for_book: {
+        Args: { book_id_param: string }
+        Returns: {
+          id: string
+          entity_id: string
+          entity_type: string
+          version_data: Json
+          created_at: string
+          message_id: string
+          description: string
+        }[]
+      }
+      store_entity_version: {
+        Args: {
+          version_id: string
+          entity_id: string
+          entity_type: string
+          version_data: Json
+          book_id: string
+          message_id?: string
+          version_description?: string
+        }
+        Returns: boolean
       }
     }
     Enums: {
