@@ -44,14 +44,17 @@ export function CopilotActions() {
           return { success: false, error: 'No book selected' };
         }
         
+        // Type assertion to access properties safely
+        const data = characterData as Record<string, any>;
+        
         // Cast the data to the correct type and ensure all required properties
         const typedCharacterData: Omit<Character, "id"> = {
-          name: String(characterData.name),
-          description: characterData.description ? String(characterData.description) : undefined,
-          traits: Array.isArray(characterData.traits) ? characterData.traits.map(String) : [],
-          role: characterData.role ? String(characterData.role) : undefined,
-          backstory: characterData.backstory ? String(characterData.backstory) : undefined,
-          secrets: Array.isArray(characterData.secrets) ? characterData.secrets.map(String) : [],
+          name: String(data.name || ''),
+          description: data.description ? String(data.description) : undefined,
+          traits: Array.isArray(data.traits) ? data.traits.map(String) : [],
+          role: data.role ? String(data.role) : undefined,
+          backstory: data.backstory ? String(data.backstory) : undefined,
+          secrets: Array.isArray(data.secrets) ? data.secrets.map(String) : [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
@@ -101,13 +104,16 @@ export function CopilotActions() {
           return { success: false, error: 'No book selected' };
         }
         
+        // Type assertion to access properties safely
+        const data = sceneData as Record<string, any>;
+        
         // Cast the data to the correct type and ensure all required properties
         const typedSceneData: Omit<Scene, "id"> = {
-          title: String(sceneData.title),
-          description: sceneData.description ? String(sceneData.description) : undefined,
-          content: sceneData.content ? String(sceneData.content) : undefined,
-          characters: Array.isArray(sceneData.characters) ? sceneData.characters.map(String) : [],
-          location: sceneData.location ? String(sceneData.location) : undefined,
+          title: String(data.title || ''),
+          description: data.description ? String(data.description) : undefined,
+          content: data.content ? String(data.content) : undefined,
+          characters: Array.isArray(data.characters) ? data.characters.map(String) : [],
+          location: data.location ? String(data.location) : undefined,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
@@ -156,12 +162,15 @@ export function CopilotActions() {
           return { success: false, error: 'No book selected' };
         }
         
+        // Type assertion to access properties safely
+        const data = placeData as Record<string, any>;
+        
         // Cast the data to the correct type and ensure all required properties
         const typedPlaceData: Omit<Place, "id"> = {
-          name: String(placeData.name),
-          description: placeData.description ? String(placeData.description) : undefined,
-          geography: placeData.geography ? String(placeData.geography) : undefined,
-          culturalNotes: placeData.cultural_notes ? String(placeData.cultural_notes) : undefined,
+          name: String(data.name || ''),
+          description: data.description ? String(data.description) : undefined,
+          geography: data.geography ? String(data.geography) : undefined,
+          culturalNotes: data.cultural_notes ? String(data.cultural_notes) : undefined,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
@@ -208,10 +217,13 @@ export function CopilotActions() {
           return { success: false, error: 'No book selected' };
         }
         
+        // Type assertion to access properties safely
+        const data = pageData as Record<string, any>;
+        
         // Cast the data to the correct type and ensure all required properties
         const typedPageData: Omit<Page, "id"> = {
-          title: String(pageData.title),
-          content: pageData.content ? String(pageData.content) : undefined,
+          title: String(data.title || ''),
+          content: data.content ? String(data.content) : undefined,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };

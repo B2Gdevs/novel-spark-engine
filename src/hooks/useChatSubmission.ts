@@ -80,7 +80,7 @@ export function useChatSubmission({
       // Send message to AI assistant
       const aiResponse = await sendMessageToAI(
         messageContent, 
-        [...(linkedEntityType && linkedEntityId ? [] : []), ...mentionedEntitiesForAI], 
+        mentionedEntitiesForAI, 
         systemPrompt
       );
             
