@@ -27,7 +27,9 @@ export function EventForm() {
     description: "",
     characters: [],
     consequences: [],
-    date: format(new Date(), "PPP"), // Use current date as default
+    date: format(new Date(), "PPP"),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   });
   
   const [selectedCharacter, setSelectedCharacter] = useState("");
@@ -40,15 +42,17 @@ export function EventForm() {
       if (existingEvent) {
         setEvent({
           name: existingEvent.name,
-          description: existingEvent.description,
+          description: existingEvent.description || "",
           characters: existingEvent.characters || [],
           consequences: existingEvent.consequences || [],
           date: existingEvent.date || format(new Date(), "PPP"),
+          createdAt: existingEvent.createdAt,
+          updatedAt: new Date().toISOString()
         });
         
         // Try to parse the date if it exists
         try {
-          const parsedDate = new Date(existingEvent.date);
+          const parsedDate = new Date(existingEvent.date || "");
           if (!isNaN(parsedDate.getTime())) {
             setDate(parsedDate);
           }

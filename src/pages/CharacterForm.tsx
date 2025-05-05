@@ -22,6 +22,8 @@ export function CharacterForm() {
     description: "",
     role: "",
     secrets: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   });
   
   const [newTrait, setNewTrait] = useState("");
@@ -34,10 +36,12 @@ export function CharacterForm() {
         setCharacter({
           name: existingCharacter.name,
           traits: existingCharacter.traits || [],
-          description: existingCharacter.description,
-          role: existingCharacter.role,
+          description: existingCharacter.description || "",
+          role: existingCharacter.role || "",
           secrets: existingCharacter.secrets || [],
           relationships: existingCharacter.relationships,
+          createdAt: existingCharacter.createdAt,
+          updatedAt: new Date().toISOString()
         });
       }
     }

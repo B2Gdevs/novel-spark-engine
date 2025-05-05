@@ -18,7 +18,8 @@ export interface Book {
   };
   createdAt?: string;
   updatedAt?: string;
-  deletedAt?: string; // Add this property for soft-deleted books
+  deletedAt?: string; // Add this for soft-deleted books
+  isDeleted?: boolean; // Flag for soft-deleted books
 }
 
 export interface ChatMessage {
@@ -33,6 +34,9 @@ export interface ChatMessage {
     id: string;
     name: string;
   }>;
+  entityAction?: 'create' | 'update' | 'restore'; // Track what action was performed
+  entityVersionId?: string; // Reference to the version created
+  isCheckpoint?: boolean; // Whether this message is a checkpoint
 }
 
 export interface Character {
@@ -44,6 +48,8 @@ export interface Character {
   age?: number;
   backstory?: string;
   imageUrl?: string;
+  secrets?: string[]; // Add this property
+  relationships?: any[]; // Add this property
   createdAt: string;
   updatedAt: string;
 }
@@ -56,6 +62,7 @@ export interface Scene {
   location?: string;
   characters?: string[];
   notes?: string;
+  tone?: string; // Add this property
   createdAt: string;
   updatedAt: string;
 }
@@ -95,6 +102,7 @@ export interface Note {
   id: string;
   title: string;
   content?: string;
+  tags?: string[]; // Add this property
   createdAt: string;
   updatedAt: string;
 }
@@ -107,4 +115,22 @@ export interface NovelProject {
     entityType: string;
     entityId: string;
   } | null;
+  entityVersions?: EntityVersion[]; // Add version history
+  chatCheckpoints?: {
+    id: string;
+    description: string;
+    timestamp: number;
+    messageIndex: number; // The index in chatHistory at which this checkpoint was created
+  }[];
+}
+
+// Add this interface for entity versions
+export interface EntityVersion {
+  id: string;
+  entityId: string;
+  entityType: 'character' | 'scene' | 'page' | 'place' | 'event';
+  versionData: any;
+  createdAt: string;
+  messageId?: string;
+  description?: string;
 }

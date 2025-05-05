@@ -1,3 +1,4 @@
+
 export interface Book {
   id: string;
   title: string;
@@ -13,6 +14,8 @@ export interface Book {
   places?: Place[];
   notes: Note[];
   summary?: string;
+  deletedAt?: string;
+  isDeleted?: boolean;
 }
 
 export interface Character {
@@ -24,6 +27,8 @@ export interface Character {
   age?: number;
   backstory?: string;
   imageUrl?: string;
+  secrets?: string[];
+  relationships?: any[];
   createdAt: string;
   updatedAt: string;
 }
@@ -36,6 +41,7 @@ export interface Scene {
   location?: string;
   characters: string[];
   notes?: string;
+  tone?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -57,6 +63,7 @@ export interface Page {
   id: string;
   title: string;
   content?: string;
+  order?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -73,7 +80,9 @@ export interface Place {
 
 export interface Note {
   id: string;
+  title: string;
   content: string;
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -90,6 +99,9 @@ export interface ChatMessage {
     id: string;
     name: string;
   }>;
+  entityAction?: 'create' | 'update' | 'restore';
+  entityVersionId?: string;
+  isCheckpoint?: boolean;
 }
 
 // Add versioning types
@@ -99,8 +111,8 @@ export interface EntityVersion {
   entityType: 'character' | 'scene' | 'page' | 'place' | 'event';
   versionData: any;
   createdAt: string;
-  messageId?: string; // Link to the chat message that created this version
-  description?: string; // Short description of what changed in this version
+  messageId?: string;
+  description?: string;
 }
 
 // Add version history to the NovelProject type
@@ -112,29 +124,11 @@ export interface NovelProject {
     entityType: string;
     entityId: string;
   };
-  entityVersions?: EntityVersion[]; // Add version history
+  entityVersions?: EntityVersion[];
   chatCheckpoints?: {
     id: string;
     description: string;
     timestamp: number;
-    messageIndex: number; // The index in chatHistory at which this checkpoint was created
+    messageIndex: number;
   }[];
-}
-
-// Extend ChatMessage type to track entity creation/updates
-export interface ChatMessage {
-  id: string;
-  role: "user" | "assistant" | "system";
-  content: string;
-  timestamp: number;
-  entityType?: string | null;
-  entityId?: string | null;
-  mentionedEntities?: Array<{
-    type: string;
-    id: string;
-    name: string;
-  }>;
-  entityAction?: 'create' | 'update' | 'restore'; // Track what action was performed
-  entityVersionId?: string; // Reference to the version created
-  isCheckpoint?: boolean; // Whether this message is a checkpoint
 }

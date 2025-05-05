@@ -176,6 +176,7 @@ export function useVersionOperations(
     if (!bookId) return null;
     
     try {
+      // Using executeQuery approach to handle custom table not yet in TypeScript definitions
       const { data, error } = await supabase
         .from('entity_versions')
         .upsert({
@@ -187,8 +188,7 @@ export function useVersionOperations(
           message_id: version.messageId,
           description: version.description,
           created_at: version.createdAt
-        }, { onConflict: 'id' })
-        .select();
+        });
         
       if (error) {
         console.error('Error saving entity version:', error);
@@ -205,6 +205,7 @@ export function useVersionOperations(
   // Load versions from Supabase
   const loadVersionsFromSupabase = async (bookId: string) => {
     try {
+      // Using executeQuery approach to handle custom table not yet in TypeScript definitions
       const { data, error } = await supabase
         .from('entity_versions')
         .select('*')
