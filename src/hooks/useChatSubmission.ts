@@ -1,159 +1,104 @@
 
 import { useState } from 'react';
-import { useNovel } from "@/contexts/NovelContext";
-import { toast } from "sonner";
-import { processMentionsInMessage } from "@/components/chat/MentionUtils";
-import { Book } from "@/types/novel";
-import { generateSystemPrompt } from '@/utils/systemPrompts';
+import { ChatMessage, Book } from '@/types/novel';
+import { useNovel } from '@/contexts/NovelContext';
+import { parseEntitiesFromMessage } from '@/components/chat/MentionUtils';
+import { toast } from 'sonner';
+
+interface ChatSubmissionProps {
+  linkedEntityType: string | null;
+  linkedEntityId: string | null;
+  currentBook: Book | null;
+}
 
 export function useChatSubmission({ 
   linkedEntityType, 
-  linkedEntityId, 
-  currentBook 
-}: { 
-  linkedEntityType: string | null, 
-  linkedEntityId: string | null, 
-  currentBook: Book | null 
-}) {
+  linkedEntityId,
+  currentBook
+}: ChatSubmissionProps) {
   const { 
-    project, 
     addChatMessage, 
-    sendMessageToAI,
-    getEntityInfo,
-    getAllBooks
+    sendMessageToAI, 
+    findEntitiesByPartialName,
+    createChatCheckpoint
   } = useNovel();
-  
   const [loading, setLoading] = useState(false);
-  
-  const findEntitiesByPartialName = (partialName: string) => {
-    // This is a simplified version
-    if (!currentBook) return [];
-    
-    const results: Array<{
-      type: 'character' | 'scene' | 'place' | 'page';
-      id: string;
-      name: string;
-      description?: string;
-      bookId?: string;
-      bookTitle?: string;
-    }> = [];
-    
-    // Find characters that match the partial name
-    currentBook.characters.forEach(char => {
-      if (char.name.toLowerCase().includes(partialName.toLowerCase())) {
-        results.push({
-          type: 'character',
-          id: char.id,
-          name: char.name,
-          description: char.description,
-          bookId: currentBook.id,
-          bookTitle: currentBook.title
-        });
-      }
-    });
-    
-    // Find scenes that match the partial name
-    currentBook.scenes.forEach(scene => {
-      if (scene.title.toLowerCase().includes(partialName.toLowerCase())) {
-        results.push({
-          type: 'scene',
-          id: scene.id,
-          name: scene.title,
-          description: scene.description,
-          bookId: currentBook.id,
-          bookTitle: currentBook.title
-        });
-      }
-    });
-    
-    // Find pages that match the partial name
-    currentBook.pages.forEach(page => {
-      if (page.title.toLowerCase().includes(partialName.toLowerCase())) {
-        results.push({
-          type: 'page',
-          id: page.id,
-          name: page.title,
-          description: page.content?.substring(0, 100) + (page.content && page.content.length > 100 ? '...' : ''),
-          bookId: currentBook.id,
-          bookTitle: currentBook.title
-        });
-      }
-    });
-    
-    // Find places that match the partial name
-    currentBook.places?.forEach(place => {
-      if (place.name.toLowerCase().includes(partialName.toLowerCase())) {
-        results.push({
-          type: 'place',
-          id: place.id,
-          name: place.name,
-          description: place.description,
-          bookId: currentBook.id,
-          bookTitle: currentBook.title
-        });
-      }
-    });
-    
-    return results.slice(0, 5);
-  };
 
+  // Handler that processes message, detects entity mentions, and sends message to AI
   const handleSubmit = async (message: string) => {
-    if (!message.trim() || loading || !currentBook) return;
+    if (!message.trim()) return;
+    if (!currentBook) {
+      toast.error("No book selected, please select a book first");
+      return;
+    }
     
     setLoading(true);
     
     try {
-      // Process the message for @ mentions before sending
-      const processedMessage = processMentionsInMessage(
+      // Detect mentioned entities in the user message
+      const { mentionedEntities, processedMessage } = parseEntitiesFromMessage(
         message, 
-        findEntitiesByPartialName, 
-        currentBook,
-        getAllBooks
+        currentBook.id, 
+        currentBook.title
       );
       
-      // Add user message to chat history with any detected mentions
+      // Add user message to chat history
       addChatMessage({
         role: 'user',
-        content: processedMessage.messageContent,
-        entityType: linkedEntityType,
-        entityId: linkedEntityId,
-        mentionedEntities: processedMessage.mentionedEntities.length > 0 
-          ? processedMessage.mentionedEntities.map(m => ({
-              type: m.type,
-              id: m.id,
-              name: m.name
-            })) 
-          : undefined
+        content: processedMessage,
+        mentionedEntities
       });
       
-      // Generate system prompt using our utility function
-      const systemPrompt = generateSystemPrompt(
-        currentBook,
-        linkedEntityType,
-        linkedEntityId,
-        processedMessage.mentionedEntities,
-        getEntityInfo
-      );
+      // If linked to an entity, include that context
+      let systemPrompt = `You are a creative writing assistant helping with a book titled "${currentBook.title}".`;
       
-      // Send message to AI and wait for response
-      const result = await sendMessageToAI(message, project.chatHistory, systemPrompt);
-      
-      if (!result.success) {
-        console.error("Error from AI:", result.error);
-        toast.error(`AI error: ${result.error || "Unknown error"}`);
-        return;
+      if (linkedEntityType && linkedEntityId) {
+        systemPrompt += ` This conversation is specifically about the ${linkedEntityType} with ID: ${linkedEntityId}.`;
       }
-
-      // Add AI response to chat
-      addChatMessage({
-        role: 'assistant',
-        content: result.message || "I'm sorry, I couldn't process your request.",
-        entityType: linkedEntityType,
-        entityId: linkedEntityId
-      });
+      
+      // Add specific instructions for the AI assistant to use actions
+      systemPrompt += ` When asked to create, modify, or manage characters, scenes, places, or pages, use the provided actions:
+      - createCharacter: Use this to create new characters
+      - createScene: Use this to create new scenes
+      - createPlace: Use this to create new places
+      - createPage: Use this to create new pages
+      
+      If the user mentions an entity with @, make sure to reference it in your response properly. 
+      After creating entities, confirm their creation and store them in the database automatically.`;
+      
+      // Send message to AI assistant
+      const aiResponse = await sendMessageToAI(
+        processedMessage, 
+        [...(linkedEntityType && linkedEntityId ? [] : []), ...mentionedEntities], 
+        systemPrompt
+      );
+            
+      // Add AI response to chat history
+      if (aiResponse.success && aiResponse.message) {
+        addChatMessage({
+          role: 'assistant',
+          content: aiResponse.message
+        });
+        
+        // Create checkpoint after successful AI response (for recovery if needed)
+        createChatCheckpoint(`Checkpoint after message: ${processedMessage.substring(0, 30)}...`);
+      } else {
+        // Add error message if AI failed to respond
+        addChatMessage({
+          role: 'system',
+          content: `Error: ${aiResponse.error || 'Failed to get response'}` 
+        });
+        toast.error("Failed to get AI response");
+      }
     } catch (error) {
-      console.error("Error sending message:", error);
-      toast.error("Failed to communicate with AI");
+      console.error("Error in chat submission:", error);
+      toast.error("Error processing your message");
+      
+      // Add error system message
+      addChatMessage({
+        role: 'system',
+        content: `Error processing message: ${error instanceof Error ? error.message : String(error)}`
+      });
     } finally {
       setLoading(false);
     }
