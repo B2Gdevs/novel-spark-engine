@@ -16,8 +16,8 @@ export function AssistantMessageItem({ message }: AssistantMessageItemProps) {
       <div className={cn(
         "max-w-[80%] px-4 py-3 rounded-2xl",
         message.role === "user" 
-          ? "bg-blue-100 text-gray-800 border border-gray-400 rounded-br-none" 
-          : "bg-white text-gray-800 border border-gray-400 rounded-bl-none shadow-sm"
+          ? "bg-blue-100 text-gray-800 border-2 border-gray-400 rounded-br-none" 
+          : "bg-gray-50 text-gray-800 border-2 border-gray-400 rounded-bl-none shadow-sm"
       )}>
         <div className="prose prose-sm max-w-none">
           {message.content.split('\n').map((paragraph, idx) => (

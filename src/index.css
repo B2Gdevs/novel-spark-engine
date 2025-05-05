@@ -29,8 +29,8 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 240 5.9% 80%;
-    --input: 240 5.9% 80%;
+    --border: 240 5.9% 60%;
+    --input: 240 5.9% 60%;
     --ring: 262 83% 58%;
     
     --radius: 0.5rem;
@@ -47,7 +47,7 @@
     --novel-purple: rgb(139, 92, 246);
     --novel-lavender: rgb(196, 181, 253);
     --novel-orange: rgb(249, 115, 22);
-    --novel-light: rgb(248, 250, 252);
+    --novel-light: rgb(246, 248, 250);
     --novel-dark: rgb(30, 41, 59);
   }
 }
@@ -71,7 +71,7 @@ body {
   }
   
   .chat-message {
-    @apply border border-gray-300 shadow-sm;
+    @apply border-2 border-gray-300 shadow-sm;
   }
   
   .chat-message-user {
@@ -79,7 +79,7 @@ body {
   }
   
   .chat-message-assistant {
-    @apply bg-white border-gray-400;
+    @apply bg-gray-50 border-gray-400;
   }
   
   .chat-message-system {
@@ -115,7 +115,7 @@ body {
 }
 
 .glass-morphism {
-  @apply backdrop-blur-xl bg-white/90 border border-gray-300 shadow-sm;
+  @apply backdrop-blur-xl bg-white/90 border-2 border-gray-300 shadow-sm;
 }
 
 @keyframes fade-in-up {
