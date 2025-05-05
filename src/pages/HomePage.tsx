@@ -8,6 +8,7 @@ import { BookGrid } from "@/components/home/BookGrid";
 import { TrashZone } from "@/components/TrashZone";
 import { DeleteBookDialog } from "@/components/home/DeleteBookDialog";
 import { DragPreview } from "@/components/home/DragPreview";
+import { Book } from "@/types/novel";
 
 export function HomePage() {
   const { project, currentBook, addBook, switchBook, deleteBook, getLastModifiedItem } = useNovel();
@@ -61,7 +62,7 @@ export function HomePage() {
     try {
       const timestamp = new Date().toISOString();
       
-      const newBook = {
+      const newBook: Omit<Book, "id"> = {
         title: "New Book",
         description: "Start writing your new story...",
         genre: "Fiction",

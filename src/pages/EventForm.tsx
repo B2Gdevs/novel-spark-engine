@@ -14,15 +14,12 @@ export function EventForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentBook, addEvent, updateEvent, getEvent } = useNovel();
-  const [event, setEvent] = useState<Partial<Event> & { id?: string }>({
-    id: '',
+  const [event, setEvent] = useState<Partial<Event>>({
     name: '',
     description: '',
     characters: [],
     consequences: [],
-    date: '',
-    createdAt: '',
-    updatedAt: ''
+    date: ''
   });
   const [availableCharacters, setAvailableCharacters] = useState<{ id: string; name: string; }[]>([]);
 
@@ -102,8 +99,9 @@ export function EventForm() {
   };
 
   const saveEvent = () => {
+    const timestamp = new Date().toISOString();
+    
     if (id === 'new') {
-      const timestamp = new Date().toISOString();
       const newEvent: Omit<Event, 'id'> = {
         name: event.name || '',
         description: event.description,
@@ -114,10 +112,14 @@ export function EventForm() {
         updatedAt: timestamp
       };
       addEvent(newEvent);
+      navigate('/events');
     } else if (id) {
-      updateEvent(id, event);
+      updateEvent(id, { 
+        ...event,
+        updatedAt: timestamp
+      });
+      navigate('/events');
     }
-    navigate('/events');
   };
 
   if (!currentBook) {

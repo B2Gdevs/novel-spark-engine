@@ -43,10 +43,9 @@ export function useVersionOperations(
       entityVersions: [...(prev.entityVersions || []), newVersion]
     }));
 
-    // Save to Supabase in background
+    // Save to Supabase in background using a custom RPC function
     try {
-      // Using executeQuery approach with our custom table
-      saveEntityVersionToDb(newVersion, project.currentBookId)
+      saveVersionToDatabase(newVersion, project.currentBookId)
         .catch(error => console.error(`Failed to sync ${entityType} version to database:`, error));
     } catch (error) {
       console.error('Exception in addEntityVersion:', error);
@@ -55,31 +54,28 @@ export function useVersionOperations(
     return newVersion.id;
   };
 
-  // Helper function to save version to database
-  const saveEntityVersionToDb = async (version: EntityVersion, bookId: string | null) => {
+  // Helper function to save version to database via RPC
+  const saveVersionToDatabase = async (version: EntityVersion, bookId: string | null) => {
     if (!bookId) return null;
     
     try {
-      // Using executeQuery for custom table
-      const { error } = await supabase
-        .from('entity_versions')
-        .insert({
-          id: version.id,
-          entity_id: version.entityId,
-          entity_type: version.entityType,
-          version_data: version.versionData,
-          book_id: bookId,
-          message_id: version.messageId,
-          description: version.description,
-          created_at: version.createdAt
-        });
+      // Use an RPC function instead of direct table access
+      const { data, error } = await supabase.rpc('store_entity_version', {
+        version_id: version.id,
+        entity_id: version.entityId,
+        entity_type: version.entityType,
+        version_data: version.versionData,
+        book_id: bookId,
+        message_id: version.messageId,
+        version_description: version.description
+      });
         
       if (error) {
         console.error('Error saving entity version:', error);
         throw error;
       }
       
-      return true;
+      return data;
     } catch (error) {
       console.error('Exception saving entity version:', error);
       return null;
@@ -210,12 +206,10 @@ export function useVersionOperations(
   // Load versions from Supabase
   const loadVersionsFromSupabase = async (bookId: string): Promise<EntityVersion[]> => {
     try {
-      // Using executeQuery for custom table
-      const { data, error } = await supabase
-        .from('entity_versions')
-        .select('*')
-        .eq('book_id', bookId)
-        .order('created_at', { ascending: false });
+      // Use an RPC function to fetch entity versions
+      const { data, error } = await supabase.rpc('get_entity_versions_for_book', { 
+        book_id_param: bookId
+      });
         
       if (error) {
         console.error('Error loading entity versions:', error);
@@ -227,7 +221,7 @@ export function useVersionOperations(
       }
       
       // Transform from snake_case to camelCase
-      const versions = data.map(v => ({
+      const versions: EntityVersion[] = data.map((v: any) => ({
         id: v.id,
         entityId: v.entity_id,
         entityType: v.entity_type,

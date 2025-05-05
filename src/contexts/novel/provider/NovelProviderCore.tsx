@@ -53,7 +53,7 @@ export function NovelProviderCore({ children }: { children: ReactNode }) {
         console.error("Failed to load entity versions:", err)
       );
     }
-  }, [project.currentBookId]);
+  }, [project.currentBookId, loadVersionsFromSupabase]);
 
   // Log the current state for debugging
   useEffect(() => {

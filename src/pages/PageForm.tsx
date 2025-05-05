@@ -46,7 +46,7 @@ export function PageForm() {
   const savePage = () => {
     const timestamp = new Date().toISOString();
     
-    if (id === 'new') {
+    if (isNewPage) {
       const newPage: Omit<Page, 'id'> = {
         title: page.title || '',
         content: page.content || '',
@@ -56,6 +56,7 @@ export function PageForm() {
       };
       addPage(newPage);
       navigate('/pages');
+      toast.success("Page created successfully");
     } else if (id) {
       updatePage(id, {
         title: page.title,
