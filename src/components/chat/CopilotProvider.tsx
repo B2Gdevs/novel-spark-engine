@@ -27,7 +27,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
   
   return (
     <CopilotKit 
-      publicApiKey="sk-0000" // Using a placeholder key, replace with a real one or use environment variable
+      runtimeUrl="/api/copilotkit"
       context={contextItems}
     >
       {children}

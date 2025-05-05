@@ -16,8 +16,8 @@ export function AssistantMessageItem({ message }: AssistantMessageItemProps) {
       <div className={cn(
         "max-w-[80%] px-4 py-3 rounded-2xl",
         message.role === "user" 
-          ? "bg-blue-100 text-gray-800 border border-blue-200 rounded-br-none" 
-          : "bg-white text-gray-800 border border-gray-300 rounded-bl-none shadow-sm"
+          ? "bg-blue-100 text-gray-800 border border-gray-400 rounded-br-none" 
+          : "bg-white text-gray-800 border border-gray-400 rounded-bl-none shadow-sm"
       )}>
         <div className="prose prose-sm max-w-none">
           {message.content.split('\n').map((paragraph, idx) => (
@@ -28,11 +28,11 @@ export function AssistantMessageItem({ message }: AssistantMessageItemProps) {
         </div>
         
         {message.mentionedEntities && message.mentionedEntities.length > 0 && (
-          <div className="mt-2 pt-2 border-t border-gray-200 flex flex-wrap gap-1">
+          <div className="mt-2 pt-2 border-t border-gray-300 flex flex-wrap gap-1">
             {message.mentionedEntities.map((entity) => (
               <span 
                 key={`${entity.type}-${entity.id}`} 
-                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-800"
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-800 border border-purple-300"
               >
                 @{entity.type}/{entity.name}
               </span>

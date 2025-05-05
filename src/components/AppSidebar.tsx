@@ -84,13 +84,13 @@ export function AppSidebar() {
   return (
     <div 
       className={cn(
-        "bg-zinc-900 border-r border-zinc-700 transition-all duration-300 ease-in-out",
+        "bg-gray-800 border-r border-gray-600 transition-all duration-300 ease-in-out",
         expanded ? "w-48" : "w-14"
       )}
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
     >
-      <Sidebar variant="inset" collapsible="none">
+      <Sidebar variant="inset" collapsible="none" className="bg-gray-800">
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupContent>
@@ -102,7 +102,7 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         onClick={item.action}
                         tooltip={expanded ? undefined : item.tooltip}
-                        className="flex items-center justify-start p-3 w-full text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-md transition-colors"
+                        className="flex items-center justify-start p-3 w-full text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
                       >
                         <item.icon className="h-5 w-5" />
                         <span className={cn(
@@ -117,9 +117,9 @@ export function AppSidebar() {
                 ) : (
                   // Message displayed when no book is selected - fixed positioning
                   <div className="flex flex-col items-start justify-center px-4 py-3 text-center">
-                    <Book className="h-5 w-5 text-zinc-400 mb-2" />
+                    <Book className="h-5 w-5 text-gray-400 mb-2" />
                     <div className={cn(
-                      "text-zinc-400 text-xs transition-opacity duration-200 text-left",
+                      "text-gray-400 text-xs transition-opacity duration-200 text-left",
                       expanded ? "opacity-100" : "opacity-0"
                     )}>
                       Select a book to see options
@@ -130,13 +130,13 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter className="p-3 border-t border-zinc-800/50">
+        <SidebarFooter className="p-3 border-t border-gray-700">
           <div className="flex flex-col space-y-3">
             <Button 
               variant="ghost"
               size="sm"
               onClick={() => navigate("/")}
-              className="flex items-center justify-start text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-md transition-colors w-full"
+              className="flex items-center justify-start text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors w-full"
             >
               <Library className="h-5 w-5" />
               <span className={cn(
@@ -152,7 +152,7 @@ export function AppSidebar() {
                 <AvatarFallback className="bg-purple-700">NS</AvatarFallback>
               </Avatar>
               <span className={cn(
-                "ml-3 text-zinc-300 text-sm transition-all duration-200",
+                "ml-3 text-gray-300 text-sm transition-all duration-200",
                 expanded ? "opacity-100" : "opacity-0"
               )}>
                 User

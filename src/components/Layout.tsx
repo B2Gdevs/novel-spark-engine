@@ -79,7 +79,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <ChatInterface />
       </DialogProvider>
       
-      <div className="min-h-screen flex flex-col w-full bg-white text-gray-900">
+      <div className="min-h-screen flex flex-col w-full bg-gray-50 text-gray-900">
         <Toolbar />
         <div className="flex flex-1 h-[calc(100vh-3rem)] overflow-hidden">
           <AppSidebar />

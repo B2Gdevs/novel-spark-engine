@@ -16,7 +16,7 @@ export function EmptyChat({ currentBook, mode, onPromptClick }: EmptyChatProps) 
         "flex flex-col items-center justify-center text-center p-8",
         mode === 'page' ? "h-full" : "h-[300px]"
       )}>
-        <p className="text-lg text-zinc-400">
+        <p className="text-lg text-gray-600">
           Please select a book first to use the AI assistant.
         </p>
       </div>
@@ -31,11 +31,11 @@ export function EmptyChat({ currentBook, mode, onPromptClick }: EmptyChatProps) 
   ];
 
   return (
-    <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
-      <h2 className="text-xl font-medium text-white mb-2">
+    <div className="h-full flex flex-col items-center justify-center text-center space-y-4 bg-gray-50">
+      <h2 className="text-xl font-medium text-gray-800 mb-2">
         How can I help with {currentBook.title}?
       </h2>
-      <p className="text-zinc-400 max-w-md">
+      <p className="text-gray-600 max-w-md">
         Ask for help with your characters, scenes, or story development.
       </p>
       
@@ -44,8 +44,8 @@ export function EmptyChat({ currentBook, mode, onPromptClick }: EmptyChatProps) 
           {suggestedPrompts.map((prompt, index) => (
             <div 
               key={index} 
-              className="p-3 bg-zinc-800 rounded-lg border border-zinc-700 hover:bg-zinc-700 
-                        transition-colors cursor-pointer text-zinc-300 text-sm"
+              className="p-3 bg-white rounded-lg border border-gray-300 hover:bg-gray-100 
+                        transition-colors cursor-pointer text-gray-700 text-sm"
               onClick={() => onPromptClick(prompt)}
             >
               {prompt}
