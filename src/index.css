@@ -5,42 +5,42 @@
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
     
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
     
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
     
     --primary: 262 83% 58%;
-    --primary-foreground: 0 0% 98%;
+    --primary-foreground: 0 0% 100%;
     
-    --secondary: 250 87% 85%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
     
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
     
     --accent: 24 94% 53%;
-    --accent-foreground: 0 0% 98%;
+    --accent-foreground: 0 0% 100%;
     
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
     --ring: 262 83% 58%;
     
     --radius: 0.5rem;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-background: 220 8% 23%;
+    --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 262 83% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 262 83% 58%;
 
@@ -69,6 +69,34 @@ body {
   .prose-custom h1, .prose-custom h2, .prose-custom h3 {
     @apply text-novel-purple font-semibold;
   }
+  
+  .chat-message {
+    @apply border border-zinc-200 shadow-sm;
+  }
+  
+  .chat-message-user {
+    @apply bg-blue-50 border-blue-200;
+  }
+  
+  .chat-message-assistant {
+    @apply bg-white border-zinc-200;
+  }
+  
+  .chat-message-system {
+    @apply bg-gray-50 border-gray-200;
+  }
+  
+  .sidebar-nav-item {
+    @apply flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors;
+  }
+  
+  .sidebar-nav-item-active {
+    @apply bg-sidebar-accent text-sidebar-accent-foreground;
+  }
+  
+  .sidebar-nav-item-inactive {
+    @apply text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50;
+  }
 }
 
 .typing-effect {
@@ -87,7 +115,7 @@ body {
 }
 
 .glass-morphism {
-  @apply backdrop-blur-xl bg-white/5 border border-white/10;
+  @apply backdrop-blur-xl bg-white/90 border border-zinc-200 shadow-sm;
 }
 
 @keyframes fade-in-up {

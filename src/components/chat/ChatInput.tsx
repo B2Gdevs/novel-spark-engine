@@ -180,7 +180,7 @@ export function ChatInput({
   };
 
   return (
-    <form onSubmit={onSubmit} className="p-4 border-t border-zinc-800">
+    <form onSubmit={onSubmit} className="p-4 border-t border-gray-200 bg-white">
       <div 
         ref={inputRef} 
         className="relative max-w-3xl mx-auto"
@@ -199,17 +199,17 @@ export function ChatInput({
                   key={`${mention.type}-${mention.id}`}
                   className={cn(
                     "px-2 py-0.5 flex items-center space-x-1 gap-1",
-                    mention.type === 'character' ? "bg-purple-900/50 text-purple-200 hover:bg-purple-800" :
-                    mention.type === 'scene' ? "bg-blue-900/50 text-blue-200 hover:bg-blue-800" :
-                    mention.type === 'place' ? "bg-green-900/50 text-green-200 hover:bg-green-800" :
-                    "bg-amber-900/50 text-amber-200 hover:bg-amber-800"
+                    mention.type === 'character' ? "bg-purple-100 text-purple-800 hover:bg-purple-200" :
+                    mention.type === 'scene' ? "bg-blue-100 text-blue-800 hover:bg-blue-200" :
+                    mention.type === 'place' ? "bg-green-100 text-green-800 hover:bg-green-200" :
+                    "bg-amber-100 text-amber-800 hover:bg-amber-200"
                   )}
                 >
                   <span>{mention.name}</span>
                   <button 
                     type="button"
                     onClick={() => removeMention(mention)}
-                    className="hover:text-white rounded-full"
+                    className="hover:text-red-500 rounded-full"
                   >
                     <X size={12} />
                   </button>
@@ -218,7 +218,7 @@ export function ChatInput({
               {activeMentions.length > 3 && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="bg-zinc-800 text-xs px-2 py-0.5 rounded-full">
+                    <div className="bg-gray-200 text-xs px-2 py-0.5 rounded-full text-gray-700">
                       +{activeMentions.length - 3} more
                     </div>
                   </TooltipTrigger>
@@ -241,14 +241,14 @@ export function ChatInput({
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyPress}
           placeholder="Message AI assistant... (use @ to mention entities)"
-          className="pr-12 resize-none bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:ring-purple-500"
+          className="pr-12 resize-none border-gray-300 focus:border-purple-500 focus:ring-purple-500 text-gray-800 bg-white"
           rows={1}
         />
         <Button
           type="submit"
           size="icon"
           disabled={loading || !message.trim()}
-          className="absolute right-2 bottom-2 h-8 w-8 bg-transparent hover:bg-zinc-700"
+          className="absolute right-2 bottom-2 h-8 w-8 bg-purple-600 hover:bg-purple-700 text-white rounded-full"
         >
           <Send className="h-4 w-4" />
         </Button>
@@ -256,17 +256,17 @@ export function ChatInput({
         {showMentions && mentionSuggestions.length > 0 && (
           <div 
             ref={popoverRef}
-            className="absolute bottom-full left-0 mb-1 w-full max-w-md bg-zinc-900 border border-zinc-700 rounded-md shadow-lg z-10"
+            className="absolute bottom-full left-0 mb-1 w-full max-w-md bg-white border border-gray-200 rounded-md shadow-lg z-10"
           >
             <div className="p-1">
-              <p className="px-2 py-1 text-xs text-zinc-500">Mentions</p>
+              <p className="px-2 py-1 text-xs text-gray-500">Mentions</p>
               <div className="max-h-48 overflow-y-auto">
                 {mentionSuggestions.map((suggestion, index) => (
                   <div
                     key={`${suggestion.type}-${suggestion.id}`}
                     className={cn(
-                      "px-2 py-1.5 hover:bg-zinc-800 cursor-pointer rounded text-sm flex items-center",
-                      index === selectedMentionIndex ? "bg-zinc-800" : ""
+                      "px-2 py-1.5 hover:bg-gray-100 cursor-pointer rounded text-sm flex items-center",
+                      index === selectedMentionIndex ? "bg-gray-100" : ""
                     )}
                     onClick={() => handleMentionSelect(suggestion)}
                   >
@@ -278,14 +278,14 @@ export function ChatInput({
                       "bg-amber-500"
                     )}/>
                     <div className="flex flex-col">
-                      <span className="font-medium text-white">
+                      <span className="font-medium text-gray-800">
                         {suggestion.bookTitle && suggestion.bookId !== currentBookId 
                           ? `@${suggestion.bookTitle}/${suggestion.type}/${suggestion.name}`
                           : `@${suggestion.type}/${suggestion.name}`
                         }
                       </span>
                       {suggestion.description && (
-                        <span className="text-xs text-zinc-400 truncate max-w-80">
+                        <span className="text-xs text-gray-500 truncate max-w-80">
                           {suggestion.description}
                         </span>
                       )}

@@ -114,7 +114,7 @@ function MarkdownMessage({
   return (
     <div className="prose dark:prose-invert max-w-none">
       {showFullPrompt ? (
-        <pre className="whitespace-pre-wrap bg-zinc-100 dark:bg-zinc-800 rounded-md p-4 font-mono text-sm">
+        <pre className="whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 rounded-md p-4 font-mono text-sm text-gray-900">
           {message.content}
         </pre>
       ) : (
@@ -127,7 +127,7 @@ function MarkdownMessage({
                   components={{
                     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
                     a: ({ node, ...props }) => (
-                      <a {...props} target="_blank" rel="noopener noreferrer">
+                      <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                         {props.children}
                       </a>
                     ),
@@ -160,93 +160,91 @@ export function ChatMessage({
   const isVersionRestoration = message.entityAction === 'restore';
   const isCheckpoint = message.isCheckpoint;
   
-  // Styling based on message type
-  const borderColor = getBorderColorForMessageType(message, isVersionRestoration, isCheckpoint);
-  
   return (
     <div className={cn(
-      "p-4 rounded-lg", 
-      message.role === "assistant" ? "bg-white dark:bg-zinc-800/50 shadow-sm border-l-4" : "",
-      message.role === "user" ? "bg-blue-50 dark:bg-blue-900/10 shadow-sm border-l-4" : "",
-      message.role === "system" ? "bg-gray-50 dark:bg-gray-800/20 text-sm border-l-4" : "",
-      borderColor
+      "p-4 rounded-lg my-3 chat-message",
+      message.role === "assistant" ? "chat-message-assistant" : "",
+      message.role === "user" ? "chat-message-user" : "",
+      message.role === "system" ? "chat-message-system" : "",
+      isVersionRestoration ? "border-l-4 border-l-green-500" : "",
+      isCheckpoint ? "border-l-4 border-l-amber-500" : "",
+      message.entityAction === 'create' ? "border-l-4 border-l-green-500" : "",
+      message.entityAction === 'update' ? "border-l-4 border-l-blue-500" : ""
     )}>
       <div className="flex items-start space-x-3">
-        <Avatar>
+        <Avatar className="h-8 w-8">
           {message.role === "user" && (
             <>
               <AvatarImage src="https://github.com/shadcn.png" alt="Your Avatar" />
-              <AvatarFallback>CN</AvatarFallback>
+              <AvatarFallback className="bg-blue-100 text-blue-800">U</AvatarFallback>
             </>
           )}
           {message.role === "assistant" && (
             <>
               <AvatarImage src="/ai-logo.png" alt="AI Avatar" />
-              <AvatarFallback>AI</AvatarFallback>
+              <AvatarFallback className="bg-purple-100 text-purple-800">AI</AvatarFallback>
             </>
           )}
           {message.role === "system" && (
             <>
               <AvatarImage src="/system-logo.png" alt="System Avatar" />
-              <AvatarFallback>System</AvatarFallback>
+              <AvatarFallback className="bg-gray-100 text-gray-800">SYS</AvatarFallback>
             </>
           )}
         </Avatar>
-        <div className="space-y-1">
-          <div className="text-sm font-medium leading-none">
-            {message.role === "user" && "You"}
-            {message.role === "assistant" && "Assistant"}
-            {message.role === "system" && "System"}
+        <div className="space-y-1 flex-1">
+          <div className="text-sm font-medium leading-none flex justify-between items-center">
+            <span>
+              {message.role === "user" && "You"}
+              {message.role === "assistant" && "Assistant"}
+              {message.role === "system" && "System"}
+            </span>
+            <span className="text-xs text-gray-500">
+              {new Date(message.timestamp).toLocaleTimeString()}
+            </span>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {new Date(message.timestamp).toLocaleTimeString()}
-          </p>
+          
+          {/* Message content */}
+          <div className="mt-2 text-gray-800">
+            <MarkdownMessage 
+              message={message} 
+              setHasDetectedEntity={setHasDetectedEntity} 
+              onCreateEntity={onCreateEntity} 
+              onUpdateEntity={onUpdateEntity}
+              currentBook={currentBook}
+              showFullPrompt={showFullPrompt}
+            />
+          </div>
+          
+          {/* Show detected mentions button if there are any */}
+          {message.mentionedEntities && message.mentionedEntities.length > 0 && (
+            <div className="flex justify-end mt-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowFullPrompt(!showFullPrompt)}
+                className="text-xs text-gray-500 hover:text-gray-700"
+              >
+                {showFullPrompt ? "Hide full prompt" : "Show full prompt"}
+              </Button>
+            </div>
+          )}
+          
+          {/* Entity badges */}
+          {message.mentionedEntities && message.mentionedEntities.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-gray-200 flex flex-wrap gap-1">
+              {message.mentionedEntities.map((entity) => (
+                <span 
+                  key={`${entity.type}-${entity.id}`} 
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-800"
+                >
+                  @{entity.type}/{entity.name}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
-      
-      {/* Show detected mentions button if there are any */}
-      {message.mentionedEntities && message.mentionedEntities.length > 0 && (
-        <div className="flex justify-end mb-1">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setShowFullPrompt(!showFullPrompt)}
-            className="text-xs text-muted-foreground"
-          >
-            {showFullPrompt ? "Hide full prompt" : "Show full prompt"}
-          </Button>
-        </div>
-      )}
-      
-      {/* Message content */}
-      <div className="mt-2">
-        <MarkdownMessage 
-          message={message} 
-          setHasDetectedEntity={setHasDetectedEntity} 
-          onCreateEntity={onCreateEntity} 
-          onUpdateEntity={onUpdateEntity}
-          currentBook={currentBook}
-          showFullPrompt={showFullPrompt}
-        />
       </div>
     </div>
   );
-}
-
-// Helper function for border colors
-function getBorderColorForMessageType(message, isVersionRestoration, isCheckpoint) {
-  if (isCheckpoint) return "border-amber-500";
-  if (isVersionRestoration) return "border-green-500";
-  
-  if (message.entityAction === 'create') {
-    return "border-green-500";
-  } else if (message.entityAction === 'update') {
-    return "border-blue-500";
-  } else if (message.role === "assistant") {
-    return "border-novel-lavender";
-  } else if (message.role === "user") {
-    return "border-blue-500";
-  } else {
-    return "border-gray-300 dark:border-gray-700";
-  }
 }

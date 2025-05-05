@@ -7,12 +7,13 @@ import { DialogProvider } from "@/components/DialogProvider";
 import { ChatInterface } from "@/components/ChatInterface";
 import { toast } from "sonner";
 import { useNovel } from "@/contexts/NovelContext";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export function Layout({ children }: { children: ReactNode }) {
   const [showChatDialog, setShowChatDialog] = useState(false);
-  const { currentBook } = useNovel();
+  const { currentBook, getLastModifiedItem } = useNovel();
   const location = useLocation();
+  const navigate = useNavigate();
   const isHomePage = location.pathname === "/";
   
   useEffect(() => {
@@ -44,6 +45,30 @@ export function Layout({ children }: { children: ReactNode }) {
     };
   }, [currentBook]);
 
+  // Navigate to latest page if a book is selected
+  useEffect(() => {
+    if (currentBook && isHomePage) {
+      const lastItem = getLastModifiedItem(currentBook.id);
+      
+      if (lastItem && lastItem.type === 'pages') {
+        // Navigate to the last modified page
+        setTimeout(() => {
+          navigate(`/pages/${lastItem.id}`);
+        }, 300);
+      } else if (lastItem) {
+        // Navigate to the appropriate section based on last edited item
+        setTimeout(() => {
+          navigate(`/${lastItem.type}/${lastItem.id}`);
+        }, 300);
+      } else {
+        // If no items exist yet, navigate to assistant as default
+        setTimeout(() => {
+          navigate("/assistant");
+        }, 300);
+      }
+    }
+  }, [currentBook, isHomePage, navigate, getLastModifiedItem]);
+
   return (
     <SidebarProvider>
       <DialogProvider
@@ -54,7 +79,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <ChatInterface />
       </DialogProvider>
       
-      <div className="min-h-screen flex flex-col w-full bg-zinc-900 text-white">
+      <div className="min-h-screen flex flex-col w-full bg-white text-gray-900">
         <Toolbar />
         <div className="flex flex-1 h-[calc(100vh-3rem)] overflow-hidden">
           <AppSidebar />

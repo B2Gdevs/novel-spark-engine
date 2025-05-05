@@ -53,7 +53,7 @@ export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
     data: any;
     exists: boolean;
     id?: string;
-    messageId?: string; // Add message ID
+    messageId?: string;
   } | null>(null);
   
   // Handlers
@@ -153,7 +153,10 @@ export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className={cn(
+      "flex flex-col h-full", 
+      mode === 'page' ? "bg-white" : "bg-white"
+    )}>
       {processingEntity && (
         <EntityProcessor 
           type={processingEntity.type}
@@ -174,7 +177,7 @@ export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
       />
       
       {project.chatHistory.length === 0 ? (
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto bg-gray-50">
           <EmptyChat 
             currentBook={currentBook} 
             mode={mode} 
