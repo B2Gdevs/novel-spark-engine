@@ -23,10 +23,10 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
   return (
     <CopilotKit 
       runtimeUrl="/api/copilotkit"
-      // Use context prop instead of documents
-      context={bookInfo ? [
+      // Use documents prop which is the correct prop name according to CopilotKit docs
+      documents={bookInfo ? [
         {
-          description: `Current book: ${currentBook.title}`,
+          name: `Current book: ${currentBook.title}`,
           content: JSON.stringify(bookInfo)
         }
       ] : []}
