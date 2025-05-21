@@ -111,6 +111,26 @@ export const Sidebar = React.forwardRef<
 )
 Sidebar.displayName = "Sidebar"
 
+export const SidebarInset = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<"div">
+>(({ className, children, ...props }, ref) => {
+  return (
+    <div
+      ref={ref}
+      data-sidebar-inset
+      className={cn(
+        "flex flex-1 flex-col w-full transition-[margin] duration-300 ease-in-out peer-[[data-state=collapsed]]:ml-[var(--sidebar-width-icon)] peer-[[data-state=expanded]]:ml-[var(--sidebar-width)] peer-[[data-state=offcanvas]]:ml-0",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  )
+})
+SidebarInset.displayName = "SidebarInset"
+
 export const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
@@ -137,3 +157,14 @@ export const SidebarTrigger = React.forwardRef<
 })
 SidebarTrigger.displayName = "SidebarTrigger"
 
+export const SidebarContent = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<"div">
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col flex-1 overflow-auto", className)}
+    {...props}
+  />
+))
+SidebarContent.displayName = "SidebarContent"

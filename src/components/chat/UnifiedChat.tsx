@@ -36,14 +36,22 @@ export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
   
   // Custom hooks to split functionality
   const { linkedEntityType, linkedEntityId } = useEntityContext();
-  const { handleSubmit, loading, findEntitiesByPartialName } = useChatSubmission({
+  
+  // Use the updated useChatSubmission hook with props
+  const { 
+    handleSubmit, 
+    loading, 
+    findEntitiesByPartialName, 
+    isLoading
+  } = useChatSubmission({
     linkedEntityType,
     linkedEntityId,
     currentBook
   });
+  
+  // Pass correct parameters to useMentionDetection
   const { mentionSearch, mentionSuggestions, handleMentionSelect } = useMentionDetection(
     message, 
-    currentBook,
     findEntitiesByPartialName
   );
   
@@ -143,7 +151,7 @@ export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
     bookId?: string;
     bookTitle?: string;
   }) => {
-    const newMessage = handleMentionSelect(message, suggestion, currentBook?.id);
+    const newMessage = handleMentionSelect(message, suggestion);
     setMessage(newMessage);
   };
 
@@ -195,7 +203,7 @@ export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
           currentBook={currentBook}
           onCreateEntity={handleCreateEntity}
           onUpdateEntity={handleUpdateEntity}
-          loading={loading}
+          loading={loading || isLoading}
         />
       )}
 
@@ -203,7 +211,7 @@ export function UnifiedChat({ mode, onClose }: UnifiedChatProps) {
         message={message}
         setMessage={setMessage}
         onSubmit={handleMessageSubmit}
-        loading={loading}
+        loading={loading || isLoading}
         mentionSearch={mentionSearch}
         mentionSuggestions={mentionSuggestions}
         onMentionSelect={handleMentionSelection}

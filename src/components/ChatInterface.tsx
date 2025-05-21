@@ -9,7 +9,7 @@ export function ChatInterface() {
 
   return (
     <CopilotProvider>
-      <div className="bg-[#f8f8f8] dark:bg-[#1a1a1a] h-full border border-[#e0e0e0] dark:border-[#333] rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-background border rounded-lg shadow-sm overflow-hidden h-full">
         <CopilotActions />
         <UnifiedChat mode="dialog" />
       </div>

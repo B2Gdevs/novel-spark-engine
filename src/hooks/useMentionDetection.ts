@@ -1,67 +1,70 @@
 
 import { useState, useEffect } from 'react';
-import { Book } from '@/types/novel';
 
-interface MentionSuggestion {
+// Define the structure of an entity suggestion
+export interface EntitySuggestion {
   type: 'character' | 'scene' | 'place' | 'page';
   id: string;
   name: string;
-  description?: string;
   bookId?: string;
   bookTitle?: string;
 }
 
+// Custom hook to detect @mentions in the text input
 export function useMentionDetection(
   message: string,
-  currentBook: Book | null,
-  findEntities: (query: string, entityTypes: Array<'character' | 'scene' | 'place' | 'page'>, includeAllBooks?: boolean) => MentionSuggestion[]
+  findEntitiesByPartialName: (partialName: string, type?: string) => any[]
 ) {
-  const [mentionSearch, setMentionSearch] = useState("");
-  const [mentionSuggestions, setMentionSuggestions] = useState<MentionSuggestion[]>([]);
+  const [mentionSearch, setMentionSearch] = useState<string | null>(null);
+  const [mentionSuggestions, setMentionSuggestions] = useState<EntitySuggestion[]>([]);
 
-  // Enhanced effect to watch for @ mentions in the message
+  // Detect @mentions in the current message
   useEffect(() => {
-    const atIndex = message.lastIndexOf('@');
+    if (!message) {
+      setMentionSearch(null);
+      setMentionSuggestions([]);
+      return;
+    }
     
-    if (atIndex !== -1 && atIndex < message.length - 1) {
-      // Find the part of the message after the last @
-      const afterAt = message.substring(atIndex + 1);
+    // Look for @mention patterns
+    const lastMention = message.match(/@([^\s/]+)(?:\/([^\s]+))?$/);
+    
+    if (lastMention) {
+      const fullMention = lastMention[0];
+      const entityType = fullMention.includes('/') ? fullMention.split('/')[0].substring(1) : null;
+      const searchTerm = fullMention.includes('/') ? fullMention.split('/')[1] : fullMention.substring(1);
       
-      // Check if we've already typed enough to search
-      if (afterAt.length >= 1) {
-        // Search all entity types
-        const results = findEntities(afterAt, ['character', 'scene', 'page', 'place']);
-        setMentionSuggestions(results);
-        setMentionSearch(afterAt);
+      setMentionSearch(searchTerm);
+      
+      // Find matching entities
+      if (searchTerm && searchTerm.length > 0) {
+        const suggestions = findEntitiesByPartialName(searchTerm, entityType || undefined);
+        setMentionSuggestions(suggestions);
       } else {
         setMentionSuggestions([]);
-        setMentionSearch("");
       }
     } else {
+      setMentionSearch(null);
       setMentionSuggestions([]);
-      setMentionSearch("");
     }
-  }, [message, findEntities]);
+  }, [message, findEntitiesByPartialName]);
 
+  // Replace the @mention with the selected entity
   const handleMentionSelect = (
-    message: string,
-    suggestion: MentionSuggestion,
-    currentBookId?: string
+    message: string, 
+    suggestion: EntitySuggestion
   ): string => {
-    // Find the last @ in the message
-    const atIndex = message.lastIndexOf('@');
+    const lastAtIndex = message.lastIndexOf('@');
     
-    if (atIndex !== -1) {
-      // Replace from the @ to the current cursor position with the entity mention
-      const beforeAt = message.substring(0, atIndex);
-      const afterSearch = message.substring(atIndex + mentionSearch.length + 1);
+    if (lastAtIndex !== -1) {
+      const beforeMention = message.substring(0, lastAtIndex);
+      const afterMention = message.substring(lastAtIndex).match(/\s|$/)?.index || message.length - lastAtIndex;
+      const afterText = message.substring(lastAtIndex + afterMention);
       
-      // Format based on whether cross-book reference is needed
-      const mentionText = suggestion.bookId && suggestion.bookId !== currentBookId
-        ? `@${suggestion.bookTitle}/${suggestion.type}/${suggestion.name} `
-        : `@${suggestion.type}/${suggestion.name} `;
+      // Create the replacement text with the entity reference
+      const replacement = `@${suggestion.type}/${suggestion.name} `;
       
-      return `${beforeAt}${mentionText}${afterSearch}`;
+      return beforeMention + replacement + afterText;
     }
     
     return message;

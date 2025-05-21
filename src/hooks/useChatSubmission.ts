@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useNovel } from "@/contexts/NovelContext";
 import { toast } from "sonner";
@@ -22,8 +23,15 @@ export type DetectedEntity = {
   bookTitle: string;
 };
 
+// Interface for linked entity context
+interface ChatSubmissionProps {
+  linkedEntityType?: string;
+  linkedEntityId?: string;
+  currentBook?: any;
+}
+
 // Custom hook for handling chat submissions and managing chat state
-export function useChatSubmission() {
+export function useChatSubmission(props?: ChatSubmissionProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -59,6 +67,8 @@ export function useChatSubmission() {
         context: {
           bookId: currentBook?.id,
           bookTitle: currentBook?.title,
+          linkedEntityType: props?.linkedEntityType,
+          linkedEntityId: props?.linkedEntityId
         },
       };
 
@@ -105,6 +115,12 @@ export function useChatSubmission() {
     }
   };
   
+  // Function to handle submitting a message (wrapper for sendMessage)
+  const handleSubmit = async (message: string) => {
+    setInput(message);
+    await sendMessage();
+  };
+  
   // Function to process referenced entities and create system messages
   const processReferencedEntities = () => {
     if (!detectedEntities || detectedEntities.length === 0) return [];
@@ -125,6 +141,75 @@ export function useChatSubmission() {
     }));
   };
 
+  // Helper function to find entities by partial name (for mention suggestions)
+  const findEntitiesByPartialName = (partialName: string, type?: string) => {
+    if (!currentBook) return [];
+    
+    const results: any[] = [];
+    
+    // Filter characters
+    if (!type || type === 'character') {
+      const matchedCharacters = currentBook.characters?.filter((char: any) => 
+        char.name.toLowerCase().includes(partialName.toLowerCase())
+      ).map((char: any) => ({
+        type: 'character',
+        id: char.id,
+        name: char.name,
+        bookId: currentBook.id,
+        bookTitle: currentBook.title
+      })) || [];
+      
+      results.push(...matchedCharacters);
+    }
+    
+    // Filter scenes
+    if (!type || type === 'scene') {
+      const matchedScenes = currentBook.scenes?.filter((scene: any) => 
+        scene.title.toLowerCase().includes(partialName.toLowerCase())
+      ).map((scene: any) => ({
+        type: 'scene',
+        id: scene.id,
+        name: scene.title,
+        bookId: currentBook.id,
+        bookTitle: currentBook.title
+      })) || [];
+      
+      results.push(...matchedScenes);
+    }
+    
+    // Filter places
+    if (!type || type === 'place') {
+      const matchedPlaces = currentBook.places?.filter((place: any) => 
+        place.name.toLowerCase().includes(partialName.toLowerCase())
+      ).map((place: any) => ({
+        type: 'place',
+        id: place.id,
+        name: place.name,
+        bookId: currentBook.id,
+        bookTitle: currentBook.title
+      })) || [];
+      
+      results.push(...matchedPlaces);
+    }
+    
+    // Filter pages
+    if (!type || type === 'page') {
+      const matchedPages = currentBook.pages?.filter((page: any) => 
+        page.title.toLowerCase().includes(partialName.toLowerCase())
+      ).map((page: any) => ({
+        type: 'page',
+        id: page.id,
+        name: page.title,
+        bookId: currentBook.id,
+        bookTitle: currentBook.title
+      })) || [];
+      
+      results.push(...matchedPages);
+    }
+    
+    return results.slice(0, 5); // Limit to 5 results
+  };
+
   // Effect to prepend referenced entities to the chat messages
   useEffect(() => {
     if (detectedEntities && detectedEntities.length > 0) {
@@ -132,14 +217,17 @@ export function useChatSubmission() {
       setMessages(prev => [...entityMessages, ...prev]);
       setDetectedEntities(null); // Clear detected entities after processing
     }
-  }, [detectedEntities, processReferencedEntities]);
+  }, [detectedEntities]);
 
   return {
     messages,
     input,
     isLoading,
+    loading: isLoading, // Alias for backward compatibility
     setInput,
     sendMessage,
+    handleSubmit,
+    findEntitiesByPartialName,
     clearChat,
   };
 }

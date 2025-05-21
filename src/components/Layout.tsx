@@ -1,5 +1,5 @@
 
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarContent, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toolbar } from "@/components/Toolbar";
 import { ReactNode, useEffect, useState } from "react";
@@ -64,7 +64,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <Toolbar />
         <div className="flex flex-1 h-[calc(100vh-3.5rem)] overflow-hidden">
           <AppSidebar />
-          <SidebarInset className="bg-background">
+          <SidebarContent className="bg-background">
             <header className="flex h-14 shrink-0 items-center border-b">
               <div className="flex items-center gap-2 px-4">
                 <SidebarTrigger />
@@ -75,7 +75,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <main className="flex-1 overflow-auto p-6">
               {children}
             </main>
-          </SidebarInset>
+          </SidebarContent>
         </div>
       </div>
     </SidebarProvider>
