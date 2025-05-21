@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@copilotkit/react-core": "^1.8.12",
     "@copilotkit/react-ui": "^1.8.9",
     "@copilotkit/runtime": "^1.8.9",
     "@hookform/resolvers": "^3.9.0",

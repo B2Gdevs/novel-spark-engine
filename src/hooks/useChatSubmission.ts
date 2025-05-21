@@ -1,116 +1,145 @@
+import { useState, useEffect, useCallback } from "react";
+import { useNovel } from "@/contexts/NovelContext";
+import { toast } from "sonner";
+import { v4 as uuidv4 } from 'uuid';
+import { Character, Scene } from "@/types/novel";
 
-import { useState } from 'react';
-import { ChatMessage, Book } from '@/types/novel';
-import { useNovel } from '@/contexts/NovelContext';
-import { processMentionsInMessage } from '@/components/chat/MentionUtils';
-import { toast } from 'sonner';
+// Define the type for chat messages
+export type ChatMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+  timestamp: string;
+  metadata?: any;
+};
 
-interface ChatSubmissionProps {
-  linkedEntityType: string | null;
-  linkedEntityId: string | null;
-  currentBook: Book | null;
-}
+// Define the type for detected entities
+export type DetectedEntity = {
+  type: string;
+  id: string;
+  name: string;
+  fullText: string;
+  bookId: string;
+  bookTitle: string;
+};
 
-export function useChatSubmission({ 
-  linkedEntityType, 
-  linkedEntityId,
-  currentBook
-}: ChatSubmissionProps) {
-  const { 
-    addChatMessage, 
-    sendMessageToAI, 
-    findEntitiesByPartialName,
-    createChatCheckpoint
-  } = useNovel();
-  const [loading, setLoading] = useState(false);
+// Custom hook for handling chat submissions and managing chat state
+export function useChatSubmission() {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [detectedEntities, setDetectedEntities] = useState<DetectedEntity[] | null>(null);
+  const { currentBook } = useNovel();
 
-  // Handler that processes message, detects entity mentions, and sends message to AI
-  const handleSubmit = async (message: string) => {
-    if (!message.trim()) return;
-    if (!currentBook) {
-      toast.error("No book selected, please select a book first");
-      return;
-    }
+  // Function to clear the chat history
+  const clearChat = useCallback(() => {
+    setMessages([]);
+    toast.success("Chat history cleared");
+  }, []);
+
+  // Function to handle sending a message
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+
+    setIsLoading(true);
+    const userMessage: ChatMessage = {
+      role: "user",
+      content: input,
+      timestamp: new Date().toISOString(),
+    };
     
-    setLoading(true);
-    
+    // Optimistically update the chat with the user's message
+    setMessages(prev => [...prev, userMessage]);
+    setInput("");
+
     try {
-      // Detect mentioned entities in the user message using the processMentionsInMessage function
-      const { messageContent, mentionedEntities } = processMentionsInMessage(
-        message,
-        (query) => findEntitiesByPartialName(query, ['character', 'scene', 'page', 'place']),
-        currentBook
-      );
-      
-      // Add user message to chat history
-      addChatMessage({
-        role: 'user',
-        content: messageContent,
-        mentionedEntities: mentionedEntities.map(entity => ({
-          id: entity.id,
-          type: entity.type,
-          name: entity.name
-        }))
+      // Prepare the request body
+      const requestBody = {
+        messages: [...messages, userMessage],
+        query: input,
+        context: {
+          bookId: currentBook?.id,
+          bookTitle: currentBook?.title,
+        },
+      };
+
+      // Make the API request
+      const response = await fetch("/api/copilotkit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
       });
-      
-      // If linked to an entity, include that context
-      let systemPrompt = `You are a creative writing assistant helping with a book titled "${currentBook.title}".`;
-      
-      if (linkedEntityType && linkedEntityId) {
-        systemPrompt += ` This conversation is specifically about the ${linkedEntityType} with ID: ${linkedEntityId}.`;
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
-      // Add specific instructions for the AI assistant to use actions
-      systemPrompt += ` When asked to create, modify, or manage characters, scenes, places, or pages, use the provided actions:
-      - createCharacter: Use this to create new characters
-      - createScene: Use this to create new scenes
-      - createPlace: Use this to create new places
-      - createPage: Use this to create new pages
-      
-      If the user mentions an entity with @, make sure to reference it in your response properly. 
-      After creating entities, confirm their creation and store them in the database automatically.`;
-      
-      // Send message to AI assistant
-      const aiResponse = await sendMessageToAI(
-        messageContent, 
-        mentionedEntities, 
-        systemPrompt
-      );
-            
-      // Add AI response to chat history
-      if (aiResponse.success && aiResponse.message) {
-        addChatMessage({
-          role: 'assistant',
-          content: aiResponse.message
-        });
+
+      const data = await response.json();
+
+      if (data && data.reply) {
+        // Create the assistant's reply message
+        const assistantMessage: ChatMessage = {
+          role: "assistant",
+          content: data.reply,
+          timestamp: new Date().toISOString(),
+        };
+
+        // Update the chat with the assistant's reply
+        setMessages((prev) => [...prev, assistantMessage]);
         
-        // Create checkpoint after successful AI response (for recovery if needed)
-        createChatCheckpoint(`Checkpoint after message: ${messageContent.substring(0, 30)}...`);
+        // Extract and set detected entities
+        if (data.entities) {
+          setDetectedEntities(data.entities);
+        } else {
+          setDetectedEntities(null);
+        }
       } else {
-        // Add error message if AI failed to respond
-        addChatMessage({
-          role: 'system',
-          content: `Error: ${aiResponse.error || 'Failed to get response'}` 
-        });
-        toast.error("Failed to get AI response");
+        toast.error("No reply received from the assistant.");
       }
-    } catch (error) {
-      console.error("Error in chat submission:", error);
-      toast.error("Error processing your message");
-      
-      // Add error system message
-      addChatMessage({
-        role: 'system',
-        content: `Error processing message: ${error instanceof Error ? error.message : String(error)}`
-      });
+    } catch (error: any) {
+      console.error("Failed to send message:", error);
+      toast.error(`Failed to send message: ${error.message}`);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
+  
+  // Function to process referenced entities and create system messages
+  const processReferencedEntities = () => {
+    if (!detectedEntities || detectedEntities.length === 0) return [];
+    
+    // Transform entities to match ChatMessage type
+    return detectedEntities.map(entity => ({
+      role: "system" as const,
+      content: `Referenced ${entity.type}: ${entity.name}`,
+      timestamp: new Date().toISOString(),
+      metadata: {
+        type: entity.type,
+        id: entity.id,
+        name: entity.name,
+        fullText: entity.fullText,
+        bookId: entity.bookId,
+        bookTitle: entity.bookTitle
+      }
+    }));
+  };
+
+  // Effect to prepend referenced entities to the chat messages
+  useEffect(() => {
+    if (detectedEntities && detectedEntities.length > 0) {
+      const entityMessages = processReferencedEntities();
+      setMessages(prev => [...entityMessages, ...prev]);
+      setDetectedEntities(null); // Clear detected entities after processing
+    }
+  }, [detectedEntities, processReferencedEntities]);
 
   return {
-    handleSubmit,
-    loading,
-    findEntitiesByPartialName
+    messages,
+    input,
+    isLoading,
+    setInput,
+    sendMessage,
+    clearChat,
   };
 }

@@ -11,8 +11,8 @@ export async function POST(req: Request) {
   try {
     const requestBody = await req.json();
     
-    // Use the correct method for CopilotRuntime
-    const response = await runtime.handle(requestBody, serviceAdapter);
+    // Use the handleRequest method instead of handle
+    const response = await runtime.handleRequest(requestBody, serviceAdapter);
     
     return new Response(JSON.stringify(response), {
       headers: {

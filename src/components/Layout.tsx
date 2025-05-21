@@ -1,5 +1,5 @@
 
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toolbar } from "@/components/Toolbar";
 import { ReactNode, useEffect, useState } from "react";
@@ -8,6 +8,7 @@ import { ChatInterface } from "@/components/ChatInterface";
 import { toast } from "sonner";
 import { useNovel } from "@/contexts/NovelContext";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Separator } from "@/components/ui/separator";
 
 export function Layout({ children }: { children: ReactNode }) {
   const [showChatDialog, setShowChatDialog] = useState(false);
@@ -31,43 +32,23 @@ export function Layout({ children }: { children: ReactNode }) {
 
     window.addEventListener('keydown', handleKeyDown);
     
-    // Show toast about keyboard shortcut
-    const toastMessage = currentBook 
-      ? "Press Cmd+K or Ctrl+K to open the AI chat"
-      : "Select a book first to use the AI assistant with Cmd+K or Ctrl+K";
-      
-    toast(toastMessage, {
-      duration: 5000,
-    });
-
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [currentBook]);
 
-  // Navigate to latest page if a book is selected
   useEffect(() => {
-    if (currentBook && isHomePage) {
-      const lastItem = getLastModifiedItem(currentBook.id);
-      
-      if (lastItem && lastItem.type === 'pages') {
-        // Navigate to the last modified page
-        setTimeout(() => {
-          navigate(`/pages/${lastItem.id}`);
-        }, 300);
-      } else if (lastItem) {
-        // Navigate to the appropriate section based on last edited item
-        setTimeout(() => {
-          navigate(`/${lastItem.type}/${lastItem.id}`);
-        }, 300);
-      } else {
-        // If no items exist yet, navigate to assistant as default
-        setTimeout(() => {
-          navigate("/assistant");
-        }, 300);
-      }
+    // Show toast about keyboard shortcut (only once)
+    if (!currentBook) return;
+    
+    const hasShownToast = sessionStorage.getItem('shown-shortcut-toast');
+    if (!hasShownToast) {
+      toast("Press Cmd+K or Ctrl+K to open the AI chat", {
+        duration: 5000,
+      });
+      sessionStorage.setItem('shown-shortcut-toast', 'true');
     }
-  }, [currentBook, isHomePage, navigate, getLastModifiedItem]);
+  }, [currentBook]);
 
   return (
     <SidebarProvider>
@@ -81,11 +62,20 @@ export function Layout({ children }: { children: ReactNode }) {
       
       <div className="min-h-screen flex flex-col w-full">
         <Toolbar />
-        <div className="flex flex-1 h-[calc(100vh-3rem)] overflow-hidden">
+        <div className="flex flex-1 h-[calc(100vh-3.5rem)] overflow-hidden">
           <AppSidebar />
-          <main className="flex-1 overflow-auto p-4">
-            {children}
-          </main>
+          <SidebarInset className="bg-background">
+            <header className="flex h-14 shrink-0 items-center border-b">
+              <div className="flex items-center gap-2 px-4">
+                <SidebarTrigger />
+                <Separator orientation="vertical" className="mx-2 h-4" />
+                <span className="font-medium">{currentBook?.title || "Library"}</span>
+              </div>
+            </header>
+            <main className="flex-1 overflow-auto p-6">
+              {children}
+            </main>
+          </SidebarInset>
         </div>
       </div>
     </SidebarProvider>

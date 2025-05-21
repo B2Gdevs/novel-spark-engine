@@ -1,5 +1,4 @@
 
-import React from "react";
 import { 
   Book, 
   User, 
@@ -8,7 +7,8 @@ import {
   Library, 
   FileText, 
   MessageSquare,
-  ChevronRight 
+  Settings,
+  ChevronDown
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useNovel } from "@/contexts/NovelContext";
@@ -25,15 +25,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { project, currentBook } = useNovel();
+  const { project, currentBook, switchBook } = useNovel();
   
   // Book-related sidebar items with icons
   const bookSidebarItems = [
@@ -72,19 +69,24 @@ export function AppSidebar() {
   const hasActiveBook = !!currentBook && 
     !!project.books.find(book => book.id === currentBook.id);
 
+  const handleBookSelect = (bookId: string) => {
+    switchBook(bookId);
+    navigate("/assistant");
+  };
+
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="px-3 py-2">
+    <Sidebar collapsible="icon" variant="inset">
+      <SidebarHeader className="p-3 flex flex-col">
         <div className="flex items-center">
-          <Book className="h-6 w-6 text-primary mr-2" />
-          <span className="font-semibold text-lg">NovelSpark</span>
+          <Book className="h-5 w-5 text-primary mr-2" />
+          <span className="font-medium text-lg">NovelSpark</span>
         </div>
       </SidebarHeader>
       
       <SidebarContent>
         {hasActiveBook ? (
           <SidebarGroup>
-            <SidebarGroupLabel>{currentBook?.title || "Current Book"}</SidebarGroupLabel>
+            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {bookSidebarItems.map((item) => (
@@ -94,7 +96,7 @@ export function AppSidebar() {
                       isActive={item.active}
                       tooltip={item.title}
                     >
-                      <item.icon className="h-5 w-5" />
+                      <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -104,17 +106,45 @@ export function AppSidebar() {
           </SidebarGroup>
         ) : (
           <SidebarGroup>
-            <SidebarGroupLabel>Library</SidebarGroupLabel>
+            <SidebarGroupLabel>Welcome</SidebarGroupLabel>
             <SidebarGroupContent>
-              <div className="p-3 text-center text-sm text-muted-foreground">
-                Select a book to see options
+              <div className="p-3 text-sm text-muted-foreground">
+                Select a book below to begin
               </div>
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        {/* Books section - Always visible */}
+        <SidebarGroup>
+          <Collapsible defaultOpen className="w-full">
+            <CollapsibleTrigger className="flex w-full items-center justify-between p-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+              <span>My Books</span>
+              <ChevronDown className="h-4 w-4 transition-transform ui-open:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {project.books.map(book => (
+                    <SidebarMenuItem key={book.id}>
+                      <SidebarMenuButton 
+                        onClick={() => handleBookSelect(book.id)}
+                        isActive={currentBook?.id === book.id}
+                        tooltip={book.title}
+                      >
+                        <Book className="h-4 w-4" />
+                        <span>{book.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter className="border-t">
+      <SidebarFooter className="border-t p-3">
         <SidebarGroup>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -123,18 +153,18 @@ export function AppSidebar() {
                 isActive={location.pathname === "/"}
                 tooltip="Library"
               >
-                <Library className="h-5 w-5" />
+                <Library className="h-4 w-4" />
                 <span>Library</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
         
-        <div className="px-3 py-2">
+        <div className="pt-2 mt-2 border-t">
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
               <AvatarImage src="" />
-              <AvatarFallback className="bg-primary text-primary-foreground">NS</AvatarFallback>
+              <AvatarFallback className="bg-primary/20 text-primary">NS</AvatarFallback>
             </Avatar>
             <div className="flex flex-col text-sm">
               <span className="font-medium">User</span>
