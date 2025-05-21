@@ -1,6 +1,6 @@
 
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 import { Toolbar } from "@/components/Toolbar";
 import { ReactNode, useEffect, useState } from "react";
 import { DialogProvider } from "@/components/DialogProvider";
@@ -79,11 +79,11 @@ export function Layout({ children }: { children: ReactNode }) {
         <ChatInterface />
       </DialogProvider>
       
-      <div className="min-h-screen flex flex-col w-full bg-gray-50 text-gray-900">
+      <div className="min-h-screen flex flex-col w-full">
         <Toolbar />
         <div className="flex flex-1 h-[calc(100vh-3rem)] overflow-hidden">
           <AppSidebar />
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto p-4">
             {children}
           </main>
         </div>

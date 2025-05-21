@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { NovelProvider } from "@/contexts/NovelContext";
 import { useState } from "react";
 import { CopilotProvider } from "@/components/chat/CopilotProvider";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 // Pages
 import { HomePage } from "./pages/HomePage";
@@ -29,27 +30,29 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <NovelProvider>
-        <CopilotProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Layout><HomePage /></Layout>} />
-                <Route path="/assistant" element={<Layout><AssistantPage /></Layout>} />
-                <Route path="/characters" element={<Layout><CharactersPage /></Layout>} />
-                <Route path="/scenes" element={<Layout><ScenesPage /></Layout>} />
-                <Route path="/events" element={<Layout><EventsPage /></Layout>} />
-                <Route path="/pages" element={<Layout><PagesPage /></Layout>} />
-                <Route path="/characters/:id" element={<Layout><CharacterForm /></Layout>} />
-                <Route path="/scenes/:id" element={<Layout><SceneForm /></Layout>} />
-                <Route path="/events/:id" element={<Layout><EventForm /></Layout>} />
-                <Route path="/pages/:id" element={<Layout><PageForm /></Layout>} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </CopilotProvider>
+        <ThemeProvider defaultTheme="light" storageKey="novel-theme">
+          <CopilotProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Layout><HomePage /></Layout>} />
+                  <Route path="/assistant" element={<Layout><AssistantPage /></Layout>} />
+                  <Route path="/characters" element={<Layout><CharactersPage /></Layout>} />
+                  <Route path="/scenes" element={<Layout><ScenesPage /></Layout>} />
+                  <Route path="/events" element={<Layout><EventsPage /></Layout>} />
+                  <Route path="/pages" element={<Layout><PagesPage /></Layout>} />
+                  <Route path="/characters/:id" element={<Layout><CharacterForm /></Layout>} />
+                  <Route path="/scenes/:id" element={<Layout><SceneForm /></Layout>} />
+                  <Route path="/events/:id" element={<Layout><EventForm /></Layout>} />
+                  <Route path="/pages/:id" element={<Layout><PageForm /></Layout>} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </CopilotProvider>
+        </ThemeProvider>
       </NovelProvider>
     </QueryClientProvider>
   );

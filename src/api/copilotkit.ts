@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const requestBody = await req.json();
     
     // Use the correct method for CopilotRuntime
-    const response = await runtime.handleMessage(requestBody, serviceAdapter);
+    const response = await runtime.handle(requestBody, serviceAdapter);
     
     return new Response(JSON.stringify(response), {
       headers: {

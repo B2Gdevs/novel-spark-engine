@@ -73,11 +73,7 @@ export function useChatSubmission({
       // Send message to AI assistant
       const aiResponse = await sendMessageToAI(
         messageContent, 
-        mentionedEntities.map(entity => ({
-          type: entity.type,
-          id: entity.id,
-          name: entity.name
-        })), 
+        mentionedEntities, 
         systemPrompt
       );
             

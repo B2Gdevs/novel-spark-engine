@@ -5,13 +5,13 @@
 
 @layer base {
   :root {
-    --background: 0 0% 95%;
+    --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     
-    --card: 0 0% 98%;
+    --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
     
-    --popover: 0 0% 98%;
+    --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
     
     --primary: 262 83% 58%;
@@ -23,25 +23,25 @@
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
     
-    --accent: 24 94% 53%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
     
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 240 5.9% 20%;
-    --input: 240 5.9% 20%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
     --ring: 262 83% 58%;
     
     --radius: 0.5rem;
 
-    --sidebar-background: 220 10% 20%;
+    --sidebar-background: 240 6% 10%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 262 83% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent: 240 5% 15%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-border: 240 4% 16%;
     --sidebar-ring: 262 83% 58%;
 
     --novel-purple: rgb(139, 92, 246);
@@ -50,6 +50,45 @@
     --novel-light: rgb(246, 248, 250);
     --novel-dark: rgb(30, 41, 59);
   }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+
+    --sidebar-background: 240 10% 3.9%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 240 4.9% 83.9%;
+  }
 }
 
 * {
@@ -57,33 +96,33 @@
 }
 
 body {
-  @apply bg-[#f3f3f3] text-foreground;
+  @apply bg-background text-foreground;
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
 .prose-custom h1, .prose-custom h2, .prose-custom h3 {
-  @apply text-novel-purple font-semibold;
+  @apply text-primary font-semibold;
 }
 
 @layer components {
   .prose-custom h1, .prose-custom h2, .prose-custom h3 {
-    @apply text-novel-purple font-semibold;
+    @apply text-primary font-semibold;
   }
   
   .chat-message {
-    @apply border-2 border-[#333] shadow-sm;
+    @apply border shadow-sm bg-card rounded-lg;
   }
   
   .chat-message-user {
-    @apply bg-[#eee] border-[#333];
+    @apply bg-secondary border-border;
   }
   
   .chat-message-assistant {
-    @apply bg-[#f3f3f3] border-[#333];
+    @apply bg-card border-border;
   }
   
   .chat-message-system {
-    @apply bg-[#f3f3f3] border-[#222];
+    @apply bg-muted border-border;
   }
   
   .sidebar-nav-item {
@@ -100,7 +139,7 @@ body {
 }
 
 .typing-effect {
-  @apply overflow-hidden whitespace-nowrap border-r-4 border-novel-orange;
+  @apply overflow-hidden whitespace-nowrap border-r-4 border-primary;
   animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
 }
 
@@ -111,11 +150,11 @@ body {
 
 @keyframes blink-caret {
   from, to { border-color: transparent }
-  50% { border-color: theme('colors.novel.orange') }
+  50% { border-color: theme('colors.primary.DEFAULT') }
 }
 
 .glass-morphism {
-  @apply backdrop-blur-xl bg-[#eeeeee]/90 border-2 border-[#333] shadow-sm;
+  @apply backdrop-blur-xl bg-background/90 border-2 border-border shadow-sm;
 }
 
 @keyframes fade-in-up {
