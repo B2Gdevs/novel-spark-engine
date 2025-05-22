@@ -8,12 +8,11 @@ import {
   FileText, 
   MessageSquare,
   Settings,
-  ChevronDown
+  Plus
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useNovel } from "@/contexts/NovelContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -83,6 +82,17 @@ export function AppSidebar() {
           <Book className="h-5 w-5 text-primary mr-2" />
           <span className="font-medium text-lg">NovelSpark</span>
         </div>
+        
+        {hasActiveBook && (
+          <div className="mt-4 text-sm text-muted-foreground">
+            <div className="flex items-center">
+              <span>Currently selected:</span>
+            </div>
+            <div className="font-semibold text-foreground mt-1">
+              {currentBook?.title}
+            </div>
+          </div>
+        )}
       </SidebarHeader>
       
       <SidebarContent>
@@ -119,30 +129,35 @@ export function AppSidebar() {
 
         {/* Books section - Always visible */}
         <SidebarGroup>
-          <Collapsible defaultOpen className="w-full">
-            <CollapsibleTrigger className="flex w-full items-center justify-between p-2 text-xs font-medium text-muted-foreground hover:text-foreground">
-              <span>My Books</span>
-              <ChevronDown className="h-4 w-4 transition-transform ui-open:rotate-180" />
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {project.books.map(book => (
-                    <SidebarMenuItem key={book.id}>
-                      <SidebarMenuButton 
-                        onClick={() => handleBookSelect(book.id)}
-                        isActive={currentBook?.id === book.id}
-                        tooltip={book.title}
-                      >
-                        <Book className="h-4 w-4" />
-                        <span>{book.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
+          <SidebarGroupLabel>My Books</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {project.books.map(book => (
+                <SidebarMenuItem key={book.id}>
+                  <SidebarMenuButton 
+                    onClick={() => handleBookSelect(book.id)}
+                    isActive={currentBook?.id === book.id}
+                    tooltip={book.title}
+                  >
+                    <Book className="h-4 w-4" />
+                    <span>{book.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => navigate("/")}
+                  variant="outline"
+                  className="mt-1"
+                  tooltip="Create new book"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>New Book</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
       
@@ -157,6 +172,15 @@ export function AppSidebar() {
               >
                 <Library className="h-4 w-4" />
                 <span>Library</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => {}}
+                tooltip="Settings"
+              >
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

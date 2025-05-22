@@ -168,3 +168,15 @@ export const SidebarContent = React.forwardRef<
   />
 ))
 SidebarContent.displayName = "SidebarContent"
+
+export const SidebarFooter = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<"div">
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col gap-2 mt-auto p-2", className)}
+    {...props}
+  />
+))
+SidebarFooter.displayName = "SidebarFooter"
