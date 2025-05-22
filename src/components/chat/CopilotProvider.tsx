@@ -1,6 +1,6 @@
 
 import { ReactNode } from 'react';
-import { CopilotKit } from '@copilotkit/react-ui';
+import { CopilotProvider as CopilotKitProvider } from '@copilotkit/react-ui';
 
 interface CopilotProviderProps {
   children: ReactNode;
@@ -8,10 +8,10 @@ interface CopilotProviderProps {
 
 export function CopilotProvider({ children }: CopilotProviderProps) {
   return (
-    <CopilotKit
+    <CopilotKitProvider
       runtimeUrl="/api/copilotkit"
     >
       {children}
-    </CopilotKit>
+    </CopilotKitProvider>
   );
 }
