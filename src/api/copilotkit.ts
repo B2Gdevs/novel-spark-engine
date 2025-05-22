@@ -11,8 +11,8 @@ export async function POST(req: Request) {
   try {
     const requestBody = await req.json();
     
-    // Using the handle method instead of handleRequest
-    const response = await runtime.handle(requestBody, serviceAdapter);
+    // Using the handleRequest method which is the correct method according to the type
+    const response = await runtime.handleRequest(requestBody, serviceAdapter);
     
     return new Response(JSON.stringify(response), {
       headers: {
